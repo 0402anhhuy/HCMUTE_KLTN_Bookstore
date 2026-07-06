@@ -1,0 +1,101 @@
+package com.kltn.bookstore_be.ordering.presentation;
+
+import com.kltn.bookstore_be.ordering.domain.Shipper;
+import com.kltn.bookstore_be.ordering.domain.ShipperRepository;
+import com.kltn.bookstore_be.identity.domain.User;
+import com.kltn.bookstore_be.identity.application.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/shippers")
+public class ShipperController {
+
+    @Autowired
+    private ShipperRepository shipperRepository;
+
+    @Autowired
+    private UserService userService;
+
+    private User getAuthenticatedUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            return userService.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
+        }
+        throw new RuntimeException("Người dùng chưa được xác thực");
+    }
+
+    private void checkManagerOrAdmin() {
+        User user = getAuthenticatedUser();
+        if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
+            throw new RuntimeException("Bạn không có quyền thực hiện chức năng này");
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllShippers() {
+        try {
+            checkManagerOrAdmin();
+            List<Shipper> shippers = shipperRepository.findAll();
+            return ResponseEntity.ok(shippers);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createShipper(@RequestBody Shipper shipper) {
+        try {
+            checkManagerOrAdmin();
+            if (shipper.getFullName() == null || shipper.getFullName().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Tên shipper không được để trống"));
+            }
+            if (shipper.getPhone() == null || shipper.getPhone().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại không được để trống"));
+            }
+            Shipper saved = shipperRepository.save(shipper);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateShipper(@PathVariable Long id, @RequestBody Shipper details) {
+        try {
+            checkManagerOrAdmin();
+            Shipper shipper = shipperRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Shipper không tồn tại"));
+            
+            if (details.getFullName() != null) shipper.setFullName(details.getFullName());
+            if (details.getPhone() != null) shipper.setPhone(details.getPhone());
+            if (details.getVehicle() != null) shipper.setVehicle(details.getVehicle());
+            if (details.getStatus() != null) shipper.setStatus(details.getStatus());
+
+            Shipper updated = shipperRepository.save(shipper);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteShipper(@PathVariable Long id) {
+        try {
+            checkManagerOrAdmin();
+            Shipper shipper = shipperRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Shipper không tồn tại"));
+            shipperRepository.delete(shipper);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa shipper thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+}

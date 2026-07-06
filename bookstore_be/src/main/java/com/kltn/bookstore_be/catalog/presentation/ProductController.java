@@ -1,0 +1,176 @@
+package com.kltn.bookstore_be.catalog.presentation;
+
+import com.kltn.bookstore_be.identity.domain.*;
+import com.kltn.bookstore_be.catalog.domain.*;
+import com.kltn.bookstore_be.ordering.domain.*;
+import com.kltn.bookstore_be.payment.domain.*;
+import com.kltn.bookstore_be.review.domain.*;
+import com.kltn.bookstore_be.notification.domain.*;
+import com.kltn.bookstore_be.audit.domain.*;
+import com.kltn.bookstore_be.identity.application.*;
+import com.kltn.bookstore_be.catalog.application.*;
+import com.kltn.bookstore_be.ordering.application.*;
+import com.kltn.bookstore_be.payment.application.*;
+import com.kltn.bookstore_be.review.application.*;
+import com.kltn.bookstore_be.notification.application.*;
+import com.kltn.bookstore_be.audit.application.*;
+import com.kltn.bookstore_be.identity.infrastructure.*;
+import com.kltn.bookstore_be.payment.infrastructure.*;
+import com.kltn.bookstore_be.common.*;
+
+
+import com.kltn.bookstore_be.catalog.domain.Category;
+import com.kltn.bookstore_be.catalog.domain.Product;
+import com.kltn.bookstore_be.catalog.domain.StockMovement;
+import com.kltn.bookstore_be.identity.domain.User;
+import com.kltn.bookstore_be.catalog.application.ProductService;
+import com.kltn.bookstore_be.identity.application.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api")
+public class ProductController {
+
+    @Autowired
+    private ProductService productService;
+
+    @Autowired
+    private UserService userService;
+
+    private User getAuthenticatedUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            return userService.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
+        }
+        throw new RuntimeException("Người dùng chưa được xác thực");
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<?> searchProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "id,desc") String sort
+    ) {
+        try {
+            String[] sortParams = sort.split(",");
+            Sort sorting = Sort.by(sortParams[0]);
+            if (sortParams.length > 1 && "desc".equalsIgnoreCase(sortParams[1])) {
+                sorting = sorting.descending();
+            } else {
+                sorting = sorting.ascending();
+            }
+
+            Pageable pageable = PageRequest.of(page, size, sorting);
+            Page<Product> productPage = productService.searchProducts(keyword, categoryId, minPrice, maxPrice, pageable);
+            return ResponseEntity.ok(productPage);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/products/{id}")
+    public ResponseEntity<?> getProductById(@PathVariable Long id) {
+        try {
+            Product product = productService.getProductById(id);
+            return ResponseEntity.ok(product);
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<?> getAllCategories() {
+        try {
+            List<Category> categories = productService.getAllCategories();
+            return ResponseEntity.ok(categories);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/products/stock-movements")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<?> getAllStockMovements() {
+        try {
+            List<StockMovement> movements = productService.getAllStockMovements();
+            return ResponseEntity.ok(movements);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/products/{id}/adjust-stock")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<?> adjustStock(
+            @PathVariable Long id,
+            @RequestParam Integer quantity,
+            @RequestParam StockMovement.MovementType movementType,
+            @RequestParam String note
+    ) {
+        try {
+            User manager = getAuthenticatedUser();
+            productService.adjustStock(id, quantity, movementType, note, manager);
+            return ResponseEntity.ok(Map.of("message", "Điều chỉnh kho thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/products")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<?> createProduct(
+            @RequestBody Product product,
+            @RequestParam Long categoryId
+      ) {
+        try {
+            Product created = productService.createProduct(product, categoryId);
+            return ResponseEntity.ok(created);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/products/{id}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,
+            @RequestBody Product product,
+            @RequestParam Long categoryId
+      ) {
+        try {
+            Product updated = productService.updateProduct(id, product, categoryId);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/products/{id}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        try {
+            productService.deleteProduct(id);
+            return ResponseEntity.ok(Map.of("message", "Xóa sản phẩm thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+}

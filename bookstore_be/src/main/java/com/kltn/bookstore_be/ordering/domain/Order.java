@@ -1,0 +1,105 @@
+package com.kltn.bookstore_be.ordering.domain;
+
+import com.kltn.bookstore_be.identity.domain.*;
+import com.kltn.bookstore_be.catalog.domain.*;
+import com.kltn.bookstore_be.ordering.domain.*;
+import com.kltn.bookstore_be.payment.domain.*;
+import com.kltn.bookstore_be.review.domain.*;
+import com.kltn.bookstore_be.notification.domain.*;
+import com.kltn.bookstore_be.audit.domain.*;
+import com.kltn.bookstore_be.identity.application.*;
+import com.kltn.bookstore_be.catalog.application.*;
+import com.kltn.bookstore_be.ordering.application.*;
+import com.kltn.bookstore_be.payment.application.*;
+import com.kltn.bookstore_be.review.application.*;
+import com.kltn.bookstore_be.notification.application.*;
+import com.kltn.bookstore_be.audit.application.*;
+import com.kltn.bookstore_be.identity.infrastructure.*;
+import com.kltn.bookstore_be.payment.infrastructure.*;
+import com.kltn.bookstore_be.common.*;
+
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "orders")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipper_id")
+    private Shipper shipper;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
+
+    @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal totalAmount;
+
+    @Column(name = "discount_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal discountAmount;
+
+    @Column(name = "shipping_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal shippingFee;
+
+    @Column(name = "final_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal finalAmount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
+    private PaymentMethod paymentMethod;
+
+    @Column(name = "shipping_address", nullable = false, length = 500)
+    private String shippingAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrderStatus status;
+
+    @Column(name = "cancelled_reason", length = 500)
+    private String cancelledReason;
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (status == null) {
+            status = OrderStatus.pending;
+        }
+        if (discountAmount == null) {
+            discountAmount = BigDecimal.ZERO;
+        }
+        if (shippingFee == null) {
+            shippingFee = BigDecimal.ZERO;
+        }
+    }
+
+    public enum PaymentMethod {
+        COD, VNPAY
+    }
+
+    public enum OrderStatus {
+        pending, confirmed, preparing, shipping, delivered, cancel_requested, cancelled, refunded
+    }
+}
