@@ -1,0 +1,124 @@
+package com.kltn.bookstore_be.identity.presentation;
+
+import com.kltn.bookstore_be.identity.domain.*;
+import com.kltn.bookstore_be.catalog.domain.*;
+import com.kltn.bookstore_be.ordering.domain.*;
+import com.kltn.bookstore_be.payment.domain.*;
+import com.kltn.bookstore_be.review.domain.*;
+import com.kltn.bookstore_be.notification.domain.*;
+import com.kltn.bookstore_be.audit.domain.*;
+import com.kltn.bookstore_be.identity.application.*;
+import com.kltn.bookstore_be.catalog.application.*;
+import com.kltn.bookstore_be.ordering.application.*;
+import com.kltn.bookstore_be.payment.application.*;
+import com.kltn.bookstore_be.review.application.*;
+import com.kltn.bookstore_be.notification.application.*;
+import com.kltn.bookstore_be.audit.application.*;
+import com.kltn.bookstore_be.identity.infrastructure.*;
+import com.kltn.bookstore_be.payment.infrastructure.*;
+import com.kltn.bookstore_be.common.*;
+
+
+import com.kltn.bookstore_be.identity.application.ChangePasswordRequest;
+import com.kltn.bookstore_be.identity.application.UpdateProfileRequest;
+import com.kltn.bookstore_be.identity.domain.User;
+import com.kltn.bookstore_be.notification.domain.Notification;
+import com.kltn.bookstore_be.identity.application.UserService;
+import com.kltn.bookstore_be.notification.application.NotificationService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    private User getAuthenticatedUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            return userService.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
+        }
+        throw new RuntimeException("Người dùng chưa được xác thực");
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile() {
+        try {
+            User user = getAuthenticatedUser();
+            return ResponseEntity.ok(Map.of(
+                    "email", user.getEmail(),
+                    "fullName", user.getFullName(),
+                    "phone", user.getPhone() != null ? user.getPhone() : "",
+                    "address", user.getAddress() != null ? user.getAddress() : "",
+                    "avatarUrl", user.getAvatarUrl() != null ? user.getAvatarUrl() : "",
+                    "role", user.getRole().name()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        try {
+            User user = getAuthenticatedUser();
+            User updated = userService.updateProfile(user, request);
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("message", "Cập nhật hồ sơ cá nhân thành công");
+            response.put("fullName", updated.getFullName());
+            response.put("phone", updated.getPhone() != null ? updated.getPhone() : "");
+            response.put("address", updated.getAddress() != null ? updated.getAddress() : "");
+            response.put("avatarUrl", updated.getAvatarUrl() != null ? updated.getAvatarUrl() : "");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        try {
+            User user = getAuthenticatedUser();
+            userService.changePassword(user, request);
+            return ResponseEntity.ok(Map.of("message", "Thay đổi mật khẩu thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<?> getNotifications() {
+        try {
+            User user = getAuthenticatedUser();
+            List<Notification> list = notificationService.getNotificationsForUser(user.getId());
+            // Map to avoid lazy initialization issues with User object inside Notification if any
+            // We can return a simplified projection or list directly
+            return ResponseEntity.ok(list);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/notifications/{id}/read")
+    public ResponseEntity<?> readNotification(@PathVariable Long id) {
+        try {
+            notificationService.markAsRead(id);
+            return ResponseEntity.ok(Map.of("message", "Đã đọc thông báo"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+}
