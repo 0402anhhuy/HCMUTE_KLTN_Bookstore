@@ -128,6 +128,11 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  const getImagesList = (urlStr) => {
+    if (!urlStr) return [];
+    return urlStr.split(' || ').map(s => s.trim()).filter(Boolean);
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -142,7 +147,12 @@ const ManagerProducts = ({ products, categories, loadData }) => {
           'Content-Type': 'multipart/form-data',
         },
       });
-      setProductForm(prev => ({ ...prev, imageUrl: response.data.url }));
+      const newUrl = response.data.url;
+      setProductForm(prev => {
+        const currentList = getImagesList(prev.imageUrl);
+        const newList = [...currentList, newUrl];
+        return { ...prev, imageUrl: newList.join(' || ') };
+      });
       showToast('Tải ảnh lên thành công!', 'success');
     } catch (err) {
       console.error(err);
@@ -150,6 +160,14 @@ const ManagerProducts = ({ products, categories, loadData }) => {
     } finally {
       setUploadingImage(false);
     }
+  };
+
+  const handleRemoveImage = (index) => {
+    setProductForm(prev => {
+      const currentList = getImagesList(prev.imageUrl);
+      const newList = currentList.filter((_, idx) => idx !== index);
+      return { ...prev, imageUrl: newList.join(' || ') };
+    });
   };
 
   // Filtered and Paginated Products
@@ -197,7 +215,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
             fontWeight: 600,
             cursor: 'pointer'
           }}>
-            Export
+            Xuất Excel
           </button>
           <button 
             onClick={handleOpenAddModal}
@@ -216,7 +234,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
             }}
           >
             <Plus size={16} />
-            <span>+ Add New Product</span>
+            <span>+ Thêm sản phẩm</span>
           </button>
         </div>
       </div>
@@ -282,8 +300,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
         >
           <option value="ALL">Tất cả trạng thái</option>
           <option value="ACTIVE">Còn hàng / Đang bán</option>
-          <option value="INACTIVE">Tạm ẩn (INACTIVE)</option>
-          <option value="OUT_OF_STOCK">Hết hàng (Stock = 0)</option>
+          <option value="INACTIVE">Tạm ẩn</option>
+          <option value="OUT_OF_STOCK">Hết hàng</option>
         </select>
       </div>
 
@@ -314,7 +332,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <img 
-                        src={p.imageUrl || 'https://via.placeholder.com/40x60?text=Book'} 
+                        src={getImagesList(p.imageUrl)[0] || 'https://via.placeholder.com/40x60?text=Book'} 
                         alt={p.name}
                         style={{ width: '40px', height: '56px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #f1f5f9' }}
                       />
@@ -612,12 +630,12 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Ảnh bìa sản phẩm
+                  Danh sách ảnh sản phẩm (Có thể tải lên nhiều ảnh)
                 </label>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
                   <input
                     type="text"
-                    placeholder="Đường dẫn ảnh (URL) hoặc tải lên..."
+                    placeholder="URL ảnh hoặc nhập URL..."
                     value={productForm.imageUrl}
                     onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
                     style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
@@ -644,10 +662,61 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   </label>
                 </div>
                 {uploadingImage && (
-                  <span style={{ fontSize: '0.75rem', color: '#7c3aed', marginTop: '4px', display: 'block' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#7c3aed', marginTop: '4px', display: 'block', marginBottom: '8px' }}>
                     Đang tải ảnh lên...
                   </span>
                 )}
+
+                {/* Uploaded images display */}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  {getImagesList(productForm.imageUrl).map((url, index) => (
+                    <div key={index} style={{ position: 'relative', width: '80px', height: '110px', borderRadius: '6px', border: '1px solid #e2e8f0', overflow: 'hidden', backgroundColor: '#fafafa' }}>
+                      <img src={url} alt={`img-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                          color: '#ffffff',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          padding: 0
+                        }}
+                      >
+                        ✕
+                      </button>
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        color: '#ffffff',
+                        fontSize: '0.65rem',
+                        textAlign: 'center',
+                        padding: '2px 0'
+                      }}>
+                        Ảnh {index + 1} {index === 0 && "(Bìa)"}
+                      </div>
+                    </div>
+                  ))}
+                  {getImagesList(productForm.imageUrl).length === 0 && (
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                      Chưa có ảnh nào được tải lên.
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ gridColumn: 'span 2' }}>
@@ -836,19 +905,19 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   onChange={(e) => setProductForm({ ...productForm, status: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
                 >
-                  <option value="ACTIVE">ĐANG BÁN (ACTIVE)</option>
-                  <option value="INACTIVE">TẠM ẨN (INACTIVE)</option>
+                  <option value="ACTIVE">Đang bán</option>
+                  <option value="INACTIVE">Tạm ẩn</option>
                 </select>
               </div>
 
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Ảnh bìa sản phẩm
+                  Danh sách ảnh sản phẩm (Có thể tải lên nhiều ảnh)
                 </label>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
                   <input
                     type="text"
-                    placeholder="Đường dẫn ảnh (URL) hoặc tải lên..."
+                    placeholder="URL ảnh hoặc nhập URL..."
                     value={productForm.imageUrl}
                     onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
                     style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
@@ -875,10 +944,61 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   </label>
                 </div>
                 {uploadingImage && (
-                  <span style={{ fontSize: '0.75rem', color: '#7c3aed', marginTop: '4px', display: 'block' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#7c3aed', marginTop: '4px', display: 'block', marginBottom: '8px' }}>
                     Đang tải ảnh lên...
                   </span>
                 )}
+
+                {/* Uploaded images display */}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  {getImagesList(productForm.imageUrl).map((url, index) => (
+                    <div key={index} style={{ position: 'relative', width: '80px', height: '110px', borderRadius: '6px', border: '1px solid #e2e8f0', overflow: 'hidden', backgroundColor: '#fafafa' }}>
+                      <img src={url} alt={`img-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                          color: '#ffffff',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          padding: 0
+                        }}
+                      >
+                        ✕
+                      </button>
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        color: '#ffffff',
+                        fontSize: '0.65rem',
+                        textAlign: 'center',
+                        padding: '2px 0'
+                      }}>
+                        Ảnh {index + 1} {index === 0 && "(Bìa)"}
+                      </div>
+                    </div>
+                  ))}
+                  {getImagesList(productForm.imageUrl).length === 0 && (
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                      Chưa có ảnh nào được tải lên.
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ gridColumn: 'span 2' }}>
