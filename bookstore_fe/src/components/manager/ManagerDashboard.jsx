@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useApp } from '../../context/AppContext';
 import {
@@ -25,11 +25,29 @@ import ManagerWarehouse from './ManagerWarehouse';
 import ManagerShippers from './ManagerShippers';
 
 const ManagerDashboard = () => {
-  const { user, logoutUser, showToast } = useApp();
+  const { 
+    user, 
+    logoutUser, 
+    showToast, 
+    notifications, 
+    unreadCount, 
+    markNotificationRead,
+    markAllNotificationsAsRead
+  } = useApp();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  // Tab State
+  // Tab & Notification State
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+  // Set active tab based on query param
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Loading & Data State
   const [loading, setLoading] = useState(false);
@@ -106,6 +124,25 @@ const ManagerDashboard = () => {
       showToast('Lỗi tải dữ liệu kênh quản lý!', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNotificationClick = (n) => {
+    if (!n.read) {
+      markNotificationRead(n.id);
+    }
+    setShowNotifDropdown(false);
+    
+    if (n.referenceType === 'orders' || n.type === 'ORDER') {
+      setActiveTab('orders');
+    } else if (n.referenceType === 'products' || n.type === 'PRODUCT') {
+      setActiveTab('products');
+    } else if (n.referenceType === 'reviews' || n.type === 'REVIEW') {
+      setActiveTab('reviews');
+    } else if (n.referenceType === 'return_requests' || n.type === 'RETURN') {
+      setActiveTab('orders');
+    } else {
+      setActiveTab('dashboard');
     }
   };
 
@@ -267,27 +304,135 @@ const ManagerDashboard = () => {
               <Home size={18} />
             </Link>
 
-            {/* Bell icon */}
-            <button style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#475569',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              <Bell size={20} />
-              <span style={{
-                position: 'absolute',
-                top: '-4px',
-                right: '-4px',
-                width: '8px',
-                height: '8px',
-                backgroundColor: '#ef4444',
-                borderRadius: '50%'
-              }} />
-            </button>
+            {/* Bell icon & Notifications Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#475569',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    width: '16px',
+                    height: '16px',
+                    backgroundColor: '#ef4444',
+                    color: '#ffffff',
+                    borderRadius: '50%',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1.5px solid #ffffff'
+                  }}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '8px',
+                  width: '320px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  border: '1px solid #e2e8f0',
+                  zIndex: 200,
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    padding: '12px 16px',
+                    borderBottom: '1px solid #e2e8f0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: '#f8fafc'
+                  }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0f172a' }}>Thông báo mới</span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); markAllNotificationsAsRead(); }}
+                          style={{ fontSize: '0.75rem', color: '#7c3aed', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                        >
+                          Đã đọc tất cả
+                        </button>
+                      )}
+                      {unreadCount > 0 && (
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          ({unreadCount})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                        Không có thông báo nào
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                        <div 
+                          key={n.id}
+                          onClick={() => handleNotificationClick(n)}
+                          style={{
+                            padding: '12px 16px',
+                            borderBottom: '1px solid #f1f5f9',
+                            backgroundColor: n.read ? '#ffffff' : '#f5f3ff',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s',
+                            textAlign: 'left'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = n.read ? '#f8fafc' : '#ede9fe'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = n.read ? '#ffffff' : '#f5f3ff'}
+                        >
+                          <div style={{ 
+                            fontWeight: n.read ? 600 : 700, 
+                            fontSize: '0.85rem', 
+                            color: n.read ? '#475569' : '#1e1b4b',
+                            marginBottom: '2px' 
+                          }}>
+                            {n.title}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: '1.3' }}>
+                            {n.message}
+                          </div>
+                          <div style={{ 
+                            fontSize: '0.65rem', 
+                            color: '#94a3b8', 
+                            marginTop: '4px',
+                            textAlign: 'right' 
+                          }}>
+                            {n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : ''}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* User display */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
