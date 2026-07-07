@@ -47,6 +47,12 @@ public class ReviewService {
     private ProductReviewRepository reviewRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CouponRepository couponRepository;
+
+    @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
@@ -57,6 +63,9 @@ public class ReviewService {
 
     @Autowired
     private AuditLogService auditLogService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public List<ProductReview> getProductReviews(Long productId) {
         return reviewRepository.findByProductIdAndStatusOrderByReviewedAtDesc(productId, ProductReview.ReviewStatus.VISIBLE);
@@ -103,20 +112,90 @@ public class ReviewService {
 
         ProductReview savedReview = reviewRepository.save(review);
 
-        auditLogService.log(user, "ADD_REVIEW", "Thêm đánh giá sách " + product.getName() + " (" + request.getRating() + " sao)");
+        // 1. Award reward points (10 points)
+        user.setRewardPoints((user.getRewardPoints() != null ? user.getRewardPoints() : 0) + 10);
+        userRepository.save(user);
+
+        // 2. Generate personalized coupon code for the user
+        String randomCode = "DG-" + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        Coupon coupon = Coupon.builder()
+                .code(randomCode)
+                .description("Mã giảm giá 20k tri ân khách hàng đánh giá sách \"" + product.getName() + "\"")
+                .discountType(Coupon.DiscountType.FIXED)
+                .discountValue(new java.math.BigDecimal("20000.00"))
+                .minOrderValue(new java.math.BigDecimal("100000.00"))
+                .maxDiscountAmount(new java.math.BigDecimal("20000.00"))
+                .usageLimit(1)
+                .usedCount(0)
+                .startDate(java.time.LocalDateTime.now())
+                .endDate(java.time.LocalDateTime.now().plusDays(30))
+                .status(Coupon.CouponStatus.ACTIVE)
+                .user(user)
+                .build();
+        couponRepository.save(coupon);
+
+        auditLogService.log(user, "ADD_REVIEW", "Thêm đánh giá sách " + product.getName() + " (" + request.getRating() + " sao). Cộng 10 điểm, tặng mã giảm giá " + randomCode);
+
+        // 3. Notify user
+        notificationService.createNotification(
+                user,
+                "Nhận điểm thưởng & Mã giảm giá mới",
+                "Bạn đã được cộng 10 điểm thưởng (1đ = 10k VND) và nhận mã giảm giá 20k: " + randomCode + " nhờ đánh giá sản phẩm!",
+                Notification.NotificationType.ACCOUNT,
+                "coupons",
+                coupon.getId()
+        );
+
+        notificationService.notifyManagersAndAdmins(
+                "Đánh giá mới cho sách " + product.getName(),
+                "Khách hàng " + user.getFullName() + " đã đánh giá " + request.getRating() + " sao: \"" + request.getComment() + "\"",
+                Notification.NotificationType.SYSTEM,
+                "reviews",
+                savedReview.getId()
+        );
 
         return savedReview;
     }
 
     @Transactional
-    public void deleteReview(Long reviewId, User manager) {
+    public void deleteReview(Long reviewId, String reason, User manager) {
         ProductReview review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Đánh giá không tồn tại"));
+                
+        notificationService.createNotification(
+                review.getUser(),
+                "Đánh giá của bạn đã bị gỡ",
+                "Đánh giá cho sách \"" + review.getProduct().getName() + "\" đã bị quản trị viên gỡ bỏ. Lý do: \"" + reason + "\"",
+                Notification.NotificationType.SYSTEM,
+                "reviews",
+                null
+        );
+
         reviewRepository.delete(review);
-        auditLogService.log(manager, "DELETE_REVIEW", "Xóa đánh giá của " + review.getUser().getFullName() + " trên sách " + review.getProduct().getName());
+        auditLogService.log(manager, "DELETE_REVIEW", "Xóa đánh giá của " + review.getUser().getFullName() + " trên sách " + review.getProduct().getName() + ". Lý do: " + reason);
     }
 
     public List<ProductReview> getAllReviews() {
         return reviewRepository.findAll();
+    }
+
+    @Transactional
+    public ProductReview replyReview(Long reviewId, String reply, User manager) {
+        ProductReview review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Đánh giá không tồn tại"));
+        review.setReply(reply);
+        review.setRepliedAt(java.time.LocalDateTime.now());
+        
+        notificationService.createNotification(
+                review.getUser(),
+                "Phản hồi từ cửa hàng",
+                "Cửa hàng đã phản hồi đánh giá của bạn về sách \"" + review.getProduct().getName() + "\": \"" + reply + "\"",
+                Notification.NotificationType.SYSTEM,
+                "reviews",
+                reviewId
+        );
+        
+        auditLogService.log(manager, "REPLY_REVIEW", "Phản hồi đánh giá của " + review.getUser().getFullName() + " trên sách " + review.getProduct().getName());
+        return reviewRepository.save(review);
     }
 }
