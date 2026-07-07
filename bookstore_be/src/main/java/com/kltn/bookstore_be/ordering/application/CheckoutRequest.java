@@ -29,4 +29,5 @@ public class CheckoutRequest {
     private String couponCode;
     private Long productId;
     private Integer quantity;
+    private Boolean usePoints;
 }

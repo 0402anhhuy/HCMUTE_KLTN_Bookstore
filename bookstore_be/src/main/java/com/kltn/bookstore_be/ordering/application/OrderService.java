@@ -56,6 +56,9 @@ public class OrderService {
     private OrderRepository orderRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private OrderItemRepository orderItemRepository;
 
     @Autowired
@@ -204,10 +207,32 @@ public class OrderService {
                 ? BigDecimal.ZERO 
                 : BigDecimal.valueOf(30000);
 
-        BigDecimal finalAmount = totalAmount.subtract(discountAmount).add(shippingFee);
+        BigDecimal finalAmountBeforePoints = totalAmount.subtract(discountAmount).add(shippingFee);
+        if (finalAmountBeforePoints.compareTo(BigDecimal.ZERO) < 0) {
+            finalAmountBeforePoints = BigDecimal.ZERO;
+        }
+
+        int pointsUsed = 0;
+        BigDecimal pointsDiscount = BigDecimal.ZERO;
+        if (Boolean.TRUE.equals(request.getUsePoints()) && user.getRewardPoints() != null && user.getRewardPoints() > 0) {
+            BigDecimal userPointsValue = BigDecimal.valueOf(user.getRewardPoints()).multiply(BigDecimal.valueOf(10000));
+            if (userPointsValue.compareTo(finalAmountBeforePoints) >= 0) {
+                pointsDiscount = finalAmountBeforePoints;
+                pointsUsed = pointsDiscount.divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.UP).intValue();
+            } else {
+                pointsDiscount = userPointsValue;
+                pointsUsed = user.getRewardPoints();
+            }
+            user.setRewardPoints(user.getRewardPoints() - pointsUsed);
+            userRepository.save(user);
+        }
+
+        BigDecimal finalAmount = finalAmountBeforePoints.subtract(pointsDiscount);
         if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
             finalAmount = BigDecimal.ZERO;
         }
+
+        discountAmount = discountAmount.add(pointsDiscount);
 
         String shippingAddress = request.getShippingAddress() != null && !request.getShippingAddress().isEmpty()
                 ? request.getShippingAddress()
@@ -221,6 +246,8 @@ public class OrderService {
                 .discountAmount(discountAmount)
                 .shippingFee(shippingFee)
                 .finalAmount(finalAmount)
+                .pointsUsed(pointsUsed)
+                .pointsDiscount(pointsDiscount)
                 .paymentMethod(request.getPaymentMethod())
                 .shippingAddress(shippingAddress)
                 .status(Order.OrderStatus.pending)
@@ -281,6 +308,13 @@ public class OrderService {
                 user,
                 "Đặt hàng thành công",
                 "Đơn hàng #" + savedOrder.getId() + " đã được tạo thành công. Phương thức thanh toán: " + request.getPaymentMethod(),
+                Notification.NotificationType.ORDER,
+                "orders",
+                savedOrder.getId()
+        );
+        notificationService.notifyManagersAndAdmins(
+                "Đơn hàng mới #" + savedOrder.getId(),
+                "Khách hàng " + user.getFullName() + " đã đặt một đơn hàng mới trị giá " + finalAmount + "đ.",
                 Notification.NotificationType.ORDER,
                 "orders",
                 savedOrder.getId()
@@ -545,5 +579,42 @@ public class OrderService {
         }
         orderRepository.save(order);
         auditLogService.log(manager, "ASSIGN_SHIPPER", "Phân công shipper " + shipper.getFullName() + " cho đơn hàng #" + orderId);
+    }
+
+    @Transactional
+    public void updateOrderStatus(Long orderId, Order.OrderStatus status, User manager) {
+        Order order = getOrderById(orderId);
+        
+        if (status == Order.OrderStatus.cancelled) {
+            cancelOrder(orderId, "Hủy bởi quản trị viên", manager);
+            return;
+        }
+
+        order.setStatus(status);
+        orderRepository.save(order);
+        auditLogService.log(manager, "UPDATE_ORDER_STATUS", "Cập nhật trạng thái đơn hàng #" + orderId + " sang: " + status);
+        
+        notificationService.createNotification(
+                order.getUser(),
+                "Cập nhật đơn hàng",
+                "Đơn hàng #" + orderId + " đã thay đổi trạng thái sang: " + getStatusName(status),
+                Notification.NotificationType.ORDER,
+                "orders",
+                orderId
+        );
+    }
+
+    private String getStatusName(Order.OrderStatus status) {
+        switch(status) {
+            case pending: return "Chờ xác nhận";
+            case confirmed: return "Đã xác nhận";
+            case preparing: return "Đang chuẩn bị";
+            case shipping: return "Đang giao hàng";
+            case delivered: return "Đã giao hàng";
+            case cancelled: return "Đã hủy";
+            case cancel_requested: return "Yêu cầu hủy";
+            case refunded: return "Đã hoàn tiền";
+            default: return status.name();
+        }
     }
 }

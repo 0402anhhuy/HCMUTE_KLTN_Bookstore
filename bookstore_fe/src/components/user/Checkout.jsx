@@ -30,6 +30,24 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [coupons, setCoupons] = useState([]);
+  const [usePoints, setUsePoints] = useState(false);
+  const [bestCoupon, setBestCoupon] = useState(null);
+
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const res = await api.get('/orders/coupons');
+        setCoupons(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch coupons", err);
+      }
+    };
+    if (user) {
+      fetchCoupons();
+    }
+  }, [user]);
+
   useEffect(() => {
     if (savedAddresses.length === 0) setUseCustomAddress(true);
   }, [user]);
@@ -62,8 +80,54 @@ const Checkout = () => {
     ? buyNowProduct.price * qty
     : cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const shippingFee = subtotal >= 500000 ? 0 : 30000;
-  const vatAmount = subtotal * 0.08;
-  const total = subtotal + shippingFee + vatAmount;
+
+  const calculateDiscount = (coupon, currentSubtotal) => {
+    if (!coupon) return 0;
+    if (currentSubtotal < coupon.minOrderValue) return 0;
+
+    const isExpired = new Date(coupon.endDate) < new Date();
+    const isLimitReached = coupon.usedCount >= coupon.usageLimit;
+    if (coupon.status !== 'ACTIVE' || isExpired || isLimitReached) return 0;
+
+    if (coupon.discountType === 'PERCENT') {
+      let disc = (currentSubtotal * coupon.discountValue) / 100;
+      if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
+        disc = coupon.maxDiscountAmount;
+      }
+      return disc;
+    } else {
+      return coupon.discountValue;
+    }
+  };
+
+  useEffect(() => {
+    if (coupons.length > 0) {
+      let maxDisc = 0;
+      let best = null;
+      coupons.forEach(c => {
+        const disc = calculateDiscount(c, subtotal);
+        if (disc > maxDisc) {
+          maxDisc = disc;
+          best = c;
+        }
+      });
+      if (best) {
+        setBestCoupon(best);
+        setCouponCode(best.code);
+      }
+    }
+  }, [coupons, subtotal]);
+
+  const activeCouponObj = coupons.find(c => c.code === couponCode);
+  const couponDiscount = calculateDiscount(activeCouponObj, subtotal);
+
+  const rewardPoints = user?.rewardPoints || 0;
+  const maxPointsValue = rewardPoints * 10000;
+  const remainingAfterCoupon = Math.max(0, subtotal + shippingFee - couponDiscount);
+  const pointsDiscount = usePoints ? Math.min(maxPointsValue, remainingAfterCoupon) : 0;
+  const pointsUsed = usePoints ? Math.ceil(pointsDiscount / 10000) : 0;
+
+  const total = Math.max(0, subtotal + shippingFee - couponDiscount - pointsDiscount);
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
@@ -78,6 +142,7 @@ const Checkout = () => {
         shippingAddress: shippingAddress.trim(),
         paymentMethod,
         couponCode: couponCode.trim() || null,
+        usePoints,
         ...(productId && { productId: Number(productId), quantity: qty })
       };
       const response = await api.post('/orders/checkout', payload);
@@ -281,15 +346,130 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Coupon code */}
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <input
-              type="text"
-              placeholder="Mã giảm giá (nếu có)"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              style={{ flex: 1, padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', outline: 'none' }}
-            />
+          {/* Reward Points */}
+          {rewardPoints > 0 && (
+            <div style={{
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: '10px',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🪙 Sử dụng điểm tích lũy
+                </div>
+                <div style={{ fontSize: '0.78rem', color: '#1b6b3e', marginTop: '4px' }}>
+                  Bạn đang có <strong>{rewardPoints} điểm</strong> (quy đổi <strong>{formatPrice(maxPointsValue)}</strong>)
+                </div>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={usePoints}
+                  onChange={(e) => setUsePoints(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
+                />
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>Áp dụng</span>
+              </label>
+            </div>
+          )}
+
+          {/* Coupon selector */}
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid #f3f4f6', paddingBottom: '12px' }}>
+              <span style={{ fontSize: '1.2rem' }}>🎫</span>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#111827', margin: 0 }}>Mã giảm giá (Voucher)</h3>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+              <input
+                type="text"
+                placeholder="Nhập mã giảm giá..."
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                style={{ flex: 1, padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', outline: 'none' }}
+              />
+              {couponCode && (
+                <button
+                  type="button"
+                  onClick={() => setCouponCode('')}
+                  style={{ padding: '0 12px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#4b5563' }}
+                >
+                  Xóa
+                </button>
+              )}
+            </div>
+
+            {coupons.length > 0 ? (
+              <div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#4b5563', marginBottom: '10px' }}>
+                  Voucher khả dụng trong ví của bạn:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                  {coupons.map(c => {
+                    const isBest = bestCoupon && bestCoupon.id === c.id;
+                    const discountVal = calculateDiscount(c, subtotal);
+                    const isEligible = discountVal > 0;
+
+                    return (
+                      <div
+                        key={c.id}
+                        onClick={() => isEligible && setCouponCode(c.code)}
+                        style={{
+                          border: `1px solid ${couponCode === c.code ? '#10b981' : '#e5e7eb'}`,
+                          backgroundColor: couponCode === c.code ? '#f0fdf4' : (isEligible ? '#fff' : '#f9fafb'),
+                          borderRadius: '8px',
+                          padding: '10px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: isEligible ? 'pointer' : 'not-allowed',
+                          opacity: isEligible ? 1 : 0.6,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0a422d', fontFamily: 'monospace' }}>
+                              {c.code}
+                            </span>
+                            {isBest && (
+                              <span style={{ fontSize: '0.65rem', color: '#ffffff', backgroundColor: '#ef4444', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                Mã tốt nhất cho bạn
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: '#111827', marginTop: '4px', fontWeight: 600 }}>
+                            {c.discountType === 'PERCENT' ? `Giảm ${c.discountValue}%` : `Giảm ${formatPrice(c.discountValue)}`}
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: '#6b7280' }}>
+                            Đơn tối thiểu: {formatPrice(c.minOrderValue)}
+                          </div>
+                        </div>
+                        <div>
+                          {couponCode === c.code ? (
+                            <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }}>✓ Đã chọn</span>
+                          ) : (
+                            isEligible ? (
+                              <span style={{ color: '#0a422d', fontSize: '0.78rem', fontWeight: 600 }}>Áp dụng</span>
+                            ) : (
+                              <span style={{ color: '#9ca3af', fontSize: '0.7rem' }}>Không đủ ĐK</span>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.75rem', color: '#6b7280', fontStyle: 'italic' }}>
+                Đánh giá sản phẩm đã mua để tích điểm và nhận thêm mã giảm giá tự động!
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -304,7 +484,7 @@ const Checkout = () => {
               onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#059669'; }}
               onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#10b981'; }}
             >
-              {loading ? 'Đang xử lý...' : 'Tiếp tục mua sắm →'}
+              {loading ? 'Đang xử lý...' : 'Đặt hàng ngay →'}
             </button>
           </div>
         </form>
@@ -354,12 +534,14 @@ const Checkout = () => {
                 <span>Vận chuyển</span>
                 <span style={{ color: shippingFee === 0 ? '#10b981' : '#111827' }}>{shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#6b7280' }}>
-                <span>Thuế VAT (8%)</span><span>{formatPrice(vatAmount)}</span>
-              </div>
-              {couponCode && (
+              {couponDiscount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981' }}>
-                  <span>Mã giảm giá</span><span>{couponCode}</span>
+                  <span>Giảm giá (Voucher)</span><span>-{formatPrice(couponDiscount)}</span>
+                </div>
+              )}
+              {pointsDiscount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981' }}>
+                  <span>Dùng điểm tích lũy ({pointsUsed}đ)</span><span>-{formatPrice(pointsDiscount)}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.15rem', color: '#111827', borderTop: '1px solid #e5e7eb', paddingTop: '12px', marginTop: '4px' }}>
@@ -368,17 +550,7 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Security badges */}
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ flex: 1, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', textAlign: 'center', fontSize: '0.75rem', color: '#6b7280', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '1.3rem' }}>🔒</span>
-              <span style={{ fontWeight: 600, color: '#374151' }}>Bảo mật thanh toán</span>
-            </div>
-            <div style={{ flex: 1, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', textAlign: 'center', fontSize: '0.75rem', color: '#6b7280', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '1.3rem' }}>✅</span>
-              <span style={{ fontWeight: 600, color: '#374151' }}>Bảo vệ người mua</span>
-            </div>
-          </div>
+
         </div>
 
       </div>

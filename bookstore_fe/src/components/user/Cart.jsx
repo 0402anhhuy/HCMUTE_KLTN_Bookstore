@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, Minus, ArrowLeft } from 'lucide-react';
+import api from '../../services/api';
 
 const Cart = () => {
   const { cart, updateCartQty, removeFromCart, clearCart, user, showToast } = useApp();
@@ -13,6 +14,65 @@ const Cart = () => {
   };
 
   const totalAmount = cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+  const [coupons, setCoupons] = useState([]);
+  const [bestCoupon, setBestCoupon] = useState(null);
+
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const res = await api.get('/orders/coupons');
+        setCoupons(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch coupons", err);
+      }
+    };
+    if (user) {
+      fetchCoupons();
+    }
+  }, [user]);
+
+  const calculateDiscount = (coupon, currentSubtotal) => {
+    if (!coupon) return 0;
+    if (currentSubtotal < coupon.minOrderValue) return 0;
+    
+    const isExpired = new Date(coupon.endDate) < new Date();
+    const isLimitReached = coupon.usedCount >= coupon.usageLimit;
+    if (coupon.status !== 'ACTIVE' || isExpired || isLimitReached) return 0;
+
+    if (coupon.discountType === 'PERCENT') {
+      let disc = (currentSubtotal * coupon.discountValue) / 100;
+      if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
+        disc = coupon.maxDiscountAmount;
+      }
+      return disc;
+    } else {
+      return coupon.discountValue;
+    }
+  };
+
+  useEffect(() => {
+    if (coupons.length > 0) {
+      let maxDisc = 0;
+      let best = null;
+      coupons.forEach(c => {
+        const disc = calculateDiscount(c, totalAmount);
+        if (disc > maxDisc) {
+          maxDisc = disc;
+          best = c;
+        }
+      });
+      if (best) {
+        setBestCoupon(best);
+        setCouponCode(best.code);
+      }
+    }
+  }, [coupons, totalAmount]);
+
+  const activeCouponObj = coupons.find(c => c.code === couponCode);
+  const couponDiscount = calculateDiscount(activeCouponObj, totalAmount);
+  const shippingFee = totalAmount >= 500000 ? 0 : 30000;
+  const total = Math.max(0, totalAmount + shippingFee - couponDiscount);
 
   const handleCheckoutRedirect = () => {
     if (!user) {
@@ -228,12 +288,16 @@ const Cart = () => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#4b5563' }}>
                 <span>Phí vận chuyển</span>
-                <span style={{ fontWeight: 600, color: '#10b981' }}>Miễn phí</span>
+                <span style={{ fontWeight: 600, color: shippingFee === 0 ? '#10b981' : '#111827' }}>
+                  {shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#4b5563' }}>
-                <span>Thuế VAT (8%)</span>
-                <span style={{ fontWeight: 500, color: '#111827' }}>{formatPrice(totalAmount * 0.08)}</span>
-              </div>
+              {couponDiscount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#10b981' }}>
+                  <span>Giảm giá (Voucher)</span>
+                  <span style={{ fontWeight: 600 }}>-{formatPrice(couponDiscount)}</span>
+                </div>
+              )}
               
               <div style={{ 
                 display: 'flex', 
@@ -245,7 +309,7 @@ const Cart = () => {
               }}>
                 <span style={{ fontWeight: 600, color: '#111827', fontSize: '1rem' }}>Tổng cộng</span>
                 <span style={{ fontWeight: 800, color: '#111827', fontSize: '1.5rem' }}>
-                  {formatPrice(totalAmount * 1.08)}
+                  {formatPrice(total)}
                 </span>
               </div>
             </div>
@@ -273,46 +337,94 @@ const Cart = () => {
             </button>
 
             {/* Promo code block */}
-            <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid #e2e8f0', paddingTop: '20px', marginTop: '10px' }}>
-              <input 
-                type="text" 
-                placeholder="Nhập mã giảm giá (Nếu có)" 
-                value={couponCode} 
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                style={{ 
-                  flex: 1, 
-                  padding: '10px 12px', 
-                  border: '1px solid #d1d5db', 
-                  borderRadius: '6px', 
-                  fontSize: '0.85rem', 
-                  outline: 'none',
-                  backgroundColor: '#ffffff'
-                }}
-              />
-              <button 
-                onClick={() => {
-                  if (couponCode.trim()) {
-                    showToast(`Đã áp dụng mã giảm giá ${couponCode}!`, 'success');
-                  } else {
-                    showToast('Vui lòng nhập mã giảm giá', 'warning');
-                  }
-                }}
-                style={{ 
-                  backgroundColor: '#10b981', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '6px', 
-                  padding: '0 18px', 
-                  fontWeight: 600, 
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
-              >
-                Áp dụng
-              </button>
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Mã giảm giá..." 
+                  value={couponCode} 
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  style={{ 
+                    flex: 1, 
+                    padding: '10px 12px', 
+                    border: '1px solid #d1d5db', 
+                    borderRadius: '6px', 
+                    fontSize: '0.85rem', 
+                    outline: 'none',
+                    backgroundColor: '#ffffff'
+                  }}
+                />
+                {couponCode && (
+                  <button 
+                    onClick={() => setCouponCode('')}
+                    style={{ padding: '0 12px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#4b5563' }}
+                  >
+                    Xóa
+                  </button>
+                )}
+              </div>
+
+              {coupons.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#4b5563', marginBottom: '8px' }}>
+                    Chọn mã giảm giá khả dụng:
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
+                    {coupons.map(c => {
+                      const isBest = bestCoupon && bestCoupon.id === c.id;
+                      const discountVal = calculateDiscount(c, totalAmount);
+                      const isEligible = discountVal > 0;
+
+                      return (
+                        <div 
+                          key={c.id}
+                          onClick={() => isEligible && setCouponCode(c.code)}
+                          style={{
+                            border: `1px solid ${couponCode === c.code ? '#10b981' : '#e5e7eb'}`,
+                            backgroundColor: couponCode === c.code ? '#f0fdf4' : (isEligible ? '#fff' : '#f9fafb'),
+                            borderRadius: '6px',
+                            padding: '8px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: isEligible ? 'pointer' : 'not-allowed',
+                            opacity: isEligible ? 1 : 0.6,
+                            fontSize: '0.75rem',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontWeight: 700, color: '#0a422d', fontFamily: 'monospace' }}>
+                                {c.code}
+                              </span>
+                              {isBest && (
+                                <span style={{ fontSize: '0.6rem', color: '#ffffff', backgroundColor: '#ef4444', padding: '0 4px', borderRadius: '3px', fontWeight: 700 }}>
+                                  Mã tốt nhất
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ color: '#111827', marginTop: '2px', fontWeight: 600 }}>
+                              {c.discountType === 'PERCENT' ? `Giảm ${c.discountValue}%` : `Giảm ${formatPrice(c.discountValue)}`}
+                            </div>
+                          </div>
+                          <div>
+                            {couponCode === c.code ? (
+                              <span style={{ color: '#10b981', fontWeight: 700 }}>✓ Chọn</span>
+                            ) : (
+                              isEligible ? (
+                                <span style={{ color: '#0a422d', fontWeight: 600 }}>Dùng</span>
+                              ) : (
+                                <span style={{ color: '#9ca3af' }}>KĐK</span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
