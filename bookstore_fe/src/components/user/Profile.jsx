@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import api from '../../services/api';
 import { ShieldAlert } from 'lucide-react';
@@ -12,12 +13,32 @@ import SecuritySettings from './SecuritySettings';
 
 const Profile = () => {
   const { user, updateUser, showToast } = useApp();
+  const location = useLocation();
+  const [highlightFavorites, setHighlightFavorites] = useState(false);
 
   // Profile Form States
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'favorites') {
+      setHighlightFavorites(true);
+      setTimeout(() => {
+        const el = document.getElementById('favorite-section');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+
+      const timer = setTimeout(() => {
+        setHighlightFavorites(false);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [location]);
 
   useEffect(() => {
     if (user) {
@@ -81,7 +102,7 @@ const Profile = () => {
               <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827' }}>{user.fullName}</div>
               <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '2px' }}>{user.email}</div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                <button style={{ padding: '6px 14px', backgroundColor: '#0a422d', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>Upload New Photo</button>
+                <button style={{ padding: '6px 14px', backgroundColor: '#0a422d', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>Tải ảnh mới</button>
                 <button style={{ padding: '6px 14px', backgroundColor: '#fff', color: '#374151', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>Xóa ảnh</button>
               </div>
             </div>
@@ -122,7 +143,7 @@ const Profile = () => {
           <CouponsRewards />
 
           {/* Box 2: Favorite Products */}
-          <FavoriteProducts />
+          <FavoriteProducts highlight={highlightFavorites} />
 
           {/* Box 3: Security */}
           <SecuritySettings />

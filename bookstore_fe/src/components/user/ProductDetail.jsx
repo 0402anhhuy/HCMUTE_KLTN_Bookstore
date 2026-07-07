@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import api from '../../services/api';
-import { ShoppingCart, Star, Truck, ShieldCheck, RefreshCcw, HeadphonesIcon } from 'lucide-react';
+import { ShoppingCart, Star, Truck, ShieldCheck, RefreshCcw, HeadphonesIcon, Heart } from 'lucide-react';
 
 // Import local image assets (fallback)
 import matNguCover from '../../assets/mat_ngu_cuoc_doi.png';
@@ -13,7 +13,7 @@ import quanLyCover from '../../assets/quan_ly_cam_xuc.png';
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useApp();
+  const { addToCart, favorites = [], addFavorite, removeFavorite } = useApp();
 
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
@@ -80,6 +80,17 @@ const ProductDetail = () => {
     }
   };
 
+  const isFavorite = product ? favorites.some(fav => fav.product?.id === product.id) : false;
+
+  const handleToggleFavorite = () => {
+    if (!product) return;
+    if (isFavorite) {
+      removeFavorite(product.id);
+    } else {
+      addFavorite(product.id);
+    }
+  };
+
   const handleBuyNow = async () => {
     if (product && product.stockQuantity > 0) {
       navigate(`/checkout?productId=${product.id}&qty=${qty}`);
@@ -89,13 +100,26 @@ const ProductDetail = () => {
   if (loading) return <div style={{ padding: '80px 0', textAlign: 'center' }}>Đang tải...</div>;
   if (!product) return <div style={{ padding: '80px 0', textAlign: 'center' }}>Không tìm thấy sản phẩm</div>;
 
-  const mainImageUrl = getProductImage(product);
-  const productImages = [
-    { url: mainImageUrl, style: {} },
-    { url: mainImageUrl, style: { transform: 'scale(1.4)', transformOrigin: 'center' } },
-    { url: mainImageUrl, style: { filter: 'sepia(50%) contrast(110%)' } },
-    { url: mainImageUrl, style: { filter: 'hue-rotate(180deg)' } },
-  ];
+  const getProductImagesList = (prod) => {
+    if (!prod || !prod.imageUrl) return [];
+    return prod.imageUrl.split(' || ').map(s => s.trim()).filter(Boolean);
+  };
+
+  const resolveSingleImageUrl = (url) => {
+    if (!url) return null;
+    if (url.includes('mat_ngu_cuoc_doi')) return matNguCover;
+    if (url.includes('long_tin')) return longTinCover;
+    if (url.includes('nghe_thuat_ve')) return ngheThuatCover;
+    if (url.includes('quan_ly_cam_xuc')) return quanLyCover;
+    return url;
+  };
+
+  const parsedUrls = getProductImagesList(product);
+  const productImages = parsedUrls.length > 0 
+    ? parsedUrls.map(url => ({ url: resolveSingleImageUrl(url), style: {} }))
+    : [{ url: 'https://via.placeholder.com/200x300?text=No+Image', style: {} }];
+
+  const mainImageUrl = productImages[0]?.url;
 
   return (
     <div className="page-container animate-fade-in" style={{ paddingBottom: '80px', maxWidth: '1200px', margin: '0 auto', textAlign: 'left', backgroundColor: '#f9fafb', paddingTop: '20px' }}>
@@ -242,13 +266,34 @@ const ProductDetail = () => {
 
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '40px' }}>
-            <button 
-              onClick={handleAddToCart}
-              disabled={product.stockQuantity === 0}
-              style={{ width: '100%', height: '52px', backgroundColor: '#0a422d', color: '#ffffff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: product.stockQuantity === 0 ? 'not-allowed' : 'pointer' }}
-            >
-              <ShoppingCart size={18} /> Thêm vào giỏ hàng
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={handleAddToCart}
+                disabled={product.stockQuantity === 0}
+                style={{ flex: 1, height: '52px', backgroundColor: '#0a422d', color: '#ffffff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: product.stockQuantity === 0 ? 'not-allowed' : 'pointer' }}
+              >
+                <ShoppingCart size={18} /> Thêm vào giỏ hàng
+              </button>
+              <button 
+                onClick={handleToggleFavorite}
+                style={{ 
+                  width: '52px', 
+                  height: '52px', 
+                  backgroundColor: isFavorite ? '#fee2e2' : '#f3f4f6', 
+                  color: isFavorite ? '#ef4444' : '#4b5563', 
+                  border: 'none', 
+                  borderRadius: '8px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                title={isFavorite ? "Xóa khỏi danh sách yêu thích" : "Thêm vào danh sách yêu thích"}
+              >
+                <Heart size={20} fill={isFavorite ? '#ef4444' : 'none'} />
+              </button>
+            </div>
             <button 
               onClick={handleBuyNow}
               disabled={product.stockQuantity === 0}
@@ -365,6 +410,21 @@ const ProductDetail = () => {
               <p style={{ fontSize: '0.9rem', color: '#4b5563', lineHeight: 1.6, margin: '6px 0 0 52px' }}>
                 {rev.comment}
               </p>
+              {rev.reply && (
+                <div style={{
+                  marginTop: '10px',
+                  marginLeft: '52px',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  backgroundColor: '#f9fcfb',
+                  borderLeft: '3px solid #0a422d',
+                  fontSize: '0.85rem',
+                  color: '#374151'
+                }}>
+                  <div style={{ fontWeight: 700, color: '#0a422d', marginBottom: '4px' }}>Cửa hàng phản hồi:</div>
+                  {rev.reply}
+                </div>
+              )}
             </div>
           ))}
           {(reviews.length > 0 || ratingFilter === 'Tất cả') ? null : (

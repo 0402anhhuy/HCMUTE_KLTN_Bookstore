@@ -8,6 +8,7 @@ export const AppProvider = ({ children }) => {
   const [cart, setCart] = useState({ items: [] });
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' | 'info' }
 
@@ -52,7 +53,67 @@ export const AppProvider = ({ children }) => {
     if (user) {
       fetchCart();
       fetchNotifications();
+      fetchFavorites();
     }
+  }, [user]);
+
+  // Real-time WebSocket Notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//localhost:8081/ws/notifications`;
+    
+    let ws;
+    let reconnectTimeout;
+
+    const connect = () => {
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected to notification service');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const newNotif = JSON.parse(event.data);
+          const isForCurrentUser = newNotif.userId === user.id;
+          const isStaffNotification = !newNotif.userId && (user.role === 'MANAGER' || user.role === 'ADMIN');
+          
+          if (isForCurrentUser || isStaffNotification) {
+            setNotifications(prev => [newNotif, ...prev]);
+            if (!newNotif.read) {
+              setUnreadCount(prev => prev + 1);
+            }
+            showToast(newNotif.title + ': ' + newNotif.message, 'info');
+          }
+        } catch (err) {
+          console.error('Error processing websocket message:', err);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected. Reconnecting...');
+        reconnectTimeout = setTimeout(connect, 5000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        ws.close();
+      };
+    };
+
+    connect();
+
+    return () => {
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
   }, [user]);
 
   const loginUser = (token, userData) => {
@@ -166,6 +227,55 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const markAllNotificationsAsRead = async () => {
+    try {
+      await api.put('/users/notifications/read-all');
+      await fetchNotifications();
+    } catch (e) {
+      // fallback local update
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    if (!user) return;
+    try {
+      const response = await api.get('/favorites');
+      setFavorites(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch favorites:', error);
+    }
+  };
+
+  const addFavorite = async (productId) => {
+    if (!user) {
+      showToast('Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích.', 'error');
+      return false;
+    }
+    try {
+      await api.post(`/favorites?productId=${productId}`);
+      await fetchFavorites();
+      showToast('Đã thêm sản phẩm vào danh sách yêu thích!', 'success');
+      return true;
+    } catch (error) {
+      console.error('Failed to add favorite:', error);
+      showToast('Không thể thêm sản phẩm vào yêu thích.', 'error');
+      return false;
+    }
+  };
+
+  const removeFavorite = async (productId) => {
+    if (!user) return;
+    try {
+      await api.delete(`/favorites?productId=${productId}`);
+      await fetchFavorites();
+      showToast('Đã xóa khỏi danh sách yêu thích!', 'success');
+    } catch (error) {
+      console.error('Failed to remove favorite:', error);
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       user,
@@ -183,6 +293,11 @@ export const AppProvider = ({ children }) => {
       clearCart,
       fetchNotifications,
       markNotificationRead,
+      markAllNotificationsAsRead,
+      favorites,
+      fetchFavorites,
+      addFavorite,
+      removeFavorite,
       toast,
       showToast
     }}>
