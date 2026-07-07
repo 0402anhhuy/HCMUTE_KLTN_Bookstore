@@ -50,6 +50,9 @@ public class ProductService {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public Page<Product> searchProducts(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
         return productRepository.searchProducts(keyword, categoryId, minPrice, maxPrice, pageable);
     }
@@ -76,12 +79,23 @@ public class ProductService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
         product.setCategory(category);
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        if (saved.getStatus() == Product.ProductStatus.ACTIVE) {
+            notificationService.notifyManagersAndAdmins(
+                    "Sản phẩm mới hoạt động",
+                    "Sách '" + saved.getName() + "' đã được tạo và kích hoạt (ACTIVE).",
+                    Notification.NotificationType.SYSTEM,
+                    "products",
+                    saved.getId()
+            );
+        }
+        return saved;
     }
 
     @Transactional
     public Product updateProduct(Long id, Product updatedDetails, Long categoryId) {
         Product product = getProductById(id);
+        Product.ProductStatus oldStatus = product.getStatus();
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
         product.setCategory(category);
@@ -94,12 +108,23 @@ public class ProductService {
         product.setImageUrl(updatedDetails.getImageUrl());
         product.setStatus(updatedDetails.getStatus());
         product.setStockQuantity(updatedDetails.getStockQuantity());
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        if (saved.getStatus() == Product.ProductStatus.ACTIVE && oldStatus != Product.ProductStatus.ACTIVE) {
+            notificationService.notifyManagersAndAdmins(
+                    "Sản phẩm đã duyệt",
+                    "Sách '" + saved.getName() + "' đã được duyệt và hoạt động (ACTIVE).",
+                    Notification.NotificationType.SYSTEM,
+                    "products",
+                    saved.getId()
+            );
+        }
+        return saved;
     }
 
     @Transactional
     public Product updateProduct(Long id, Product updatedDetails) {
         Product product = getProductById(id);
+        Product.ProductStatus oldStatus = product.getStatus();
         product.setName(updatedDetails.getName());
         product.setAuthor(updatedDetails.getAuthor());
         product.setPublisher(updatedDetails.getPublisher());
@@ -109,7 +134,17 @@ public class ProductService {
         product.setImageUrl(updatedDetails.getImageUrl());
         product.setStatus(updatedDetails.getStatus());
         product.setStockQuantity(updatedDetails.getStockQuantity());
-        return productRepository.save(product);
+        Product saved = productRepository.save(product);
+        if (saved.getStatus() == Product.ProductStatus.ACTIVE && oldStatus != Product.ProductStatus.ACTIVE) {
+            notificationService.notifyManagersAndAdmins(
+                    "Sản phẩm đã duyệt",
+                    "Sách '" + saved.getName() + "' đã được duyệt và hoạt động (ACTIVE).",
+                    Notification.NotificationType.SYSTEM,
+                    "products",
+                    saved.getId()
+            );
+        }
+        return saved;
     }
 
     @Transactional

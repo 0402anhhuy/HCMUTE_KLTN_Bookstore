@@ -57,6 +57,12 @@ public class ProductReview {
     @Column(nullable = false)
     private ReviewStatus status;
 
+    @Column(name = "reply", columnDefinition = "TEXT")
+    private String reply;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt;
+
     @Column(name = "reviewed_at", updatable = false)
     private LocalDateTime reviewedAt;
 

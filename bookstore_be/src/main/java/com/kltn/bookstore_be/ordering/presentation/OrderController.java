@@ -46,6 +46,9 @@ public class OrderController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CouponRepository couponRepository;
+
     private User getAuthenticatedUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
@@ -170,6 +173,31 @@ public class OrderController {
             }
             orderService.assignShipper(id, shipperId, user);
             return ResponseEntity.ok(Map.of("message", "Đã phân công shipper thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam Order.OrderStatus status) {
+        try {
+            User user = getAuthenticatedUser();
+            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
+                return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
+            }
+            orderService.updateOrderStatus(id, status, user);
+            return ResponseEntity.ok(Map.of("message", "Cập nhật trạng thái đơn hàng thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/coupons")
+    public ResponseEntity<?> getCoupons() {
+        try {
+            User user = getAuthenticatedUser();
+            List<Coupon> coupons = couponRepository.findByUserIdOrUserIsNull(user.getId());
+            return ResponseEntity.ok(coupons);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

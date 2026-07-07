@@ -64,7 +64,8 @@ public class UserController {
                     "phone", user.getPhone() != null ? user.getPhone() : "",
                     "address", user.getAddress() != null ? user.getAddress() : "",
                     "avatarUrl", user.getAvatarUrl() != null ? user.getAvatarUrl() : "",
-                    "role", user.getRole().name()
+                    "role", user.getRole().name(),
+                    "rewardPoints", user.getRewardPoints() != null ? user.getRewardPoints() : 0
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -117,6 +118,17 @@ public class UserController {
         try {
             notificationService.markAsRead(id);
             return ResponseEntity.ok(Map.of("message", "Đã đọc thông báo"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/notifications/read-all")
+    public ResponseEntity<?> readAllNotifications() {
+        try {
+            User user = getAuthenticatedUser();
+            notificationService.markAllAsRead(user.getId());
+            return ResponseEntity.ok(Map.of("message", "Đã đọc tất cả thông báo"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

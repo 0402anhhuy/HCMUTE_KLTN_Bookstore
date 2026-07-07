@@ -94,11 +94,33 @@ public class ReviewController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
-    public ResponseEntity<?> deleteReview(@PathVariable Long id) {
+    public ResponseEntity<?> deleteReview(@PathVariable Long id, @RequestParam String reason) {
         try {
             User user = getAuthenticatedUser();
-            reviewService.deleteReview(id, user);
+            if (reason == null || reason.trim().isEmpty()) {
+                throw new RuntimeException("Lý do xóa không được để trống");
+            }
+            reviewService.deleteReview(id, reason.trim(), user);
             return ResponseEntity.ok(Map.of("message", "Xóa đánh giá thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}/reply")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<?> replyReview(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        try {
+            User user = getAuthenticatedUser();
+            String reply = body.get("reply");
+            if (reply == null || reply.trim().isEmpty()) {
+                throw new RuntimeException("Nội dung phản hồi không được để trống");
+            }
+            ProductReview updated = reviewService.replyReview(id, reply.trim(), user);
+            return ResponseEntity.ok(Map.of(
+                "message", "Phản hồi đánh giá thành công",
+                "review", updated
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

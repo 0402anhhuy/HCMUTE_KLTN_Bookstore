@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { ShoppingCart, Bell, FileText, Search } from 'lucide-react';
 
 const Navbar = () => {
-  const { user, cart, logoutUser, notifications, unreadCount, markNotificationRead, showToast } = useApp();
+  const { user, cart, logoutUser, notifications, unreadCount, markNotificationRead, markAllNotificationsAsRead, showToast, favorites = [] } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [navSearch, setNavSearch] = useState('');
   const navigate = useNavigate();
@@ -25,6 +25,36 @@ const Navbar = () => {
 
   const toggleNotifications = () => {
     setShowNotifications(!showNotifications);
+  };
+
+  const handleNotificationClick = (n) => {
+    if (!n.read) {
+      markNotificationRead(n.id);
+    }
+    setShowNotifications(false);
+
+    const isStaff = user && (user.role === 'MANAGER' || user.role === 'ADMIN');
+    if (isStaff) {
+      if (n.referenceType === 'orders' || n.type === 'ORDER') {
+        navigate('/manager?tab=orders');
+      } else if (n.referenceType === 'products' || n.type === 'PRODUCT') {
+        navigate('/manager?tab=products');
+      } else if (n.referenceType === 'reviews' || n.type === 'REVIEW') {
+        navigate('/manager?tab=reviews');
+      } else if (n.referenceType === 'return_requests' || n.type === 'RETURN') {
+        navigate('/manager?tab=orders');
+      } else {
+        navigate('/manager?tab=dashboard');
+      }
+    } else {
+      if (n.referenceType === 'orders' || n.type === 'ORDER') {
+        navigate('/orders');
+      } else if (n.referenceType === 'products' && n.referenceId) {
+        navigate(`/product/${n.referenceId}`);
+      } else {
+        navigate('/profile');
+      }
+    }
   };
 
   const totalCartItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -144,7 +174,17 @@ const Navbar = () => {
             }}>
               <div style={{ padding: '0 16px 8px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: 600, color: '#111827' }}>Thông báo</span>
-                {unreadCount > 0 && <span style={{ fontSize: '0.75rem', color: '#10b981' }}>{unreadCount} mới</span>}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); markAllNotificationsAsRead(); }}
+                      style={{ fontSize: '0.75rem', color: '#10b981', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                    >
+                      Đã đọc tất cả
+                    </button>
+                  )}
+                  {unreadCount > 0 && <span style={{ fontSize: '0.75rem', color: '#718096' }}>({unreadCount})</span>}
+                </div>
               </div>
               {!user ? (
                 <div style={{ padding: '24px 16px', textAlign: 'center', color: '#718096', fontSize: '0.9rem' }}>
@@ -158,9 +198,7 @@ const Navbar = () => {
                 notifications.map(n => (
                   <div 
                     key={n.id} 
-                    onClick={() => {
-                      if (!n.read) markNotificationRead(n.id);
-                    }}
+                    onClick={() => handleNotificationClick(n)}
                     style={{
                       padding: '12px 16px',
                       borderBottom: '1px solid rgba(0,0,0,0.05)',
@@ -187,12 +225,28 @@ const Navbar = () => {
         </Link>
 
         {/* Heart Icon (Wishlist) */}
-        <div 
-          onClick={() => showToast('Chức năng Yêu thích đang được phát triển!', 'info')} 
-          style={{ padding: '8px', color: '#4A5568', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+        <Link 
+          to="/profile?tab=favorites" 
+          style={{ position: 'relative', padding: '8px', color: '#4A5568', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-        </div>
+          {favorites.length > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '2px',
+              right: '2px',
+              background: '#ef4444',
+              color: 'white',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              borderRadius: '999px',
+              padding: '1px 5px',
+              border: '1.5px solid #ffffff'
+            }}>
+              {favorites.length}
+            </span>
+          )}
+        </Link>
 
         {/* Shopping Cart */}
         <Link to="/cart" style={{ position: 'relative', padding: '8px', color: '#4A5568', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>

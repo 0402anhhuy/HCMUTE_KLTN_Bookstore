@@ -88,6 +88,7 @@ const OrderHistory = () => {
     if (!reviewComment.trim()) return;
     try {
       await api.post('/reviews', {
+        orderId: reviewProduct.orderId,
         productId: reviewProduct.id,
         rating: reviewRating,
         comment: reviewComment.trim()
@@ -172,7 +173,8 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="page-container animate-fade-in" style={{ paddingBottom: '80px', maxWidth: '1000px', margin: '0 auto', textAlign: 'left' }}>
+    <>
+      <div className="page-container animate-fade-in" style={{ paddingBottom: '80px', maxWidth: '1000px', margin: '0 auto', textAlign: 'left' }}>
       
       <div style={{ marginBottom: '24px', marginTop: '10px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0a422d', margin: '0 0 6px 0' }}>Đơn hàng của tôi</h1>
@@ -247,7 +249,7 @@ const OrderHistory = () => {
                           <div style={{ fontSize: '1rem', fontWeight: 700, color: '#111827' }}>{formatPrice(item.subtotal)}</div>
                           {order.status === 'delivered' && (
                             <button 
-                              onClick={() => setReviewProduct({ id: item.product.id, name: item.product.name })}
+                              onClick={() => setReviewProduct({ id: item.product.id, name: item.product.name, orderId: order.id })}
                               style={{ marginTop: '8px', padding: '6px 12px', border: '1px solid #0a422d', backgroundColor: '#fff', color: '#0a422d', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
                             >
                               Đánh giá
@@ -299,6 +301,7 @@ const OrderHistory = () => {
           ))}
         </div>
       )}
+      </div>
 
       {/* CANCEL MODAL */}
       {cancelOrderId && (
@@ -377,7 +380,7 @@ const OrderHistory = () => {
         </div>
       )}
 
-    </div>
+    </>
   );
 };
 

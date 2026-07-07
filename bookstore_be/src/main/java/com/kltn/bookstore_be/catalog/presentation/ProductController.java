@@ -49,6 +49,9 @@ public class ProductController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private FavoriteProductRepository favoriteProductRepository;
+
     private User getAuthenticatedUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
@@ -169,6 +172,51 @@ public class ProductController {
         try {
             productService.deleteProduct(id);
             return ResponseEntity.ok(Map.of("message", "Xóa sản phẩm thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/favorites")
+    public ResponseEntity<?> getFavorites() {
+        try {
+            User user = getAuthenticatedUser();
+            List<FavoriteProduct> list = favoriteProductRepository.findByUserId(user.getId());
+            return ResponseEntity.ok(list);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/favorites")
+    public ResponseEntity<?> addFavorite(@RequestParam Long productId) {
+        try {
+            User user = getAuthenticatedUser();
+            Product product = productService.getProductById(productId);
+            
+            java.util.Optional<FavoriteProduct> existing = favoriteProductRepository.findByUserIdAndProductId(user.getId(), productId);
+            if (existing.isPresent()) {
+                return ResponseEntity.ok(Map.of("message", "Sản phẩm đã có trong danh sách yêu thích"));
+            }
+            
+            FavoriteProduct fp = FavoriteProduct.builder()
+                    .user(user)
+                    .product(product)
+                    .build();
+            favoriteProductRepository.save(fp);
+            return ResponseEntity.ok(Map.of("message", "Đã thêm vào danh sách yêu thích"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/favorites")
+    @jakarta.transaction.Transactional
+    public ResponseEntity<?> removeFavorite(@RequestParam Long productId) {
+        try {
+            User user = getAuthenticatedUser();
+            favoriteProductRepository.deleteByUserIdAndProductId(user.getId(), productId);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa khỏi danh sách yêu thích"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

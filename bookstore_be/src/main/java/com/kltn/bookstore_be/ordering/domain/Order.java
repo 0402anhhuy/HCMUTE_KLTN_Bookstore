@@ -64,6 +64,12 @@ public class Order {
     @Column(name = "final_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal finalAmount;
 
+    @Column(name = "points_used")
+    private Integer pointsUsed;
+
+    @Column(name = "points_discount", precision = 12, scale = 2)
+    private BigDecimal pointsDiscount;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false)
     private PaymentMethod paymentMethod;
@@ -92,6 +98,12 @@ public class Order {
         }
         if (shippingFee == null) {
             shippingFee = BigDecimal.ZERO;
+        }
+        if (pointsUsed == null) {
+            pointsUsed = 0;
+        }
+        if (pointsDiscount == null) {
+            pointsDiscount = BigDecimal.ZERO;
         }
     }
 

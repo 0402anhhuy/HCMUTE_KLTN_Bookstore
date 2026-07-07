@@ -121,8 +121,8 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             }}
           >
             <option value="ALL">Tất cả trạng thái</option>
-            <option value="ACTIVE">Hoạt động (ACTIVE)</option>
-            <option value="INACTIVE">Tạm nghỉ (INACTIVE)</option>
+            <option value="ACTIVE">Đang hoạt động</option>
+            <option value="INACTIVE">Tạm nghỉ</option>
           </select>
 
           <button
@@ -396,8 +396,8 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                   onChange={(e) => setShipperForm({ ...shipperForm, status: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
                 >
-                  <option value="ACTIVE">Hoạt động (ACTIVE)</option>
-                  <option value="INACTIVE">Tạm nghỉ (INACTIVE)</option>
+                  <option value="ACTIVE">Đang hoạt động</option>
+                  <option value="INACTIVE">Tạm nghỉ</option>
                 </select>
               </div>
 
@@ -514,8 +514,8 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                   onChange={(e) => setShipperForm({ ...shipperForm, status: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
                 >
-                  <option value="ACTIVE">Hoạt động (ACTIVE)</option>
-                  <option value="INACTIVE">Tạm nghỉ (INACTIVE)</option>
+                  <option value="ACTIVE">Đang hoạt động</option>
+                  <option value="INACTIVE">Tạm nghỉ</option>
                 </select>
               </div>
 

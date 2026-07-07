@@ -74,12 +74,18 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "reward_points")
+    private Integer rewardPoints;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (status == null) {
             status = UserStatus.ACTIVE;
+        }
+        if (rewardPoints == null) {
+            rewardPoints = 0;
         }
     }
 

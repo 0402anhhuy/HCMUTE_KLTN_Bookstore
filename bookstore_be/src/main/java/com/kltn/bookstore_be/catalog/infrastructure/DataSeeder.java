@@ -166,9 +166,8 @@ public class DataSeeder implements CommandLineRunner {
             productRepository.save(p4);
         }
 
-        if (couponRepository.count() == 0) {
-            System.out.println("===> Seeding Coupons...");
-            // 4. Seed Coupon
+        System.out.println("===> Seeding Coupons...");
+        if (couponRepository.findByCode("WELCOME10").isEmpty()) {
             Coupon coupon = Coupon.builder()
                     .code("WELCOME10")
                     .description("Giảm giá 10% chào mừng khách hàng mới")
@@ -182,6 +181,54 @@ public class DataSeeder implements CommandLineRunner {
                     .status(Coupon.CouponStatus.ACTIVE)
                     .build();
             couponRepository.save(coupon);
+        }
+
+        if (couponRepository.findByCode("GIAM20K").isEmpty()) {
+            Coupon c1 = Coupon.builder()
+                    .code("GIAM20K")
+                    .description("Giảm ngay 20.000đ cho đơn hàng từ 100.000đ")
+                    .discountType(Coupon.DiscountType.FIXED)
+                    .discountValue(new BigDecimal("20000.00"))
+                    .minOrderValue(new BigDecimal("100000.00"))
+                    .maxDiscountAmount(new BigDecimal("20000.00"))
+                    .usageLimit(1000)
+                    .startDate(LocalDateTime.now().minusDays(5))
+                    .endDate(LocalDateTime.now().plusMonths(12))
+                    .status(Coupon.CouponStatus.ACTIVE)
+                    .build();
+            couponRepository.save(c1);
+        }
+
+        if (couponRepository.findByCode("GIAM10PCT").isEmpty()) {
+            Coupon c2 = Coupon.builder()
+                    .code("GIAM10PCT")
+                    .description("Giảm 10% (tối đa 50.000đ) cho đơn hàng từ 150.000đ")
+                    .discountType(Coupon.DiscountType.PERCENT)
+                    .discountValue(new BigDecimal("10.00"))
+                    .minOrderValue(new BigDecimal("150000.00"))
+                    .maxDiscountAmount(new BigDecimal("50000.00"))
+                    .usageLimit(1000)
+                    .startDate(LocalDateTime.now().minusDays(5))
+                    .endDate(LocalDateTime.now().plusMonths(12))
+                    .status(Coupon.CouponStatus.ACTIVE)
+                    .build();
+            couponRepository.save(c2);
+        }
+
+        if (couponRepository.findByCode("GIAM50K").isEmpty()) {
+            Coupon c3 = Coupon.builder()
+                    .code("GIAM50K")
+                    .description("Giảm cực khủng 50.000đ cho đơn hàng từ 300.000đ")
+                    .discountType(Coupon.DiscountType.FIXED)
+                    .discountValue(new BigDecimal("50000.00"))
+                    .minOrderValue(new BigDecimal("300000.00"))
+                    .maxDiscountAmount(new BigDecimal("50000.00"))
+                    .usageLimit(1000)
+                    .startDate(LocalDateTime.now().minusDays(5))
+                    .endDate(LocalDateTime.now().plusMonths(12))
+                    .status(Coupon.CouponStatus.ACTIVE)
+                    .build();
+            couponRepository.save(c3);
         }
 
         System.out.println("===> DataSeeder checks completed successfully!");

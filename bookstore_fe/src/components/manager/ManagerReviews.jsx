@@ -10,16 +10,43 @@ const ManagerReviews = ({ reviews, loadData }) => {
   const [reviewPage, setReviewPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
-  const handleDeleteReview = async (reviewId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa đánh giá này?')) {
-      try {
-        await api.delete(`/reviews/${reviewId}`);
-        showToast('Đã xóa đánh giá thành công!', 'success');
-        loadData();
-      } catch (error) {
-        console.error(error);
-        showToast('Lỗi khi xóa đánh giá!', 'error');
-      }
+  // Reply Modal States
+  const [replyReviewId, setReplyReviewId] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyUser, setReplyUser] = useState('');
+
+  // Delete Modal States
+  const [deleteReviewId, setDeleteReviewId] = useState(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteUser, setDeleteUser] = useState('');
+
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    try {
+      await api.put(`/reviews/${replyReviewId}/reply`, { reply: replyText.trim() });
+      showToast('Đã gửi phản hồi thành công!', 'success');
+      setReplyReviewId(null);
+      setReplyText('');
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showToast(error.response?.data?.error || 'Lỗi khi gửi phản hồi!', 'error');
+    }
+  };
+
+  const handleDeleteSubmit = async (e) => {
+    e.preventDefault();
+    if (!deleteReason.trim()) return;
+    try {
+      await api.delete(`/reviews/${deleteReviewId}?reason=${encodeURIComponent(deleteReason.trim())}`);
+      showToast('Đã xóa đánh giá thành công!', 'success');
+      setDeleteReviewId(null);
+      setDeleteReason('');
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showToast(error.response?.data?.error || 'Lỗi khi xóa đánh giá!', 'error');
     }
   };
 
@@ -36,7 +63,8 @@ const ManagerReviews = ({ reviews, loadData }) => {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
           Bình luận & Review
@@ -119,6 +147,21 @@ const ManagerReviews = ({ reviews, loadData }) => {
                   <div style={{ color: '#334155', fontSize: '0.875rem', fontWeight: 500 }}>
                     {review.comment}
                   </div>
+                  {review.reply && (
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      backgroundColor: '#f8fafc',
+                      borderLeft: '3px solid #7c3aed',
+                      fontSize: '0.8rem',
+                      color: '#475569',
+                      textAlign: 'left'
+                    }}>
+                      <span style={{ fontWeight: 700, color: '#7c3aed', marginRight: '6px' }}>Cửa hàng phản hồi:</span>
+                      {review.reply}
+                    </div>
+                  )}
                 </td>
 
                 {/* SẢN PHẨM */}
@@ -132,24 +175,27 @@ const ManagerReviews = ({ reviews, loadData }) => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', alignItems: 'center' }}>
                     <button
                       onClick={() => {
-                        const reply = window.prompt(`Phản hồi đánh giá của ${review.user?.fullName || 'Khách hàng'}:`);
-                        if (reply && reply.trim()) {
-                          showToast('Đã gửi phản hồi thành công!', 'success');
-                        }
+                        setReplyReviewId(review.id);
+                        setReplyText(review.reply || '');
+                        setReplyUser(review.user?.fullName || 'Khách hàng');
                       }}
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#2563eb',
+                        color: '#7c3aed',
                         fontWeight: 600,
                         fontSize: '0.875rem',
                         cursor: 'pointer'
                       }}
                     >
-                      Phản hồi
+                      {review.reply ? 'Sửa phản hồi' : 'Phản hồi'}
                     </button>
                     <button
-                      onClick={() => handleDeleteReview(review.id)}
+                      onClick={() => {
+                        setDeleteReviewId(review.id);
+                        setDeleteReason('');
+                        setDeleteUser(review.user?.fullName || 'Khách hàng');
+                      }}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -233,7 +279,186 @@ const ManagerReviews = ({ reviews, loadData }) => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+
+      {/* REPLY MODAL */}
+      {replyReviewId && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 2000,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '460px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px', textAlign: 'left' }}>
+              Phản hồi đánh giá của {replyUser}
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '16px', textAlign: 'left' }}>
+              Gửi phản hồi chính thức từ cửa hàng đến khách hàng này.
+            </p>
+            
+            <form onSubmit={handleReplySubmit}>
+              <textarea 
+                rows={4} 
+                placeholder="Nhập nội dung phản hồi của cửa hàng..." 
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                style={{
+                  width: '100%',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  fontSize: '0.9rem',
+                  boxSizing: 'border-box',
+                  marginBottom: '20px',
+                  resize: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+                required
+              />
+              
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  onClick={() => { setReplyReviewId(null); setReplyText(''); }} 
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#ffffff',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="submit" 
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#7c3aed',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  Gửi phản hồi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE MODAL */}
+      {deleteReviewId && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 2000,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '460px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ef4444', marginBottom: '8px', textAlign: 'left' }}>
+              Xóa đánh giá của {deleteUser}
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '16px', textAlign: 'left' }}>
+              Bạn đang thực hiện xóa đánh giá của khách hàng. Hãy nhập lý do xóa để gửi thông báo cho khách hàng này.
+            </p>
+            
+            <form onSubmit={handleDeleteSubmit}>
+              <textarea 
+                rows={3} 
+                placeholder="Nhập lý do xóa đánh giá (ví dụ: bình luận chứa ngôn từ không phù hợp, quảng cáo...)" 
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                style={{
+                  width: '100%',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  fontSize: '0.9rem',
+                  boxSizing: 'border-box',
+                  marginBottom: '20px',
+                  resize: 'none',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+                required
+              />
+              
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  onClick={() => { setDeleteReviewId(null); setDeleteReason(''); }} 
+                  style={{
+                    padding: '10px 16px',
+                    backgroundColor: '#ffffff',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  Hủy
+                </button>
+                <button 
+                  type="submit" 
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#ef4444',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  Xác nhận xóa
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
