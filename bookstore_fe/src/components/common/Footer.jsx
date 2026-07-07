@@ -108,7 +108,7 @@ const Footer = () => {
         color: '#d2dfd8',
         fontSize: '0.8rem'
       }}>
-        <span>© 2024 UTEShop. All rights reserved. Designed and Developed by Bookstore.</span>
+        <span>© 2024 UTEShop. Bảo lưu mọi quyền. Thiết kế và Phát triển bởi Bookstore.</span>
         <div style={{ display: 'flex', gap: '20px' }}>
           <span>Hotline: 1900 1234 (8:00 - 21:00)</span>
           <span>Email: support@uteshop.vn</span>

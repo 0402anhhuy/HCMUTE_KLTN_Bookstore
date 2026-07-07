@@ -46,7 +46,7 @@ const ManagerWarehouse = ({ stockMovements, products, loadData, setStockMovement
       await api.post(`/products/${stockForm.productId}/adjust-stock?quantity=${qty}&movementType=${stockForm.movementType}&note=${encodeURIComponent(stockForm.note)}`);
       showToast('Điều chỉnh tồn kho thành công!', 'success');
       setShowStockModal(false);
-      
+
       // Update local movements log
       const newMov = {
         id: `GD${stockMovements.length + 1}`,
@@ -121,7 +121,7 @@ const ManagerWarehouse = ({ stockMovements, products, loadData, setStockMovement
             }}
           >
             <Plus size={16} />
-            <span>+ Điều chỉnh tồn kho</span>
+            <span> Điều chỉnh tồn kho</span>
           </button>
         </div>
       </div>
@@ -154,7 +154,7 @@ const ManagerWarehouse = ({ stockMovements, products, loadData, setStockMovement
                 <td style={{ padding: '16px 24px', fontSize: '0.9rem', color: '#475569' }}>
                   {mov.date}
                 </td>
-                 <td style={{ padding: '16px 24px' }}>
+                <td style={{ padding: '16px 24px' }}>
                   <span style={{
                     display: 'inline-flex',
                     padding: '4px 10px',
