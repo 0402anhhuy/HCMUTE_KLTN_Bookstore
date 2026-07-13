@@ -19,9 +19,9 @@ import matNguCover from "../assets/mat_ngu_cuoc_doi.png";
 import longTinCover from "../assets/long_tin.png";
 import ngheThuatCover from "../assets/nghe_thuat_ve.png";
 import quanLyCover from "../assets/quan_ly_cam_xuc.png";
-import phatHienCover from "../assets/phat_hien_tu_than.png";
-import tuyetVoiCover from "../assets/tam_ly_hoc_tuoi_teen.png";
-import banLaAiCover from "../assets/ban_la_ai.png";
+// import phatHienCover from "../assets/phat_hien_tu_than.png";
+// import tuyetVoiCover from "../assets/tam_ly_hoc_tuoi_teen.png";
+// import banLaAiCover from "../assets/ban_la_ai.png";
 
 const Home = () => {
     const { addToCart } = useApp();
