@@ -14,6 +14,7 @@ import Profile from './components/user/Profile';
 import Catalog from './components/user/Catalog';
 import ProductDetail from './components/user/ProductDetail';
 import ManagerDashboard from './components/manager/ManagerDashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 function AppContent() {
   const location = useLocation();
@@ -21,15 +22,18 @@ function AppContent() {
   const { toast, user } = useApp();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isManagerPage = location.pathname.startsWith('/manager');
-  const hideLayout = isAuthPage || isManagerPage;
+  const isAdminPage = location.pathname.startsWith('/admin');
+  const hideLayout = isAuthPage || isManagerPage || isAdminPage;
 
   useEffect(() => {
-    if (user && (user.role === 'MANAGER' || user.role === 'ADMIN')) {
-      if (!isManagerPage) {
+    if (user) {
+      if (user.role === 'ADMIN' && !isAdminPage && !isManagerPage && location.pathname === '/') {
+        navigate('/admin');
+      } else if (user.role === 'MANAGER' && !isManagerPage && location.pathname === '/') {
         navigate('/manager');
       }
     }
-  }, [user, location.pathname, navigate, isManagerPage]);
+  }, [user, location.pathname, navigate, isManagerPage, isAdminPage]);
 
   return (
     <div style={{ 
@@ -106,6 +110,7 @@ function AppContent() {
           <Route path="/catalog" element={<Catalog />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/manager" element={<ManagerDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           
           {/* Fallback routing */}
           <Route path="*" element={<Navigate to="/" replace />} />
