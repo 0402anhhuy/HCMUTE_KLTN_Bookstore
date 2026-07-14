@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Tag, Plus, Trash2, Calendar, Percent, DollarSign } from "lucide-react";
 import api from "../../services/api";
 
