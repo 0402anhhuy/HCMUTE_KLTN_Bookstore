@@ -24,13 +24,23 @@ public class CloudinaryService {
     }
 
     public String uploadFile(MultipartFile file, String folderName) throws IOException {
+        return uploadFile(file, folderName, null);
+    }
+
+    public String uploadFile(MultipartFile file, String folderName, String customFilename) throws IOException {
         if (cloudinary == null) {
             throw new IllegalStateException("Cloudinary chưa được cấu hình (thiếu cloud-name trong application.properties).");
         }
-        Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+        Map<String, Object> params = new java.util.HashMap<>(ObjectUtils.asMap(
                 "folder", folderName,
+                "use_filename", true,
+                "unique_filename", false,
                 "resource_type", "auto"
         ));
+        if (customFilename != null && !customFilename.isBlank()) {
+            params.put("public_id", customFilename);
+        }
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
         Object secureUrl = uploadResult.get("secure_url");
         if (secureUrl != null) {
             return secureUrl.toString();
