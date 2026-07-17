@@ -90,6 +90,8 @@ public class DataSeeder implements CommandLineRunner {
             productRepository.deleteAll();
             categoryRepository.deleteAll();
 
+            String BASE_URL = "https://res.cloudinary.com/diwo0fi2c/image/upload/";
+
             Category fictionCat = Category.builder().name("Tiểu thuyết").build();
             Category techCat = Category.builder().name("Sách công nghệ").build();
             Category artCat = Category.builder().name("Sách nghệ thuật").build();
@@ -102,6 +104,7 @@ public class DataSeeder implements CommandLineRunner {
             Category comicCat = Category.builder().name("Truyện tranh & Manga").build();
             categoryRepository.saveAll(List.of(fictionCat, techCat, artCat, psychologyCat, businessCat, historyCat, childrenCat, scienceCat, educationCat, comicCat));
 
+            // Danh mục Tiểu thuyết
             // 1. Mật ngữ cuộc đời (Tiểu thuyết)
             Product p1 = Product.builder()
                     .category(fictionCat)
@@ -113,8 +116,8 @@ public class DataSeeder implements CommandLineRunner {
                     .price(new BigDecimal("168000.00"))
                     .stockQuantity(100)
                     .imageUrls(List.of(
-                            "/src/assets/mat_ngu_cuoc_doi.png",
-                            "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80",
+                            BASE_URL + "ammuucauket.jpg",
+                            BASE_URL + "bookstore_products/tieu-thuyet/mat-ngu-cuoc-doi.png",
                             "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=80"
                     ))
                     .status(Product.ProductStatus.ACTIVE)
@@ -274,19 +277,29 @@ public class DataSeeder implements CommandLineRunner {
                     .status(Product.ProductStatus.ACTIVE)
                     .build();
 
-            // 11. Cha Giàu Cha Nghèo (Kinh tế & Quản trị)
+            // Danh mục Kinh tế chính trị
+            // 01. Âm mưu câu kết - Luke Harding
             Product p11 = Product.builder()
                     .category(businessCat)
-                    .name("Cha Giàu Cha Nghèo")
-                    .author("Robert T. Kiyosaki")
-                    .publisher("NXB Trẻ")
+                    .name("Âm mưu câu kết")
+                    .author("Luke Harding")
+                    .publisher("NXB Nhã Nam")
                     .isbn("9786049876543")
                     .description("Bài học tài chính thực tiễn về cách người giàu tư duy về tiền bạc, đầu tư và tự do tài chính.")
                     .price(new BigDecimal("145000.00"))
                     .stockQuantity(180)
                     .imageUrls(List.of(
-                            "https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&w=800&q=80",
-                            "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=800&q=80"
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-02.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-03.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-04.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-05.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-06.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-07.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-08.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-09.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-10.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-11.jpg"
                     ))
                     .status(Product.ProductStatus.ACTIVE)
                     .build();
@@ -294,16 +307,23 @@ public class DataSeeder implements CommandLineRunner {
             // 12. Từ Tốt Đến Vĩ Đại (Kinh tế & Quản trị)
             Product p12 = Product.builder()
                     .category(businessCat)
-                    .name("Từ Tốt Đến Vĩ Đại")
-                    .author("Jim Collins")
-                    .publisher("NXB Trẻ")
+                    .name("Bản đồ tài nguyên thế giới")
+                    .author("Masanori Tobita")
+                    .publisher("NXB Nhã Nam")
                     .isbn("9786043456789")
                     .description("Nghiên cứu sâu rộng về các công ty vĩ đại, tìm ra công thức bước ngoặt giúp doanh nghiệp bứt phá ngoạn mục.")
                     .price(new BigDecimal("210000.00"))
                     .stockQuantity(110)
                     .imageUrls(List.of(
-                            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80",
-                            "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-01.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-02.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-03.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-04.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-05.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-06.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-07.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-08.jpg",
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/ban-do-tai-nguyen-the-gioi--Masanori-Tobita/bdtntg-09.jpg"
                     ))
                     .status(Product.ProductStatus.ACTIVE)
                     .build();
