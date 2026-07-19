@@ -42,7 +42,7 @@ export const AppProvider = ({ children }) => {
       setCart({ items: [] });
       setNotifications([]);
       setUnreadCount(0);
-      alert('Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.');
+      showToast('Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.', 'error');
     };
     window.addEventListener('auth-expired', handleAuthExpired);
     return () => window.removeEventListener('auth-expired', handleAuthExpired);
@@ -150,7 +150,7 @@ export const AppProvider = ({ children }) => {
 
   const addToCart = async (productId, quantity = 1) => {
     if (!user) {
-      alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.');
+      showToast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.', 'error');
       return false;
     }
     try {
@@ -159,7 +159,7 @@ export const AppProvider = ({ children }) => {
       return true;
     } catch (error) {
       const msg = error.response?.data?.error || 'Không thể thêm sản phẩm vào giỏ hàng';
-      alert(msg);
+      showToast(msg, 'error');
       return false;
     }
   };
@@ -170,7 +170,7 @@ export const AppProvider = ({ children }) => {
       await fetchCart();
     } catch (error) {
       const msg = error.response?.data?.error || 'Không thể cập nhật số lượng';
-      alert(msg);
+      showToast(msg, 'error');
     }
   };
 
