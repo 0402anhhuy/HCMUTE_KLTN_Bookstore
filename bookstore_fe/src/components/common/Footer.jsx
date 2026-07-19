@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 
 const Footer = () => {
+  const { showToast } = useApp();
   return (
     <footer style={{
       backgroundColor: '#0a422d',
@@ -62,7 +64,7 @@ const Footer = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: '700', color: '#ffffff', marginBottom: '8px' }}>Đăng ký bản tin</h3>
           <p style={{ color: '#d2dfd8', lineHeight: '1.5' }}>Nhận thông tin cập nhật về các đầu sách mới và sự kiện khuyến mại đặc biệt.</p>
-          <form onSubmit={(e) => { e.preventDefault(); alert('Cảm ơn bạn đã đăng ký bản tin!'); }} style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+          <form onSubmit={(e) => { e.preventDefault(); showToast('Cảm ơn bạn đã đăng ký bản tin!', 'success'); }} style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
             <input 
               type="email" 
               placeholder="Email của bạn..." 
