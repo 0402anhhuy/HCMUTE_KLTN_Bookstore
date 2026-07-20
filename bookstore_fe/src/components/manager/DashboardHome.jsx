@@ -109,7 +109,7 @@ const DashboardHome = ({ user, products, orders }) => {
             TỔNG DOANH THU
           </h3>
           <div style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
-            {totalRevenue > 0 ? `${totalRevenue.toLocaleString('vi-VN')}đ` : '10.000.000đ'}
+            {totalRevenue.toLocaleString('vi-VN')}đ
           </div>
         </div>
 
@@ -153,7 +153,7 @@ const DashboardHome = ({ user, products, orders }) => {
             TỔNG ĐƠN HÀNG
           </h3>
           <div style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
-            {orders.length > 0 ? orders.length : '100'}
+            {orders.length}
           </div>
         </div>
 
@@ -241,7 +241,7 @@ const DashboardHome = ({ user, products, orders }) => {
             TRUNG BÌNH GIÁ ĐƠN
           </h3>
           <div style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
-            {averageOrderValue > 0 ? `${Math.round(averageOrderValue).toLocaleString('vi-VN')}đ` : '100.000đ'}
+            {Math.round(averageOrderValue).toLocaleString('vi-VN')}đ
           </div>
         </div>
 

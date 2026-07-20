@@ -18,6 +18,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
   const [showShipperModal, setShowShipperModal] = useState(false);
   const [showEditShipperModal, setShowEditShipperModal] = useState(false);
   const [editingShipper, setEditingShipper] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
   // Form states for Shippers
   const [shipperForm, setShipperForm] = useState({
@@ -41,12 +42,12 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
     e.preventDefault();
     try {
       await api.post('/shippers', shipperForm);
-      showToast('Thêm shipper thành công!', 'success');
+      showToast('Thêm người giao hàng thành công!', 'success');
       setShowShipperModal(false);
       loadData();
     } catch (error) {
       console.error(error);
-      showToast(error.response?.data?.error || 'Lỗi khi thêm shipper!', 'error');
+      showToast(error.response?.data?.error || 'Lỗi khi thêm người giao hàng!', 'error');
     }
   };
 
@@ -65,25 +66,26 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
     e.preventDefault();
     try {
       await api.put(`/shippers/${editingShipper.id}`, shipperForm);
-      showToast('Cập nhật shipper thành công!', 'success');
+      showToast('Cập nhật người giao hàng thành công!', 'success');
       setShowEditShipperModal(false);
       loadData();
     } catch (error) {
       console.error(error);
-      showToast(error.response?.data?.error || 'Lỗi khi cập nhật shipper!', 'error');
+      showToast(error.response?.data?.error || 'Lỗi khi cập nhật người giao hàng!', 'error');
     }
   };
 
-  const handleDeleteShipper = async (shipperId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa shipper này?')) {
-      try {
-        await api.delete(`/shippers/${shipperId}`);
-        showToast('Đã xóa shipper thành công!', 'success');
-        loadData();
-      } catch (error) {
-        console.error(error);
-        showToast(error.response?.data?.error || 'Lỗi khi xóa shipper!', 'error');
-      }
+  const handleDeleteShipper = async () => {
+    if (!showDeleteConfirm) return;
+    try {
+      await api.delete(`/shippers/${showDeleteConfirm}`);
+      showToast('Đã xóa người giao hàng thành công!', 'success');
+      setShowDeleteConfirm(null);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showToast(error.response?.data?.error || 'Lỗi khi xóa người giao hàng!', 'error');
+      setShowDeleteConfirm(null);
     }
   };
 
@@ -103,7 +105,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-          Quản lý người giao hàng (Shipper)
+          Quản lý người giao hàng
         </h1>
 
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -142,7 +144,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             }}
           >
             <Plus size={16} />
-            <span>+ Thêm shipper</span>
+            <span>+ Thêm người giao hàng</span>
           </button>
         </div>
       </div>
@@ -158,10 +160,10 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>MÃ SHIPPER</th>
+              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>MÃ NGƯỜI GIAO HÀNG</th>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>HỌ VÀ TÊN</th>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>SỐ ĐIỆN THOẠI</th>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>PHƯƠNG TIỆN (VEHICLE)</th>
+              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>PHƯƠNG TIỆN</th>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>TRẠNG THÁI</th>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textAlign: 'center' }}>HÀNH ĐỘNG</th>
             </tr>
@@ -198,7 +200,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
                     <button
                       onClick={() => setSelectedShipperForOrders(s)}
-                      title="Xem các đơn hàng của shipper này"
+                      title="Xem các đơn hàng của người giao hàng này"
                       style={{
                         padding: '6px',
                         borderRadius: '6px',
@@ -230,7 +232,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                       <Edit size={15} />
                     </button>
                     <button
-                      onClick={() => handleDeleteShipper(s.id)}
+                      onClick={() => setShowDeleteConfirm(s.id)}
                       style={{
                         padding: '6px',
                         borderRadius: '6px',
@@ -252,7 +254,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             {filteredShippers.length === 0 && (
               <tr>
                 <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không tìm thấy shipper giao hàng nào phù hợp
+                  Không tìm thấy người giao hàng nào phù hợp
                 </td>
               </tr>
             )}
@@ -262,7 +264,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
         {/* Pagination Controls */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
           <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-            Hiển thị {paginatedShippers.length} trên tổng số {filteredShippers.length} shipper
+            Hiển thị {paginatedShippers.length} trên tổng số {filteredShippers.length} người giao hàng
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
@@ -342,7 +344,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
           }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 24px' }}>
-              Thêm shipper giao hàng mới
+              Thêm người giao hàng mới
             </h2>
 
             <form onSubmit={handleCreateShipper} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -353,7 +355,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                 <input
                   type="text"
                   required
-                  placeholder="Nhập họ tên shipper..."
+                  placeholder="Nhập họ tên người giao hàng..."
                   value={shipperForm.fullName}
                   onChange={(e) => setShipperForm({ ...shipperForm, fullName: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
@@ -376,7 +378,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Phương tiện di chuyển (Vehicle)
+                  Phương tiện di chuyển
                 </label>
                 <input
                   type="text"
@@ -462,7 +464,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
           }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 24px' }}>
-              Chỉnh sửa thông tin shipper
+              Chỉnh sửa thông tin người giao hàng
             </h2>
 
             <form onSubmit={handleUpdateShipper} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -494,7 +496,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Phương tiện di chuyển (Vehicle)
+                  Phương tiện di chuyển
                 </label>
                 <input
                   type="text"
@@ -582,7 +584,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                Đơn hàng do Shipper {selectedShipperForOrders.fullName} phụ trách
+                Đơn hàng do người giao hàng {selectedShipperForOrders.fullName} phụ trách
               </h2>
               <button
                 onClick={() => setSelectedShipperForOrders(null)}
@@ -651,12 +653,96 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                   {orders.filter(o => o.shipper?.id === selectedShipperForOrders.id).length === 0 && (
                     <tr>
                       <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>
-                        Shipper này hiện chưa được giao đơn hàng nào.
+                        Người giao hàng này hiện chưa được giao đơn hàng nào.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '400px',
+            padding: '28px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: '#fef2f2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px auto'
+            }}>
+              <Trash2 size={28} style={{ color: '#ef4444' }} />
+            </div>
+            
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>
+              Xác nhận xóa người giao hàng
+            </h3>
+            
+            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 24px 0', lineHeight: '1.5' }}>
+              Bạn có chắc chắn muốn xóa người giao hàng này? Thao tác này không thể hoàn tác và thông tin người giao hàng sẽ bị gỡ bỏ vĩnh viễn khỏi hệ thống.
+            </p>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#ffffff',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteShipper}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#ef4444',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Xác nhận xóa
+              </button>
             </div>
           </div>
         </div>

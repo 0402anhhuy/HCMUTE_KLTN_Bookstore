@@ -76,7 +76,10 @@ const ManagerDashboard = () => {
   }, [activeTab]);
 
   const loadData = async () => {
-    setLoading(true);
+    const isInitial = products.length === 0 && orders.length === 0;
+    if (isInitial) {
+      setLoading(true);
+    }
     try {
       // 1. Fetch categories
       const catRes = await api.get('/categories');
@@ -89,7 +92,8 @@ const ManagerDashboard = () => {
 
       // 3. Fetch orders
       const orderRes = await api.get('/orders/all');
-      setOrders(orderRes.data || []);
+      const sortedOrders = (orderRes.data || []).sort((a, b) => b.id - a.id);
+      setOrders(sortedOrders);
 
       // 4. Fetch reviews
       const reviewRes = await api.get('/reviews');
@@ -197,7 +201,7 @@ const ManagerDashboard = () => {
             { id: 'revenue', label: 'Ví & Doanh thu', icon: Wallet },
             { id: 'reviews', label: 'Đánh giá & Bình luận', icon: MessageSquare },
             { id: 'warehouse', label: 'Quản lý giao dịch kho', icon: Warehouse },
-            { id: 'shippers', label: 'Quản lý shipper', icon: Truck }
+            { id: 'shippers', label: 'Quản lý người giao hàng', icon: Truck }
           ].map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -475,7 +479,7 @@ const ManagerDashboard = () => {
                 <ManagerOrders orders={orders} shippers={shippers} loadData={loadData} />
               )}
               {activeTab === 'revenue' && (
-                <ManagerRevenue orders={orders} />
+                <ManagerRevenue user={user} orders={orders} />
               )}
               {activeTab === 'reviews' && (
                 <ManagerReviews reviews={reviews} loadData={loadData} />
