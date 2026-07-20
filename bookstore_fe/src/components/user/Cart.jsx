@@ -1,19 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, Minus, ArrowLeft } from 'lucide-react';
+import { Plus, Minus, ArrowLeft, Trash2, Coins, Ticket } from 'lucide-react';
 import api from '../../services/api';
 
 const Cart = () => {
   const { cart, updateCartQty, removeFromCart, clearCart, user, showToast } = useApp();
   const navigate = useNavigate();
   const [couponCode, setCouponCode] = useState('');
+  const [usePoints, setUsePoints] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+
+  useEffect(() => {
+    if (cart?.items) {
+      setSelectedItemIds(prev => {
+        const next = new Set(prev);
+        const currentIds = new Set(cart.items.map(item => item.id));
+        next.forEach(id => {
+          if (!currentIds.has(id)) {
+            next.delete(id);
+          }
+        });
+        if (prev.size === 0 && cart.items.length > 0) {
+          cart.items.forEach(item => next.add(item.id));
+        }
+        return next;
+      });
+    }
+  }, [cart?.items]);
+
+  const toggleSelectItem = (itemId) => {
+    setSelectedItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
+  const isAllSelected = cart.items && cart.items.length > 0 && selectedItemIds.size === cart.items.length;
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedItemIds(new Set());
+    } else {
+      setSelectedItemIds(new Set(cart.items.map(item => item.id)));
+    }
+  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price || 0);
   };
 
-  const totalAmount = cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const totalAmount = cart.items
+    .filter(item => selectedItemIds.has(item.id))
+    .reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
   const [coupons, setCoupons] = useState([]);
   const [bestCoupon, setBestCoupon] = useState(null);
@@ -71,8 +114,57 @@ const Cart = () => {
 
   const activeCouponObj = coupons.find(c => c.code === couponCode);
   const couponDiscount = calculateDiscount(activeCouponObj, totalAmount);
-  const shippingFee = totalAmount >= 500000 ? 0 : 30000;
-  const total = Math.max(0, totalAmount + shippingFee - couponDiscount);
+
+  const savedAddresses = user && user.address ? user.address.split(' || ').filter(Boolean) : [];
+  const defaultAddress = savedAddresses[0] || '';
+  const getShippingFee = (address, subtotal) => {
+    if (subtotal >= 500000) return 0;
+    if (!address) return 30000;
+    const addrLower = address.toLowerCase();
+
+    // 1. Nội tỉnh HCMC
+    if (addrLower.includes('hồ chí minh') || addrLower.includes('hcm') || addrLower.includes('sài gòn') || addrLower.includes('sai gon')) {
+      return 15000;
+    }
+
+    // 2. Miền Nam & Lân cận (BRVT, Đồng Nai, Bình Dương, Long An...)
+    const southernProvinces = [
+      'bình dương', 'binh duong', 'bình phước', 'binh phuoc', 'tây ninh', 'tay ninh', 
+      'đồng nai', 'dong nai', 'bà rịa', 'ba ria', 'vũng tàu', 'vung tau', 'brvt',
+      'long an', 'tiền giang', 'tien giang', 'bến tre', 'ben tre', 'trà vinh', 'tra vinh', 
+      'vĩnh long', 'vinh long', 'đồng tháp', 'dong thap', 'an giang', 'kiên giang', 'kien giang', 
+      'cần thơ', 'can tho', 'hậu giang', 'hau giang', 'sóc trăng', 'soc trang', 'bạc liêu', 'bac lieu', 
+      'cà mau', 'ca mau'
+    ];
+    if (southernProvinces.some(p => addrLower.includes(p))) {
+      return 25000;
+    }
+
+    // 3. Miền Bắc (Hà Nội, Hải Phòng...)
+    const northernProvinces = [
+      'hà nội', 'ha noi', 'hải phòng', 'hai phong', 'hải dương', 'hai duong', 'hưng yên', 'hung yen',
+      'thái bình', 'thai binh', 'nam định', 'nam dinh', 'hà nam', 'ha nam', 'ninh bình', 'ninh binh',
+      'vĩnh phúc', 'vinh phuc', 'bắc ninh', 'bac ninh', 'quảng ninh', 'quang ninh', 'lạng sơn', 'lang son',
+      'cao bằng', 'cao bang', 'hà giang', 'ha giang', 'tuyên quang', 'tuyen quang', 'bắc kạn', 'bac kan',
+      'thái nguyên', 'thai nguyen', 'phú thọ', 'phu tho', 'bắc giang', 'bac giang', 'lai châu', 'lai chau',
+      'điện biên', 'dien bien', 'sơn la', 'son la', 'hòa bình', 'hoa binh', 'yên bái', 'yen bai', 'lào cai', 'lao cai'
+    ];
+    if (northernProvinces.some(p => addrLower.includes(p))) {
+      return 45000;
+    }
+
+    // 4. Miền Trung / Tây Nguyên
+    return 35000;
+  };
+
+  const shippingFee = getShippingFee(defaultAddress, totalAmount);
+  const rewardPoints = user?.rewardPoints || 0;
+  const maxPointsValue = rewardPoints * 1000;
+  const remainingAfterCoupon = Math.max(0, totalAmount + shippingFee - couponDiscount);
+  const pointsDiscount = usePoints ? Math.min(maxPointsValue, remainingAfterCoupon) : 0;
+  const pointsUsed = usePoints ? Math.ceil(pointsDiscount / 1000) : 0;
+
+  const total = Math.max(0, totalAmount + shippingFee - couponDiscount - pointsDiscount);
 
   const handleCheckoutRedirect = () => {
     if (!user) {
@@ -80,9 +172,22 @@ const Cart = () => {
       navigate('/login');
       return;
     }
+    if (selectedItemIds.size === 0) {
+      showToast('Vui lòng chọn ít nhất một sản phẩm để thanh toán.', 'error');
+      return;
+    }
     let path = '/checkout';
+    const params = [];
     if (couponCode.trim()) {
-      path += `?coupon=${encodeURIComponent(couponCode.trim())}`;
+      params.push(`coupon=${encodeURIComponent(couponCode.trim())}`);
+    }
+    if (usePoints) {
+      params.push(`usePoints=true`);
+    }
+    params.push(`cartItemIds=${Array.from(selectedItemIds).join(',')}`);
+    
+    if (params.length > 0) {
+      path += `?${params.join('&')}`;
     }
     navigate(path);
   };
@@ -136,19 +241,35 @@ const Cart = () => {
           {/* Table Headers */}
           <div style={{ 
             display: 'flex', 
+            alignItems: 'center',
             padding: '0 20px 12px 20px', 
             borderBottom: '1px solid #e2e8f0', 
-            color: '#9CA3AF', 
+            color: '#4B5563', 
             fontSize: '0.75rem', 
             fontWeight: '700',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            marginBottom: '16px'
+            marginBottom: '16px',
+            gap: '12px'
           }}>
-            <div style={{ flex: '2 1 0' }}>SẢN PHẨM</div>
-            <div style={{ flex: '1 1 0', textAlign: 'right' }}>GIÁ</div>
-            <div style={{ flex: '1.2 1 0', textAlign: 'center' }}>SỐ LƯỢNG</div>
-            <div style={{ flex: '1 1 0', textAlign: 'right' }}>TỔNG</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: '2 1 0', textTransform: 'none' }}>
+              <input 
+                type="checkbox" 
+                checked={isAllSelected}
+                onChange={toggleSelectAll}
+                style={{ 
+                  width: '18px', 
+                  height: '18px', 
+                  cursor: 'pointer',
+                  accentColor: '#10b981',
+                  borderRadius: '4px'
+                }}
+              />
+              <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#374151' }}>Chọn tất cả ({cart.items.length})</span>
+            </label>
+            <div style={{ flex: '1 1 0', textAlign: 'right', color: '#9CA3AF' }}>GIÁ</div>
+            <div style={{ flex: '1.2 1 0', textAlign: 'center', color: '#9CA3AF' }}>SỐ LƯỢNG</div>
+            <div style={{ flex: '1 1 0', textAlign: 'right', color: '#9CA3AF' }}>TỔNG</div>
           </div>
 
           {/* Cards */}
@@ -158,13 +279,31 @@ const Cart = () => {
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                backgroundColor: '#ffffff',
+                backgroundColor: selectedItemIds.has(item.id) ? '#fbfdfc' : '#ffffff',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: selectedItemIds.has(item.id) ? '1px solid #10b981' : '1px solid #e2e8f0',
                 padding: '20px',
-                marginBottom: '16px'
+                marginBottom: '16px',
+                gap: '12px',
+                transition: 'all 0.2s'
               }}
             >
+              {/* Checkbox */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type="checkbox"
+                  checked={selectedItemIds.has(item.id)}
+                  onChange={() => toggleSelectItem(item.id)}
+                  style={{ 
+                    width: '18px', 
+                    height: '18px', 
+                    cursor: 'pointer',
+                    accentColor: '#10b981',
+                    borderRadius: '4px'
+                  }}
+                />
+              </div>
+
               {/* Product (Image + Info) */}
               <div style={{ flex: '2 1 0', display: 'flex', gap: '20px', alignItems: 'center' }}>
                 <div style={{ 
@@ -196,14 +335,15 @@ const Cart = () => {
                       cursor: 'pointer', 
                       display: 'flex', 
                       alignItems: 'center', 
-                      gap: '4px', 
+                      gap: '6px', 
                       fontSize: '0.85rem',
                       fontWeight: 500,
                       padding: 0,
                       width: 'fit-content'
                     }}
                   >
-                    <span>🗑 Xóa</span>
+                    <Trash2 size={14} />
+                    <span>Xóa</span>
                   </button>
                 </div>
               </div>
@@ -298,6 +438,12 @@ const Cart = () => {
                   <span style={{ fontWeight: 600 }}>-{formatPrice(couponDiscount)}</span>
                 </div>
               )}
+              {pointsDiscount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#10b981' }}>
+                  <span>Dùng xu tích lũy ({pointsUsed} xu)</span>
+                  <span style={{ fontWeight: 600 }}>-{formatPrice(pointsDiscount)}</span>
+                </div>
+              )}
               
               <div style={{ 
                 display: 'flex', 
@@ -335,6 +481,39 @@ const Cart = () => {
             >
               Tiến hành thanh toán
             </button>
+
+            {/* Reward Points inside summary */}
+            {rewardPoints > 0 && (
+              <div style={{
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: '10px'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Coins size={16} style={{ color: '#166534' }} />
+                    Dùng xu tích lũy
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#1b6b3e', marginTop: '2px' }}>
+                    Có {rewardPoints} xu (-{formatPrice(maxPointsValue)})
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={usePoints}
+                    onChange={(e) => setUsePoints(e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#10b981' }}
+                  />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#166534' }}>Dùng</span>
+                </label>
+              </div>
+            )}
 
             {/* Promo code block */}
             <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px', marginTop: '10px' }}>

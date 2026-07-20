@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
-import { MapPin, CreditCard, ShoppingBag, Truck, ChevronRight, Banknote, Wallet } from 'lucide-react';
+import { MapPin, CreditCard, ShoppingBag, Truck, ChevronRight, Banknote, Wallet, Ticket, Coins } from 'lucide-react';
 
 const Checkout = () => {
-  const { user, cart, fetchCart, showToast } = useApp();
+  const { user, cart, fetchCart, showToast, reloadUserProfile } = useApp();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -31,8 +31,9 @@ const Checkout = () => {
   const [error, setError] = useState('');
 
   const [coupons, setCoupons] = useState([]);
-  const [usePoints, setUsePoints] = useState(false);
+  const [usePoints, setUsePoints] = useState(searchParams.get('usePoints') === 'true');
   const [bestCoupon, setBestCoupon] = useState(null);
+  const [recipientPhone, setRecipientPhone] = useState('');
 
   useEffect(() => {
     const fetchCoupons = async () => {
@@ -49,6 +50,9 @@ const Checkout = () => {
   }, [user]);
 
   useEffect(() => {
+    if (user) {
+      setRecipientPhone(user.phone || '');
+    }
     if (savedAddresses.length === 0) setUseCustomAddress(true);
   }, [user]);
 
@@ -76,10 +80,60 @@ const Checkout = () => {
   const formatPrice = (price) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price || 0);
 
+  const cartItemIdsParam = searchParams.get('cartItemIds') || '';
+  const selectedCartItemIds = cartItemIdsParam ? cartItemIdsParam.split(',').map(Number) : [];
+
+  const checkoutItems = buyNowProduct 
+    ? [] 
+    : (selectedCartItemIds.length > 0 
+        ? cart.items.filter(item => selectedCartItemIds.includes(item.id)) 
+        : cart.items);
+
   const subtotal = buyNowProduct
     ? buyNowProduct.price * qty
-    : cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-  const shippingFee = subtotal >= 500000 ? 0 : 30000;
+    : checkoutItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+
+  const getShippingFee = (address, amt) => {
+    if (amt >= 500000) return 0;
+    if (!address) return 30000;
+    const addrLower = address.toLowerCase();
+
+    // 1. Nội tỉnh HCMC
+    if (addrLower.includes('hồ chí minh') || addrLower.includes('hcm') || addrLower.includes('sài gòn') || addrLower.includes('sai gon')) {
+      return 15000;
+    }
+
+    // 2. Miền Nam & Lân cận (BRVT, Đồng Nai, Bình Dương, Long An...)
+    const southernProvinces = [
+      'bình dương', 'binh duong', 'bình phước', 'binh phuoc', 'tây ninh', 'tay ninh', 
+      'đồng nai', 'dong nai', 'bà rịa', 'ba ria', 'vũng tàu', 'vung tau', 'brvt',
+      'long an', 'tiền giang', 'tien giang', 'bến tre', 'ben tre', 'trà vinh', 'tra vinh', 
+      'vĩnh long', 'vinh long', 'đồng tháp', 'dong thap', 'an giang', 'kiên giang', 'kien giang', 
+      'cần thơ', 'can tho', 'hậu giang', 'hau giang', 'sóc trăng', 'soc trang', 'bạc liêu', 'bac lieu', 
+      'cà mau', 'ca mau'
+    ];
+    if (southernProvinces.some(p => addrLower.includes(p))) {
+      return 25000;
+    }
+
+    // 3. Miền Bắc (Hà Nội, Hải Phòng...)
+    const northernProvinces = [
+      'hà nội', 'ha noi', 'hải phòng', 'hai phong', 'hải dương', 'hai duong', 'hưng yên', 'hung yen',
+      'thái bình', 'thai binh', 'nam định', 'nam dinh', 'hà nam', 'ha nam', 'ninh bình', 'ninh binh',
+      'vĩnh phúc', 'vinh phuc', 'bắc ninh', 'bac ninh', 'quảng ninh', 'quang ninh', 'lạng sơn', 'lang son',
+      'cao bằng', 'cao bang', 'hà giang', 'ha giang', 'tuyên quang', 'tuyen quang', 'bắc kạn', 'bac kan',
+      'thái nguyên', 'thai nguyen', 'phú thọ', 'phu tho', 'bắc giang', 'bac giang', 'lai châu', 'lai chau',
+      'điện biên', 'dien bien', 'sơn la', 'son la', 'hòa bình', 'hoa binh', 'yên bái', 'yen bai', 'lào cai', 'lao cai'
+    ];
+    if (northernProvinces.some(p => addrLower.includes(p))) {
+      return 45000;
+    }
+
+    // 4. Miền Trung / Tây Nguyên
+    return 35000;
+  };
+
+  const shippingFee = getShippingFee(shippingAddress, subtotal);
 
   const calculateDiscount = (coupon, currentSubtotal) => {
     if (!coupon) return 0;
@@ -122,10 +176,10 @@ const Checkout = () => {
   const couponDiscount = calculateDiscount(activeCouponObj, subtotal);
 
   const rewardPoints = user?.rewardPoints || 0;
-  const maxPointsValue = rewardPoints * 10000;
+  const maxPointsValue = rewardPoints * 1000;
   const remainingAfterCoupon = Math.max(0, subtotal + shippingFee - couponDiscount);
   const pointsDiscount = usePoints ? Math.min(maxPointsValue, remainingAfterCoupon) : 0;
-  const pointsUsed = usePoints ? Math.ceil(pointsDiscount / 10000) : 0;
+  const pointsUsed = usePoints ? Math.ceil(pointsDiscount / 1000) : 0;
 
   const total = Math.max(0, subtotal + shippingFee - couponDiscount - pointsDiscount);
 
@@ -135,18 +189,24 @@ const Checkout = () => {
       setError('Vui lòng chọn hoặc nhập địa chỉ nhận hàng.');
       return;
     }
+    if (paymentMethod === 'WALLET' && (user?.walletBalance || 0) < total) {
+      setError('Số dư ví không đủ để thanh toán đơn hàng này. Vui lòng nạp thêm tiền hoặc chọn phương thức khác.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       const payload = {
         shippingAddress: shippingAddress.trim(),
+        recipientPhone: recipientPhone.trim(),
         paymentMethod,
         couponCode: couponCode.trim() || null,
         usePoints,
-        ...(productId && { productId: Number(productId), quantity: qty })
+        ...(productId ? { productId: Number(productId), quantity: qty } : { cartItemIds: selectedCartItemIds })
       };
       const response = await api.post('/orders/checkout', payload);
       await fetchCart();
+      await reloadUserProfile();
       if (paymentMethod === 'VNPAY' && response.data.paymentUrl) {
         window.location.href = response.data.paymentUrl;
       } else {
@@ -183,7 +243,7 @@ const Checkout = () => {
   const paymentOptions = [
     { value: 'COD', label: 'COD', desc: 'Thanh toán khi nhận hàng', icon: <Banknote size={24} style={{ color: '#0a422d' }} /> },
     { value: 'VNPAY', label: 'VNPay', desc: 'Thanh toán qua VNPay', icon: <CreditCard size={24} style={{ color: '#0a422d' }} /> },
-    { value: 'MOMO', label: 'MoMo', desc: 'Ví điện tử MoMo', icon: <Wallet size={24} style={{ color: '#0a422d' }} /> },
+    { value: 'WALLET', label: 'Ví điện tử', desc: `Số dư: ${formatPrice(user?.walletBalance || 0)}`, icon: <Wallet size={24} style={{ color: '#0a422d' }} /> },
   ];
 
   return (
@@ -219,10 +279,10 @@ const Checkout = () => {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <form onSubmit={handlePlaceOrder} style={{ display: 'flex', gap: '28px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
 
         {/* LEFT: Form */}
-        <form onSubmit={handlePlaceOrder} style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ flex: '2 1 500px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* Section 1: Customer info (read-only) */}
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px' }}>
@@ -242,14 +302,16 @@ const Checkout = () => {
               />
             </div>
 
-            {/* Phone (from account) */}
+            {/* Phone (contact for delivery) */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Số điện thoại</label>
+              <label style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: '6px' }}>Số điện thoại nhận hàng</label>
               <input
                 type="text"
-                value={user.phone || '0909123456'}
-                readOnly
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '0.9rem', backgroundColor: '#f9fafb', color: '#374151', boxSizing: 'border-box' }}
+                value={recipientPhone}
+                onChange={(e) => setRecipientPhone(e.target.value)}
+                placeholder="Nhập số điện thoại nhận hàng..."
+                required
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
 
@@ -280,7 +342,9 @@ const Checkout = () => {
                     style={{ marginTop: '2px', accentColor: '#10b981' }}
                   />
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#111827' }}>Địa chỉ mặc định</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#111827' }}>
+                      {idx === 0 ? 'Địa chỉ mặc định' : `Địa chỉ ${idx}`}
+                    </div>
                     <div style={{ fontSize: '0.82rem', color: '#6b7280', marginTop: '2px' }}>{addr}</div>
                   </div>
                 </div>
@@ -344,216 +408,250 @@ const Checkout = () => {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Reward Points */}
-          {rewardPoints > 0 && (
-            <div style={{
-              backgroundColor: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              borderRadius: '10px',
-              padding: '16px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div>
-                <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🪙 Sử dụng điểm tích lũy
-                </div>
-                <div style={{ fontSize: '0.78rem', color: '#1b6b3e', marginTop: '4px' }}>
-                  Bạn đang có <strong>{rewardPoints} điểm</strong> (quy đổi <strong>{formatPrice(maxPointsValue)}</strong>)
-                </div>
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={usePoints}
-                  onChange={(e) => setUsePoints(e.target.checked)}
-                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
-                />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#166534' }}>Áp dụng</span>
-              </label>
-            </div>
-          )}
-
-          {/* Coupon selector */}
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid #f3f4f6', paddingBottom: '12px' }}>
-              <span style={{ fontSize: '1.2rem' }}>🎫</span>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#111827', margin: 0 }}>Mã giảm giá (Voucher)</h3>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-              <input
-                type="text"
-                placeholder="Nhập mã giảm giá..."
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                style={{ flex: 1, padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.9rem', outline: 'none' }}
-              />
-              {couponCode && (
-                <button
-                  type="button"
-                  onClick={() => setCouponCode('')}
-                  style={{ padding: '0 12px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#4b5563' }}
-                >
-                  Xóa
-                </button>
-              )}
-            </div>
-
-            {coupons.length > 0 ? (
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#4b5563', marginBottom: '10px' }}>
-                  Voucher khả dụng trong ví của bạn:
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
-                  {coupons.map(c => {
-                    const isBest = bestCoupon && bestCoupon.id === c.id;
-                    const discountVal = calculateDiscount(c, subtotal);
-                    const isEligible = discountVal > 0;
-
-                    return (
-                      <div
-                        key={c.id}
-                        onClick={() => isEligible && setCouponCode(c.code)}
-                        style={{
-                          border: `1px solid ${couponCode === c.code ? '#10b981' : '#e5e7eb'}`,
-                          backgroundColor: couponCode === c.code ? '#f0fdf4' : (isEligible ? '#fff' : '#f9fafb'),
-                          borderRadius: '8px',
-                          padding: '10px 12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          cursor: isEligible ? 'pointer' : 'not-allowed',
-                          opacity: isEligible ? 1 : 0.6,
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0a422d', fontFamily: 'monospace' }}>
-                              {c.code}
-                            </span>
-                            {isBest && (
-                              <span style={{ fontSize: '0.65rem', color: '#ffffff', backgroundColor: '#ef4444', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                                Mã tốt nhất cho bạn
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: '#111827', marginTop: '4px', fontWeight: 600 }}>
-                            {c.discountType === 'PERCENT' ? `Giảm ${c.discountValue}%` : `Giảm ${formatPrice(c.discountValue)}`}
-                          </div>
-                          <div style={{ fontSize: '0.68rem', color: '#6b7280' }}>
-                            Đơn tối thiểu: {formatPrice(c.minOrderValue)}
-                          </div>
-                        </div>
-                        <div>
-                          {couponCode === c.code ? (
-                            <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.8rem' }}>✓ Đã chọn</span>
-                          ) : (
-                            isEligible ? (
-                              <span style={{ color: '#0a422d', fontSize: '0.78rem', fontWeight: 600 }}>Áp dụng</span>
-                            ) : (
-                              <span style={{ color: '#9ca3af', fontSize: '0.7rem' }}>Không đủ ĐK</span>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.75rem', color: '#6b7280', fontStyle: 'italic' }}>
-                Đánh giá sản phẩm đã mua để tích điểm và nhận thêm mã giảm giá tự động!
+            {paymentMethod === 'WALLET' && (user?.walletBalance || 0) < total && (
+              <div style={{
+                marginTop: '16px',
+                padding: '12px 14px',
+                backgroundColor: '#fff1f2',
+                border: '1px solid #fecdd3',
+                borderRadius: '8px',
+                fontSize: '0.8rem',
+                color: '#be123c',
+                fontWeight: 600,
+                lineHeight: '1.5'
+              }}>
+                ⚠️ Số dư ví hiện tại ({formatPrice(user?.walletBalance || 0)}) không đủ để thanh toán đơn hàng này ({formatPrice(total)}). Vui lòng nạp thêm tiền hoặc chọn phương thức thanh toán khác.
               </div>
             )}
           </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-            <Link to="/cart" style={{ fontSize: '0.85rem', color: '#6b7280', display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-              ← Quay lại giỏ hàng
-            </Link>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ flex: 1, padding: '14px', backgroundColor: '#10b981', color: '#ffffff', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'background-color 0.2s' }}
-              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#059669'; }}
-              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#10b981'; }}
-            >
-              {loading ? 'Đang xử lý...' : 'Đặt hàng ngay →'}
-            </button>
-          </div>
-        </form>
+        </div>
 
         {/* RIGHT: Order summary */}
         <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', margin: '0 0 16px 0', borderBottom: '1px solid #f3f4f6', paddingBottom: '12px' }}>
-              Tóm tắt đơn hàng
-            </h3>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#111827', margin: '0 0 16px 0', borderBottom: '1px solid #f3f4f6', paddingBottom: '12px' }}>
+                Tóm tắt đơn hàng
+              </h3>
 
-            {/* Items */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '220px', overflowY: 'auto', marginBottom: '16px' }}>
-              {buyNowProduct ? (
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <div style={{ width: '50px', height: '66px', borderRadius: '4px', background: '#f3f4f6', border: '1px solid #e5e7eb', overflow: 'hidden', flexShrink: 0 }}>
-                    {buyNowProduct.imageUrl && <img src={buyNowProduct.imageUrl} alt={buyNowProduct.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{buyNowProduct.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '2px' }}>Số lượng: {qty}</div>
-                  </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#111827', whiteSpace: 'nowrap' }}>{formatPrice(buyNowProduct.price * qty)}</div>
-                </div>
-              ) : (
-                cart.items.map(item => (
-                  <div key={item.id} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              {/* Items */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto', marginBottom: '16px' }}>
+                {buyNowProduct ? (
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <div style={{ width: '50px', height: '66px', borderRadius: '4px', background: '#f3f4f6', border: '1px solid #e5e7eb', overflow: 'hidden', flexShrink: 0 }}>
-                      {item.product.imageUrl && <img src={item.product.imageUrl} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                      {buyNowProduct.imageUrl && <img src={buyNowProduct.imageUrl} alt={buyNowProduct.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '2px' }}>Số lượng: {item.quantity}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{buyNowProduct.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '2px' }}>Số lượng: {qty}</div>
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#111827', whiteSpace: 'nowrap' }}>{formatPrice(item.product.price * item.quantity)}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#111827', whiteSpace: 'nowrap' }}>{formatPrice(buyNowProduct.price * qty)}</div>
                   </div>
-                ))
+                ) : (
+                  checkoutItems.map(item => (
+                    <div key={item.id} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <div style={{ width: '50px', height: '66px', borderRadius: '4px', background: '#f3f4f6', border: '1px solid #e5e7eb', overflow: 'hidden', flexShrink: 0 }}>
+                        {item.product.imageUrl && <img src={item.product.imageUrl} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.product.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#9CA3AF', marginTop: '2px' }}>Số lượng: {item.quantity}</div>
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#111827', whiteSpace: 'nowrap' }}>{formatPrice(item.product.price * item.quantity)}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Totals */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #f3f4f6', paddingTop: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#6b7280' }}>
+                  <span>Tạm tính</span><span>{formatPrice(subtotal)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#6b7280' }}>
+                  <span>Vận chuyển</span>
+                  <span style={{ color: shippingFee === 0 ? '#10b981' : '#111827' }}>{shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}</span>
+                </div>
+                {couponDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981' }}>
+                    <span>Giảm giá (Voucher)</span><span>-{formatPrice(couponDiscount)}</span>
+                  </div>
+                )}
+                {pointsDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981' }}>
+                    <span>Dùng xu tích lũy ({pointsUsed} xu)</span><span>-{formatPrice(pointsDiscount)}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.2rem', color: '#111827', borderTop: '1px solid #e5e7eb', paddingTop: '12px', marginTop: '4px' }}>
+                  <span>Tổng cộng</span><span>{formatPrice(total)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ borderTop: '1px solid #e2e8f0' }} />
+
+            {/* Reward Points inside summary */}
+            {rewardPoints > 0 && (
+              <div style={{
+                backgroundColor: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#166534', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Coins size={16} style={{ color: '#166534' }} />
+                    Dùng xu tích lũy
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#1b6b3e', marginTop: '2px' }}>
+                    Có {rewardPoints} xu (-{formatPrice(maxPointsValue)})
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={usePoints}
+                    onChange={(e) => setUsePoints(e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#10b981' }}
+                  />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#166534' }}>Dùng</span>
+                </label>
+              </div>
+            )}
+
+            {/* Voucher input & list inside summary */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Ticket size={16} style={{ color: '#0a422d' }} />
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#111827' }}>Mã giảm giá (Voucher)</span>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="Nhập mã giảm giá..."
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  style={{ flex: 1, padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.8rem', outline: 'none' }}
+                />
+                {couponCode && (
+                  <button
+                    type="button"
+                    onClick={() => setCouponCode('')}
+                    style={{ padding: '0 10px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem', color: '#4b5563' }}
+                  >
+                    Xóa
+                  </button>
+                )}
+              </div>
+
+              {coupons.length > 0 ? (
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', marginBottom: '6px' }}>
+                    Chọn mã giảm giá khả dụng:
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
+                    {coupons.map(c => {
+                      const isBest = bestCoupon && bestCoupon.id === c.id;
+                      const discountVal = calculateDiscount(c, subtotal);
+                      const isEligible = discountVal > 0;
+
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => isEligible && setCouponCode(c.code)}
+                          style={{
+                            border: `1px solid ${couponCode === c.code ? '#10b981' : '#e5e7eb'}`,
+                            backgroundColor: couponCode === c.code ? '#f0fdf4' : (isEligible ? '#fff' : '#f9fafb'),
+                            borderRadius: '6px',
+                            padding: '8px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: isEligible ? 'pointer' : 'not-allowed',
+                            opacity: isEligible ? 1 : 0.6,
+                            fontSize: '0.75rem',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontWeight: 700, color: '#0a422d', fontFamily: 'monospace' }}>
+                                {c.code}
+                              </span>
+                              {isBest && (
+                                <span style={{ fontSize: '0.6rem', color: '#ffffff', backgroundColor: '#ef4444', padding: '0 4px', borderRadius: '3px', fontWeight: 700 }}>
+                                  Tốt nhất
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ color: '#111827', marginTop: '2px', fontWeight: 600 }}>
+                              {c.discountType === 'PERCENT' ? `Giảm ${c.discountValue}%` : `Giảm ${formatPrice(c.discountValue)}`}
+                            </div>
+                          </div>
+                          <div>
+                            {couponCode === c.code ? (
+                              <span style={{ color: '#10b981', fontWeight: 700 }}>✓ Chọn</span>
+                            ) : (
+                              isEligible ? (
+                                <span style={{ color: '#0a422d', fontWeight: 600 }}>Dùng</span>
+                              ) : (
+                                <span style={{ color: '#9ca3af' }}>KĐK</span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.7rem', color: '#6b7280', fontStyle: 'italic' }}>
+                  Mua sách tích điểm để nhận thêm nhiều ưu đãi!
+                </div>
               )}
             </div>
 
-            {/* Totals */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderTop: '1px solid #f3f4f6', paddingTop: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#6b7280' }}>
-                <span>Tạm tính</span><span>{formatPrice(subtotal)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#6b7280' }}>
-                <span>Vận chuyển</span>
-                <span style={{ color: shippingFee === 0 ? '#10b981' : '#111827' }}>{shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}</span>
-              </div>
-              {couponDiscount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981' }}>
-                  <span>Giảm giá (Voucher)</span><span>-{formatPrice(couponDiscount)}</span>
-                </div>
-              )}
-              {pointsDiscount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#10b981' }}>
-                  <span>Dùng điểm tích lũy ({pointsUsed}đ)</span><span>-{formatPrice(pointsDiscount)}</span>
-                </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.15rem', color: '#111827', borderTop: '1px solid #e5e7eb', paddingTop: '12px', marginTop: '4px' }}>
-                <span>Tổng cộng</span><span>{formatPrice(total)}</span>
-              </div>
-            </div>
+            {/* Divider */}
+            <div style={{ borderTop: '1px solid #e2e8f0' }} />
+
+            {/* Checkout Action Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: '#10b981',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '1rem',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                transition: 'background-color 0.2s',
+                textAlign: 'center'
+              }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#059669'; }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.backgroundColor = '#10b981'; }}
+            >
+              {loading ? 'Đang xử lý...' : 'Đặt hàng ngay'}
+            </button>
+
+            <Link to="/cart" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', color: '#6b7280', textDecoration: 'none' }}>
+              ← Quay lại giỏ hàng
+            </Link>
+
           </div>
-
-
         </div>
 
-      </div>
+      </form>
     </div>
   );
 };

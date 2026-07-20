@@ -47,7 +47,7 @@ const Navbar = () => {
         navigate('/manager?tab=dashboard');
       }
     } else {
-      if (n.referenceType === 'orders' || n.type === 'ORDER') {
+      if (n.referenceType === 'orders' || n.type === 'ORDER' || n.referenceType === 'return_requests' || n.type === 'RETURN') {
         navigate('/orders');
       } else if (n.referenceType === 'products' && n.referenceId) {
         navigate(`/product/${n.referenceId}`);

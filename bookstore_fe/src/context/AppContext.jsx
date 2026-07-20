@@ -62,7 +62,7 @@ export const AppProvider = ({ children }) => {
     if (!user) return;
 
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//localhost:8081/ws/notifications`;
+    const wsUrl = `${wsProtocol}//${window.location.hostname}:8081/ws/notifications`;
     
     let ws;
     let reconnectTimeout;
@@ -77,7 +77,7 @@ export const AppProvider = ({ children }) => {
       ws.onmessage = (event) => {
         try {
           const newNotif = JSON.parse(event.data);
-          const isForCurrentUser = newNotif.userId === user.id;
+          const isForCurrentUser = newNotif.userId === Number(user.id);
           const isStaffNotification = !newNotif.userId && (user.role === 'MANAGER' || user.role === 'ADMIN');
           
           if (isForCurrentUser || isStaffNotification) {
@@ -86,6 +86,17 @@ export const AppProvider = ({ children }) => {
               setUnreadCount(prev => prev + 1);
             }
             showToast(newNotif.title + ': ' + newNotif.message, 'info');
+          }
+
+          // Dispatch real-time order status update event for either the specific customer or managers/admins
+          const isOrderOrReturn = newNotif.type === 'ORDER' || newNotif.type === 'RETURN';
+          if (isOrderOrReturn && newNotif.referenceId && (newNotif.referenceType === 'orders' || newNotif.referenceType === 'return_requests')) {
+            const isManagerOrAdmin = user.role === 'MANAGER' || user.role === 'ADMIN';
+            if (isForCurrentUser || isManagerOrAdmin) {
+              window.dispatchEvent(new CustomEvent('order-updated', { 
+                detail: { orderId: Number(newNotif.referenceId) } 
+              }));
+            }
           }
         } catch (err) {
           console.error('Error processing websocket message:', err);
@@ -126,6 +137,16 @@ export const AppProvider = ({ children }) => {
     const updated = { ...user, ...newUserData };
     localStorage.setItem('user', JSON.stringify(updated));
     setUser(updated);
+  };
+
+  const reloadUserProfile = async () => {
+    if (!localStorage.getItem('token')) return;
+    try {
+      const response = await api.get('/users/profile');
+      updateUser(response.data);
+    } catch (error) {
+      console.error('Failed to reload user profile:', error);
+    }
   };
 
   const logoutUser = () => {
@@ -280,6 +301,7 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{
       user,
       updateUser,
+      reloadUserProfile,
       cart,
       notifications,
       unreadCount,
