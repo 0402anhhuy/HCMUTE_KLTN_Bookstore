@@ -41,4 +41,10 @@ public class OrderResponse {
     private String shippingAddress;
     private String paymentUrl; // VNPAY payment redirect URL
     private LocalDateTime createdAt;
+    private LocalDateTime confirmedAt;
+    private LocalDateTime preparingAt;
+    private LocalDateTime shippingAt;
+    private LocalDateTime deliveredAt;
+    private LocalDateTime cancelledAt;
+    private LocalDateTime refundedAt;
 }

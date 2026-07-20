@@ -46,6 +46,12 @@ public class ReturnRequest {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
 
+    @Column(name = "return_type", length = 50)
+    private String returnType; // e.g., RETURN_REFUND or EXCHANGE
+
+    @Column(name = "evidence_images", length = 1000)
+    private String evidenceImages; // Comma-separated list of image URLs
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReturnStatus status;
