@@ -134,13 +134,13 @@ public class ReviewService {
                 .build();
         couponRepository.save(coupon);
 
-        auditLogService.log(user, "ADD_REVIEW", "Thêm đánh giá sách " + product.getName() + " (" + request.getRating() + " sao). Cộng 10 điểm, tặng mã giảm giá " + randomCode);
+        auditLogService.log(user, "ADD_REVIEW", "Thêm đánh giá sách " + product.getName() + " (" + request.getRating() + " sao). Cộng 10 xu, tặng mã giảm giá " + randomCode);
 
         // 3. Notify user
         notificationService.createNotification(
                 user,
-                "Nhận điểm thưởng & Mã giảm giá mới",
-                "Bạn đã được cộng 10 điểm thưởng (1đ = 10k VND) và nhận mã giảm giá 20k: " + randomCode + " nhờ đánh giá sản phẩm!",
+                "Nhận xu thưởng & Mã giảm giá mới",
+                "Bạn đã được cộng 10 xu thưởng (1 xu = 1.000đ) và nhận mã giảm giá 20k: " + randomCode + " nhờ đánh giá sản phẩm!",
                 Notification.NotificationType.ACCOUNT,
                 "coupons",
                 coupon.getId()

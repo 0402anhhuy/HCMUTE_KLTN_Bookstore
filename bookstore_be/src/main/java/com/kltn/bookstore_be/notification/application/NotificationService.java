@@ -83,7 +83,18 @@ public class NotificationService {
                 dateStr
             );
             
-            com.kltn.bookstore_be.notification.infrastructure.NotificationWebSocketHandler.broadcast(json);
+            if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) {
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            com.kltn.bookstore_be.notification.infrastructure.NotificationWebSocketHandler.broadcast(json);
+                        }
+                    }
+                );
+            } else {
+                com.kltn.bookstore_be.notification.infrastructure.NotificationWebSocketHandler.broadcast(json);
+            }
         } catch (Exception e) {
             System.err.println("Failed to broadcast notification: " + e.getMessage());
         }
