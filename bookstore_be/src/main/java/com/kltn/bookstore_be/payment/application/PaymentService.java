@@ -83,10 +83,7 @@ public class PaymentService {
             payment.setPaymentStatus(Payment.PaymentStatus.PAID);
             payment.setPaidAt(LocalDateTime.now());
             
-            order.setStatus(Order.OrderStatus.confirmed); // Mark as confirmed after payment
-            
             paymentRepository.save(payment);
-            orderRepository.save(order);
 
             // Audit & Notify
             auditLogService.log(order.getUser(), "PAYMENT_SUCCESS", "Thanh toán thành công qua VNPay cho đơn hàng #" + orderId + ", GD: " + transactionCode);

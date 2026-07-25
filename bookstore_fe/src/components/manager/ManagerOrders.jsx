@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CheckCircle, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle, X, Clock, ShoppingBag, Package, Truck, RefreshCcw } from 'lucide-react';
 import api from '../../services/api';
 import { useApp } from '../../context/AppContext';
 
@@ -15,6 +15,29 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    const handleOrderUpdated = (event) => {
+      const { orderId } = event.detail || {};
+      setTimeout(() => {
+        loadData();
+        if (selectedOrder && selectedOrder === orderId) {
+          handleViewDetails(orderId);
+        }
+      }, 300);
+    };
+    window.addEventListener('order-updated', handleOrderUpdated);
+    return () => {
+      window.removeEventListener('order-updated', handleOrderUpdated);
+    };
+  }, [selectedOrder, loadData]);
+
+  // Reject Return Request Modal state
+  const [rejectingRequest, setRejectingRequest] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  // Approve Return Request Modal state
+  const [approvingRequest, setApprovingRequest] = useState(null);
 
   const handleDeliverOrder = async (orderId) => {
     try {
@@ -72,13 +95,69 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
     setLoadingDetails(true);
     try {
       const response = await api.get(`/orders/${orderId}`);
-      setOrderDetails(response.data);
+      let returnRequest = null;
+      if (response.data.order?.status === 'cancel_requested' || response.data.order?.status === 'refunded') {
+        try {
+          const retResponse = await api.get(`/orders/${orderId}/return`);
+          returnRequest = retResponse.data;
+        } catch (e) {
+          console.error("Failed to load return request details:", e);
+        }
+      }
+      setOrderDetails({ ...response.data, returnRequest });
     } catch (error) {
       console.error(error);
       showToast('Lỗi khi lấy chi tiết đơn hàng!', 'error');
       setSelectedOrder(null);
     } finally {
       setLoadingDetails(false);
+    }
+  };
+
+  const handleOpenApproveModal = (requestId, orderId) => {
+    setApprovingRequest({ requestId, orderId });
+  };
+
+  const handleApproveSubmit = async () => {
+    if (!approvingRequest) return;
+    try {
+      const { requestId } = approvingRequest;
+      await api.post(`/orders/returns/${requestId}/process?status=APPROVED`);
+      showToast("Duyệt yêu cầu đổi trả thành công!", "success");
+      setApprovingRequest(null);
+      setSelectedOrder(null);
+      setOrderDetails(null);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showToast(error.response?.data?.error || "Lỗi khi duyệt yêu cầu đổi trả!", "error");
+      setApprovingRequest(null);
+    }
+  };
+
+  const handleOpenRejectModal = (requestId, orderId) => {
+    setRejectingRequest({ requestId, orderId });
+    setRejectReason('');
+  };
+
+  const handleRejectSubmit = async (e) => {
+    e.preventDefault();
+    if (!rejectReason.trim()) {
+      showToast("Lý do từ chối không được để trống!", "error");
+      return;
+    }
+    try {
+      const { requestId } = rejectingRequest;
+      await api.post(`/orders/returns/${requestId}/process?status=REJECTED&rejectedReason=${encodeURIComponent(rejectReason.trim())}`);
+      showToast("Đã từ chối yêu cầu đổi trả!", "success");
+      setRejectingRequest(null);
+      setRejectReason('');
+      setSelectedOrder(null);
+      setOrderDetails(null);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showToast(error.response?.data?.error || "Lỗi khi từ chối yêu cầu đổi trả!", "error");
     }
   };
 
@@ -121,6 +200,8 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
           <option value="preparing">Đang chuẩn bị</option>
           <option value="shipping">Đang giao</option>
           <option value="delivered">Đã giao hàng</option>
+          <option value="cancel_requested">Yêu cầu đổi trả</option>
+          <option value="refunded">Đã hoàn tiền / Đổi trả</option>
           <option value="cancelled">Đã hủy</option>
         </select>
       </div>
@@ -168,14 +249,24 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                     borderRadius: '999px',
                     fontSize: '0.75rem',
                     fontWeight: 700,
-                    backgroundColor: order.status === 'delivered' ? '#ecfdf5' : order.status === 'cancelled' ? '#fef2f2' : '#f1f5f9',
-                    color: order.status === 'delivered' ? '#10b981' : order.status === 'cancelled' ? '#ef4444' : '#475569'
+                    backgroundColor: 
+                      order.status === 'delivered' ? '#ecfdf5' : 
+                      order.status === 'cancelled' ? '#fef2f2' : 
+                      order.status === 'cancel_requested' ? '#fffbeb' : 
+                      order.status === 'refunded' ? '#eff6ff' : '#f1f5f9',
+                    color: 
+                      order.status === 'delivered' ? '#10b981' : 
+                      order.status === 'cancelled' ? '#ef4444' : 
+                      order.status === 'cancel_requested' ? '#d97706' : 
+                      order.status === 'refunded' ? '#3b82f6' : '#475569'
                   }}>
                     {order.status === 'pending' ? 'Chờ xác nhận' :
                      order.status === 'confirmed' ? 'Đã xác nhận' :
                      order.status === 'preparing' ? 'Đang chuẩn bị' :
                      order.status === 'shipping' ? 'Đang giao' :
                      order.status === 'delivered' ? 'Đã giao hàng' :
+                     order.status === 'cancel_requested' ? 'Yêu cầu đổi trả' :
+                     order.status === 'refunded' ? 'Đã hoàn tiền' :
                      order.status === 'cancelled' ? 'Đã hủy' : order.status}
                   </span>
                 </td>
@@ -279,18 +370,25 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                     {order.status === 'preparing' && (
                       <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
                         <button
-                          onClick={() => handleUpdateStatus(order.id, 'shipping')}
+                          onClick={() => {
+                            if (!order.shipper) {
+                              showToast('Vui lòng chọn shipper trước khi giao hàng!', 'error');
+                              return;
+                            }
+                            handleUpdateStatus(order.id, 'shipping');
+                          }}
                           style={{
                             padding: '6px 10px',
                             borderRadius: '6px',
-                            backgroundColor: '#a855f7',
-                            color: '#ffffff',
+                            backgroundColor: !order.shipper ? '#e2e8f0' : '#a855f7',
+                            color: !order.shipper ? '#94a3b8' : '#ffffff',
                             border: 'none',
                             fontWeight: 600,
                             fontSize: '0.8rem',
-                            cursor: 'pointer',
+                            cursor: !order.shipper ? 'not-allowed' : 'pointer',
                             flex: 1
                           }}
+                          title={!order.shipper ? "Vui lòng chọn shipper trước" : ""}
                         >
                           Giao hàng
                         </button>
@@ -502,19 +600,290 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                           borderRadius: '999px',
                           fontSize: '0.75rem',
                           fontWeight: 700,
-                          backgroundColor: '#f1f5f9',
-                          color: '#475569'
+                          backgroundColor: 
+                            orderDetails.order?.status === 'delivered' ? '#ecfdf5' : 
+                            orderDetails.order?.status === 'cancelled' ? '#fef2f2' : 
+                            orderDetails.order?.status === 'cancel_requested' ? '#fffbeb' : 
+                            orderDetails.order?.status === 'refunded' ? '#eff6ff' : '#f1f5f9',
+                          color: 
+                            orderDetails.order?.status === 'delivered' ? '#10b981' : 
+                            orderDetails.order?.status === 'cancelled' ? '#ef4444' : 
+                            orderDetails.order?.status === 'cancel_requested' ? '#d97706' : 
+                            orderDetails.order?.status === 'refunded' ? '#3b82f6' : '#475569'
                         }}>
                           {orderDetails.order?.status === 'pending' ? 'Chờ xác nhận' :
                            orderDetails.order?.status === 'confirmed' ? 'Đã xác nhận' :
                            orderDetails.order?.status === 'preparing' ? 'Đang chuẩn bị' :
                            orderDetails.order?.status === 'shipping' ? 'Đang giao' :
                            orderDetails.order?.status === 'delivered' ? 'Đã giao hàng' :
+                           orderDetails.order?.status === 'cancel_requested' ? 'Yêu cầu đổi trả' :
+                           orderDetails.order?.status === 'refunded' ? 'Đã hoàn tiền' :
                            orderDetails.order?.status === 'cancelled' ? 'Đã hủy' : orderDetails.order?.status}
                         </span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Timeline Trạng Thái Đơn Hàng */}
+                  {(() => {
+                    const order = orderDetails.order;
+                    if (!order) return null;
+                    const isCancelled = order.status === 'cancelled';
+                    const isRefunded = order.status === 'refunded';
+
+                    const steps = [
+                      { label: 'Đặt hàng thành công', time: order.createdAt, done: true, icon: ShoppingBag, color: '#10b981' }
+                    ];
+
+                    if (order.confirmedAt) {
+                      steps.push({ label: 'Đã xác nhận', time: order.confirmedAt, done: true, icon: CheckCircle, color: '#10b981' });
+                    } else if (!isCancelled && !isRefunded) {
+                      steps.push({ label: 'Đã xác nhận', time: null, done: false, icon: CheckCircle, color: '#cbd5e1' });
+                    }
+
+                    if (order.preparingAt) {
+                      steps.push({ label: 'Đang chuẩn bị', time: order.preparingAt, done: true, icon: Package, color: '#10b981' });
+                    } else if (!isCancelled && !isRefunded) {
+                      steps.push({ label: 'Đang chuẩn bị', time: null, done: false, icon: Package, color: '#cbd5e1' });
+                    }
+
+                    if (order.shippingAt) {
+                      steps.push({ label: 'Đang giao hàng', time: order.shippingAt, done: true, icon: Truck, color: '#10b981' });
+                    } else if (!isCancelled && !isRefunded) {
+                      steps.push({ label: 'Đang giao hàng', time: null, done: false, icon: Truck, color: '#cbd5e1' });
+                    }
+
+                    if (isCancelled) {
+                      steps.push({ label: 'Đã hủy', time: order.cancelledAt, done: true, icon: X, color: '#ef4444', isError: true });
+                    } else if (isRefunded) {
+                      if (order.deliveredAt) {
+                        steps.push({ label: 'Đã giao hàng', time: order.deliveredAt, done: true, icon: CheckCircle, color: '#10b981' });
+                      }
+                      steps.push({ label: 'Đã hoàn tiền', time: order.refundedAt, done: true, icon: RefreshCcw, color: '#7c3aed', isRefunded: true });
+                    } else {
+                      steps.push({ label: 'Đã giao hàng', time: order.deliveredAt, done: !!order.deliveredAt, icon: CheckCircle, color: '#10b981' });
+                    }
+
+                    // Find index of the last completed step
+                    let lastDoneIndex = 0;
+                    for (let i = steps.length - 1; i >= 0; i--) {
+                      if (steps[i].done) {
+                        lastDoneIndex = i;
+                        break;
+                      }
+                    }
+                    const totalSegments = steps.length - 1;
+                    const activeProgressPercent = totalSegments > 0 ? (lastDoneIndex / totalSegments) * 100 : 0;
+
+                    return (
+                      <div style={{ 
+                        marginBottom: '32px', 
+                        backgroundColor: '#f8fafc', 
+                        borderRadius: '16px', 
+                        padding: '24px 16px', 
+                        border: '1px solid #e2e8f0' 
+                      }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'left' }}>
+                          <Clock size={16} style={{ color: '#7c3aed' }} />
+                          Theo dõi trạng thái đơn hàng
+                        </div>
+                        
+                        {/* Stepper Progress Bar Row */}
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'flex-start', 
+                          position: 'relative',
+                          width: '100%'
+                        }}>
+                          
+                          {/* Progress Line Background */}
+                          <div style={{
+                            position: 'absolute',
+                            top: '24px',
+                            left: `${100 / (steps.length * 2)}%`,
+                            right: `${100 / (steps.length * 2)}%`,
+                            height: '4px',
+                            backgroundColor: '#e2e8f0',
+                            zIndex: 1
+                          }}>
+                            {/* Active Progress Line */}
+                            <div style={{
+                              width: `${activeProgressPercent}%`,
+                              height: '100%',
+                              backgroundColor: isCancelled ? '#ef4444' : '#7c3aed',
+                              transition: 'width 0.3s ease'
+                            }}></div>
+                          </div>
+
+                          {/* Stepper Dots & Labels */}
+                          {steps.map((step, idx) => {
+                            const IconComponent = step.icon;
+                            const isDone = step.done;
+                            const circleColor = step.isError ? '#ef4444' : (step.isRefunded ? '#7c3aed' : (isDone ? '#10b981' : '#cbd5e1'));
+                            const textColor = isDone ? '#0f172a' : '#94a3b8';
+
+                            return (
+                              <div key={idx} style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                position: 'relative', 
+                                zIndex: 2,
+                                flex: 1
+                              }}>
+                                {/* Circle dot containing icon */}
+                                <div style={{
+                                  width: '48px',
+                                  height: '48px',
+                                  borderRadius: '50%',
+                                  backgroundColor: isDone ? circleColor : '#ffffff',
+                                  border: `3px solid ${circleColor}`,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: isDone ? '#ffffff' : '#94a3b8',
+                                  boxShadow: isDone ? `0 0 0 4px ${circleColor}20` : 'none',
+                                  transition: 'all 0.3s ease'
+                                }}>
+                                  <IconComponent size={20} />
+                                </div>
+
+                                {/* Step Label */}
+                                <div style={{ 
+                                  marginTop: '10px', 
+                                  fontSize: '0.75rem', 
+                                  fontWeight: 700, 
+                                  color: textColor,
+                                  textAlign: 'center',
+                                  lineHeight: '1.2',
+                                  maxWidth: '90px',
+                                  wordWrap: 'break-word'
+                                }}>
+                                  {step.label}
+                                </div>
+
+                                {/* Step Timestamp */}
+                                {step.time && (
+                                  <div style={{ 
+                                    fontSize: '0.65rem', 
+                                    color: '#64748b', 
+                                    marginTop: '4px',
+                                    textAlign: 'center',
+                                    lineHeight: '1.2',
+                                    maxWidth: '90px'
+                                  }}>
+                                    {(() => {
+                                      const date = new Date(step.time);
+                                      return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {orderDetails.returnRequest && (
+                    <div style={{
+                      backgroundColor: '#fffbeb',
+                      padding: '18px',
+                      borderRadius: '12px',
+                      border: '1px solid #fef3c7',
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h4 style={{ fontSize: '0.9rem', color: '#b45309', margin: 0, fontWeight: 700 }}>
+                          Yêu cầu đổi trả ({orderDetails.returnRequest.returnType === 'EXCHANGE' ? 'Đổi hàng mới' : 'Trả hàng & Hoàn tiền'})
+                        </h4>
+                        <span style={{
+                          display: 'inline-flex',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          backgroundColor: 
+                            orderDetails.returnRequest.status === 'PENDING' ? '#fff3cd' : 
+                            orderDetails.returnRequest.status === 'APPROVED' ? '#d1e7dd' : '#f8d7da',
+                          color: 
+                            orderDetails.returnRequest.status === 'PENDING' ? '#856404' : 
+                            orderDetails.returnRequest.status === 'APPROVED' ? '#0f5132' : '#842029'
+                        }}>
+                          {orderDetails.returnRequest.status === 'PENDING' ? 'Chờ xét duyệt' : 
+                           orderDetails.returnRequest.status === 'APPROVED' ? 'Đã chấp nhận' : 'Đã từ chối'}
+                        </span>
+                      </div>
+                      
+                      <div style={{ fontSize: '0.875rem', color: '#78350f', lineHeight: '1.5' }}>
+                        <strong>Lý do của khách:</strong> {orderDetails.returnRequest.reason}
+                      </div>
+
+                      {orderDetails.returnRequest.rejectedReason && (
+                        <div style={{ fontSize: '0.875rem', color: '#ef4444' }}>
+                          <strong>Lý do từ chối:</strong> {orderDetails.returnRequest.rejectedReason}
+                        </div>
+                      )}
+
+                      {orderDetails.returnRequest.evidenceImages && (
+                        <div>
+                          <div style={{ fontSize: '0.825rem', fontWeight: 600, color: '#78350f', marginBottom: '6px' }}>Hình ảnh bằng chứng:</div>
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            {orderDetails.returnRequest.evidenceImages.split(' || ').map((img, idx) => (
+                              <a key={idx} href={img} target="_blank" rel="noopener noreferrer" style={{ display: 'block', width: '70px', height: '90px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #fcd34d' }}>
+                                <img src={img} alt={`Evidence ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Approval / Rejection buttons for Manager */}
+                      {orderDetails.returnRequest.status === 'PENDING' && (
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                          <button
+                            onClick={() => handleOpenApproveModal(orderDetails.returnRequest.id, orderDetails.order.id)}
+                            style={{
+                              flex: 1,
+                              padding: '10px',
+                              borderRadius: '8px',
+                              backgroundColor: '#10b981',
+                              color: '#ffffff',
+                              border: 'none',
+                              fontWeight: 600,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Đồng ý đổi trả & Hoàn tiền
+                          </button>
+                          <button
+                            onClick={() => handleOpenRejectModal(orderDetails.returnRequest.id, orderDetails.order.id)}
+                            style={{
+                              flex: 1,
+                              padding: '10px',
+                              borderRadius: '8px',
+                              backgroundColor: '#ffffff',
+                              color: '#ef4444',
+                              border: '1px solid #fecaca',
+                              fontWeight: 600,
+                              fontSize: '0.85rem',
+                              cursor: 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Từ chối yêu cầu
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Order Items */}
                   <div>
@@ -615,6 +984,49 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
               >
                 Đóng
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REJECT RETURN REQUEST MODAL */}
+      {rejectingRequest && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', zIndex: 2100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '440px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ef4444', marginBottom: '8px' }}>Từ chối yêu cầu đổi trả</h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '20px' }}>Vui lòng nhập lý do từ chối yêu cầu đổi trả của khách hàng để gửi phản hồi.</p>
+            <form onSubmit={handleRejectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <textarea 
+                rows={4} 
+                placeholder="Nhập lý do từ chối cụ thể..." 
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '12px', fontSize: '0.9rem', boxSizing: 'border-box', resize: 'none', outline: 'none', fontFamily: 'inherit' }}
+                required
+              />
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="button" onClick={() => setRejectingRequest(null)} style={{ flex: 1, padding: '10px', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}>Hủy bỏ</button>
+                <button type="submit" style={{ flex: 1, padding: '10px', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem' }}>Xác nhận từ chối</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* APPROVE RETURN REQUEST MODAL */}
+      {approvingRequest && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', zIndex: 2100, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+          <div style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '28px', width: '100%', maxWidth: '440px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', backgroundColor: '#ecfdf5', color: '#10b981', borderRadius: '50%', marginBottom: '16px' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981', marginBottom: '12px', marginTop: 0 }}>Duyệt yêu cầu đổi trả</h3>
+            <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: '1.5', marginBottom: '24px', textAlign: 'left' }}>
+              Bạn có chắc chắn muốn <strong>DUYỆT</strong> yêu cầu đổi trả này? Đơn hàng sẽ được chuyển sang trạng thái <strong>Đã hoàn tiền</strong> và tự động khôi phục số lượng sách tương ứng vào kho hàng.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setApprovingRequest(null)} style={{ flex: 1, padding: '10px 16px', backgroundColor: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem', outline: 'none' }}>Hủy bỏ</button>
+              <button onClick={handleApproveSubmit} style={{ flex: 1, padding: '10px 16px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem', outline: 'none' }}>Xác nhận duyệt</button>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Award, Ticket, Copy, Check } from 'lucide-react';
+import { Award, Ticket, Copy, Check, Wallet } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import api from '../../services/api';
 
@@ -38,23 +38,43 @@ const CouponsRewards = () => {
   };
 
   const rewardPoints = user?.rewardPoints || 0;
-  const rewardValue = rewardPoints * 10000;
+  const rewardValue = rewardPoints * 1000;
+  const walletBalance = user?.walletBalance || 0;
 
   return (
     <div style={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden' }}>
       <div style={{ backgroundColor: '#0a422d', color: '#fff', padding: '14px 20px', fontWeight: 700, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Award size={18} /> Kho Điểm & Ví Voucher
+        <Award size={18} /> Kho Xu & Ví Voucher
       </div>
       <div style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: '14px', marginBottom: '14px' }}>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Điểm tích lũy</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#111827', marginTop: '2px' }}>{rewardPoints} điểm</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderBottom: '1px solid #f3f4f6', paddingBottom: '14px', marginBottom: '14px' }}>
+          
+          {/* Wallet Balance Display */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ backgroundColor: '#10b981', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Wallet size={16} />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '0.75rem', color: '#166534', fontWeight: 600 }}>Số dư ví điện tử</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f5132', marginTop: '2px' }}>{formatPrice(walletBalance)}</div>
+              </div>
+            </div>
+            <span style={{ fontSize: '0.7rem', color: '#15803d', backgroundColor: '#d1e7dd', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>Hoàn tiền tự động</span>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Giá trị quy đổi</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>{formatPrice(rewardValue)}</div>
+
+          {/* Reward Points */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px' }}>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Xu tích lũy</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#111827', marginTop: '2px' }}>{rewardPoints} xu</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Giá trị quy đổi</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>{formatPrice(rewardValue)}</div>
+            </div>
           </div>
+
         </div>
         <div>
           <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#4b5563', marginBottom: '10px' }}>

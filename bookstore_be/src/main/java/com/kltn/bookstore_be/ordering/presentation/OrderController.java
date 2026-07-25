@@ -115,10 +115,13 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/address")
-    public ResponseEntity<?> updateAddress(@PathVariable Long id, @RequestParam String address) {
+    public ResponseEntity<?> updateAddress(
+            @PathVariable Long id, 
+            @RequestParam String address,
+            @RequestParam(required = false) String phone) {
         try {
             User user = getAuthenticatedUser();
-            orderService.updateOrderAddress(id, address, user);
+            orderService.updateOrderAddress(id, address, phone, user);
             return ResponseEntity.ok(Map.of("message", "Cập nhật địa chỉ nhận hàng thành công"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -126,11 +129,76 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/return")
-    public ResponseEntity<?> requestReturn(@PathVariable Long id, @RequestParam String reason) {
+    public ResponseEntity<?> requestReturn(
+            @PathVariable Long id, 
+            @RequestParam String reason,
+            @RequestParam(required = false, defaultValue = "RETURN_REFUND") String returnType,
+            @RequestParam(required = false) String evidenceImages) {
         try {
             User user = getAuthenticatedUser();
-            orderService.requestReturn(id, reason, user);
+            orderService.requestReturn(id, reason, returnType, evidenceImages, user);
             return ResponseEntity.ok(Map.of("message", "Yêu cầu đổi trả đã được gửi thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/returns/my")
+    public ResponseEntity<?> getMyReturnRequests() {
+        try {
+            User user = getAuthenticatedUser();
+            List<ReturnRequest> returns = orderService.getUserReturnRequests(user.getId());
+            return ResponseEntity.ok(returns);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/returns")
+    public ResponseEntity<?> getAllReturnRequests() {
+        try {
+            User user = getAuthenticatedUser();
+            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
+                return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
+            }
+            List<ReturnRequest> returns = orderService.getAllReturnRequests();
+            return ResponseEntity.ok(returns);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/returns/{requestId}/process")
+    public ResponseEntity<?> processReturnRequest(
+            @PathVariable Long requestId,
+            @RequestParam ReturnRequest.ReturnStatus status,
+            @RequestParam(required = false) String rejectedReason) {
+        try {
+            User user = getAuthenticatedUser();
+            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
+                return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
+            }
+            orderService.processReturnRequest(requestId, status, rejectedReason, user);
+            return ResponseEntity.ok(Map.of("message", "Xử lý yêu cầu đổi trả thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/return")
+    public ResponseEntity<?> getOrderReturnRequest(@PathVariable Long id) {
+        try {
+            User user = getAuthenticatedUser();
+            Order order = orderService.getOrderById(id);
+            
+            // Check authorization
+            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER") 
+                    && !order.getUser().getId().equals(user.getId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền xem thông tin đổi trả của đơn hàng này"));
+            }
+
+            ReturnRequest returnRequest = orderService.getReturnRequestByOrderId(id).orElse(null);
+            return ResponseEntity.ok(returnRequest);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

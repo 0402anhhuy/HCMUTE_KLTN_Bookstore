@@ -114,14 +114,13 @@ class PaymentServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
             when(paymentRepository.findByOrderId(1L)).thenReturn(Optional.of(samplePayment));
             when(paymentRepository.save(any(Payment.class))).thenReturn(samplePayment);
-            when(orderRepository.save(any(Order.class))).thenReturn(sampleOrder);
 
             boolean result = paymentService.processVNPayCallback(params);
 
             assertTrue(result);
             assertEquals(Payment.PaymentStatus.PAID, samplePayment.getPaymentStatus());
             assertNotNull(samplePayment.getPaidAt());
-            assertEquals(Order.OrderStatus.confirmed, sampleOrder.getStatus());
+            assertEquals(Order.OrderStatus.pending, sampleOrder.getStatus());
             assertEquals("TXN123456", samplePayment.getTransactionCode());
             verify(auditLogService).log(eq(sampleUser), eq("PAYMENT_SUCCESS"), anyString());
             verify(notificationService).createNotification(eq(sampleUser), anyString(), anyString(), any(), any(), any());

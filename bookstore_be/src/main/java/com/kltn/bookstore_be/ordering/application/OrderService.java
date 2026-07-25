@@ -80,6 +80,9 @@ public class OrderService {
     private ReturnRequestRepository returnRequestRepository;
 
     @Autowired
+    private ProductReviewRepository reviewRepository;
+
+    @Autowired
     private AuditLogService auditLogService;
 
     @Autowired
@@ -102,6 +105,8 @@ public class OrderService {
 
     @Transactional
     public OrderResponse checkout(User user, CheckoutRequest request, HttpServletRequest httpRequest) {
+        User dbUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<CartItem> cartItems = new ArrayList<>();
         Product singleProduct = null;
@@ -118,10 +123,22 @@ public class OrderService {
             singleProduct = product;
             totalAmount = product.getPrice().multiply(BigDecimal.valueOf(requestedQty));
         } else {
-            Cart cart = cartService.getCartForUser(user.getId());
-            cartItems = cartService.getCartItems(cart.getId());
-            if (cartItems.isEmpty()) {
+            Cart cart = cartService.getCartForUser(dbUser.getId());
+            List<CartItem> allItems = cartService.getCartItems(cart.getId());
+            if (allItems.isEmpty()) {
                 throw new RuntimeException("Giỏ hàng của bạn đang trống");
+            }
+            if (request.getCartItemIds() != null && !request.getCartItemIds().isEmpty()) {
+                for (CartItem item : allItems) {
+                    if (request.getCartItemIds().contains(item.getId())) {
+                        cartItems.add(item);
+                    }
+                }
+                if (cartItems.isEmpty()) {
+                    throw new RuntimeException("Không tìm thấy sản phẩm nào được chọn trong giỏ hàng");
+                }
+            } else {
+                cartItems.addAll(allItems);
             }
 
             for (CartItem item : cartItems) {
@@ -201,11 +218,12 @@ public class OrderService {
             couponRepository.save(coupon);
         }
 
+        String shippingAddress = request.getShippingAddress() != null && !request.getShippingAddress().isEmpty()
+                ? request.getShippingAddress()
+                : dbUser.getAddress();
+
         BigDecimal discountAmount = promotionDiscount.add(couponDiscount);
-        // Shipping fee (flat 30,000đ, free if total is above 500,000đ)
-        BigDecimal shippingFee = totalAmount.compareTo(BigDecimal.valueOf(500000)) >= 0 
-                ? BigDecimal.ZERO 
-                : BigDecimal.valueOf(30000);
+        BigDecimal shippingFee = calculateShippingFee(shippingAddress, totalAmount);
 
         BigDecimal finalAmountBeforePoints = totalAmount.subtract(discountAmount).add(shippingFee);
         if (finalAmountBeforePoints.compareTo(BigDecimal.ZERO) < 0) {
@@ -214,17 +232,17 @@ public class OrderService {
 
         int pointsUsed = 0;
         BigDecimal pointsDiscount = BigDecimal.ZERO;
-        if (Boolean.TRUE.equals(request.getUsePoints()) && user.getRewardPoints() != null && user.getRewardPoints() > 0) {
-            BigDecimal userPointsValue = BigDecimal.valueOf(user.getRewardPoints()).multiply(BigDecimal.valueOf(10000));
+        if (Boolean.TRUE.equals(request.getUsePoints()) && dbUser.getRewardPoints() != null && dbUser.getRewardPoints() > 0) {
+            BigDecimal userPointsValue = BigDecimal.valueOf(dbUser.getRewardPoints()).multiply(BigDecimal.valueOf(1000));
             if (userPointsValue.compareTo(finalAmountBeforePoints) >= 0) {
                 pointsDiscount = finalAmountBeforePoints;
-                pointsUsed = pointsDiscount.divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.UP).intValue();
+                pointsUsed = pointsDiscount.divide(BigDecimal.valueOf(1000), 0, java.math.RoundingMode.UP).intValue();
             } else {
                 pointsDiscount = userPointsValue;
-                pointsUsed = user.getRewardPoints();
+                pointsUsed = dbUser.getRewardPoints();
             }
-            user.setRewardPoints(user.getRewardPoints() - pointsUsed);
-            userRepository.save(user);
+            dbUser.setRewardPoints(dbUser.getRewardPoints() - pointsUsed);
+            userRepository.save(dbUser);
         }
 
         BigDecimal finalAmount = finalAmountBeforePoints.subtract(pointsDiscount);
@@ -232,14 +250,23 @@ public class OrderService {
             finalAmount = BigDecimal.ZERO;
         }
 
+        if (request.getPaymentMethod() == Order.PaymentMethod.WALLET) {
+            BigDecimal userBalance = BigDecimal.valueOf(dbUser.getWalletBalance() != null ? dbUser.getWalletBalance() : 0.0);
+            if (userBalance.compareTo(finalAmount) < 0) {
+                throw new RuntimeException("Số dư ví không đủ để thanh toán (cần: " + finalAmount + "đ, hiện có: " + userBalance + "đ)");
+            }
+            dbUser.setWalletBalance(dbUser.getWalletBalance() - finalAmount.doubleValue());
+            userRepository.save(dbUser);
+        }
+
         discountAmount = discountAmount.add(pointsDiscount);
 
-        String shippingAddress = request.getShippingAddress() != null && !request.getShippingAddress().isEmpty()
-                ? request.getShippingAddress()
-                : user.getAddress();
+        String recipientPhone = request.getRecipientPhone() != null && !request.getRecipientPhone().isEmpty()
+                ? request.getRecipientPhone()
+                : dbUser.getPhone();
 
         Order order = Order.builder()
-                .user(user)
+                .user(dbUser)
                 .promotion(activePromo)
                 .coupon(activeCoupon)
                 .totalAmount(totalAmount)
@@ -250,6 +277,7 @@ public class OrderService {
                 .pointsDiscount(pointsDiscount)
                 .paymentMethod(request.getPaymentMethod())
                 .shippingAddress(shippingAddress)
+                .recipientPhone(recipientPhone)
                 .status(Order.OrderStatus.pending)
                 .build();
 
@@ -280,13 +308,24 @@ public class OrderService {
         }
 
         // Save Payment record
+        Payment.PaymentMethod payMethod = Payment.PaymentMethod.COD;
+        Payment.PaymentStatus payStatus = Payment.PaymentStatus.PENDING;
+        LocalDateTime paidAt = null;
+
+        if (request.getPaymentMethod() == Order.PaymentMethod.VNPAY) {
+            payMethod = Payment.PaymentMethod.VNPAY;
+        } else if (request.getPaymentMethod() == Order.PaymentMethod.WALLET) {
+            payMethod = Payment.PaymentMethod.WALLET;
+            payStatus = Payment.PaymentStatus.PAID;
+            paidAt = LocalDateTime.now();
+        }
+
         Payment payment = Payment.builder()
                 .order(savedOrder)
-                .paymentMethod(request.getPaymentMethod() == Order.PaymentMethod.COD 
-                        ? Payment.PaymentMethod.COD 
-                        : Payment.PaymentMethod.VNPAY)
+                .paymentMethod(payMethod)
                 .amount(finalAmount)
-                .paymentStatus(Payment.PaymentStatus.PENDING)
+                .paymentStatus(payStatus)
+                .paidAt(paidAt)
                 .build();
         paymentRepository.save(payment);
 
@@ -298,14 +337,20 @@ public class OrderService {
 
         // Clear user cart if not buy now
         if (singleProduct == null) {
-            Cart cart = cartService.getCartForUser(user.getId());
-            cartService.clearCart(cart.getId());
+            if (request.getCartItemIds() != null && !request.getCartItemIds().isEmpty()) {
+                for (CartItem item : cartItems) {
+                    cartService.removeItemFromCart(dbUser.getId(), item.getProduct().getId());
+                }
+            } else {
+                Cart cart = cartService.getCartForUser(dbUser.getId());
+                cartService.clearCart(cart.getId());
+            }
         }
 
         // Audit Log and Notification
-        auditLogService.log(user, "CREATE_ORDER", "Khởi tạo đơn hàng #" + savedOrder.getId() + ", Tổng tiền: " + finalAmount + "đ");
+        auditLogService.log(dbUser, "CREATE_ORDER", "Khởi tạo đơn hàng #" + savedOrder.getId() + ", Tổng tiền: " + finalAmount + "đ");
         notificationService.createNotification(
-                user,
+                dbUser,
                 "Đặt hàng thành công",
                 "Đơn hàng #" + savedOrder.getId() + " đã được tạo thành công. Phương thức thanh toán: " + request.getPaymentMethod(),
                 Notification.NotificationType.ORDER,
@@ -314,7 +359,7 @@ public class OrderService {
         );
         notificationService.notifyManagersAndAdmins(
                 "Đơn hàng mới #" + savedOrder.getId(),
-                "Khách hàng " + user.getFullName() + " đã đặt một đơn hàng mới trị giá " + finalAmount + "đ.",
+                "Khách hàng " + dbUser.getFullName() + " đã đặt một đơn hàng mới trị giá " + finalAmount + "đ.",
                 Notification.NotificationType.ORDER,
                 "orders",
                 savedOrder.getId()
@@ -422,6 +467,7 @@ public class OrderService {
 
         order.setStatus(Order.OrderStatus.cancelled);
         order.setCancelledReason(reason);
+        order.setCancelledAt(LocalDateTime.now());
         orderRepository.save(order);
 
         // Restore inventory stock
@@ -432,9 +478,23 @@ public class OrderService {
             productService.updateProduct(product.getId(), product);
         }
 
-        // Update Payment status if applicable
+        // Update Payment status and refund to user's wallet if already paid (WALLET or VNPAY)
         paymentRepository.findByOrderId(orderId).ifPresent(p -> {
-            p.setPaymentStatus(Payment.PaymentStatus.FAILED);
+            if (p.getPaymentStatus() == Payment.PaymentStatus.PAID) {
+                if (order.getPaymentMethod() == Order.PaymentMethod.WALLET || order.getPaymentMethod() == Order.PaymentMethod.VNPAY) {
+                    User customer = order.getUser();
+                    double refundAmount = order.getFinalAmount().doubleValue();
+                    if (customer.getWalletBalance() == null) {
+                        customer.setWalletBalance(0.0);
+                    }
+                    customer.setWalletBalance(customer.getWalletBalance() + refundAmount);
+                    userRepository.save(customer);
+                    auditLogService.log(user, "WALLET_REFUND", "Hủy đơn hàng #" + orderId + " (Thanh toán " + order.getPaymentMethod() + "), hoàn trả " + refundAmount + "đ vào ví của khách hàng " + customer.getEmail());
+                }
+                p.setPaymentStatus(Payment.PaymentStatus.REFUNDED);
+            } else {
+                p.setPaymentStatus(Payment.PaymentStatus.FAILED);
+            }
             paymentRepository.save(p);
         });
 
@@ -451,7 +511,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void updateOrderAddress(Long orderId, String newAddress, User user) {
+    public void updateOrderAddress(Long orderId, String newAddress, String newPhone, User user) {
         Order order = getOrderById(orderId);
         
         if (!order.getUser().getId().equals(user.getId())) {
@@ -462,14 +522,67 @@ public class OrderService {
             throw new RuntimeException("Chỉ có thể sửa đổi địa chỉ khi đơn hàng đang Chờ xác nhận.");
         }
 
+        // Security check: Verify that new address has the exact same shipping fee to prevent fee evasion
+        BigDecimal originalShippingFee = calculateShippingFee(order.getShippingAddress(), order.getTotalAmount());
+        BigDecimal newShippingFee = calculateShippingFee(newAddress, order.getTotalAmount());
+        if (originalShippingFee.compareTo(newShippingFee) != 0) {
+            throw new RuntimeException("Không thể đổi sang địa chỉ thuộc khu vực có mức phí ship khác (Phí cũ: " 
+                    + originalShippingFee.intValue() + "đ, Phí mới: " + newShippingFee.intValue() + "đ). Vui lòng hủy đơn và đặt lại đơn hàng mới.");
+        }
+
         order.setShippingAddress(newAddress);
+        if (newPhone != null && !newPhone.trim().isEmpty()) {
+            order.setRecipientPhone(newPhone.trim());
+        }
         orderRepository.save(order);
 
-        auditLogService.log(user, "UPDATE_ORDER_ADDRESS", "Cập nhật địa chỉ đơn hàng #" + orderId + " sang: " + newAddress);
+        auditLogService.log(user, "UPDATE_ORDER_ADDRESS", "Cập nhật địa chỉ đơn hàng #" + orderId + " sang: " + newAddress + (newPhone != null ? ", SĐT: " + newPhone : ""));
+    }
+
+    public BigDecimal calculateShippingFee(String shippingAddress, BigDecimal totalAmount) {
+        BigDecimal shippingFee = BigDecimal.ZERO;
+        if (totalAmount.compareTo(BigDecimal.valueOf(500000)) < 0) {
+            if (shippingAddress == null || shippingAddress.trim().isEmpty()) {
+                shippingFee = BigDecimal.valueOf(30000);
+            } else {
+                String addrLower = shippingAddress.toLowerCase();
+
+                // 1. Nội tỉnh HCMC
+                if (addrLower.contains("hồ chí minh") || addrLower.contains("hcm") 
+                        || addrLower.contains("sài gòn") || addrLower.contains("sai gon")) {
+                    shippingFee = BigDecimal.valueOf(15000);
+                }
+                // 2. Miền Nam & Lân cận
+                else if (containsAny(addrLower, 
+                        "bình dương", "binh duong", "bình phước", "binh phuoc", "tây ninh", "tay ninh", 
+                        "đồng nai", "dong nai", "bà rịa", "ba ria", "vũng tàu", "vung tau", "brvt",
+                        "long an", "tiền giang", "tien giang", "bến tre", "ben tre", "trà vinh", "tra vinh", 
+                        "vĩnh long", "vinh long", "đồng tháp", "dong thap", "an giang", "kiên giang", "kien giang", 
+                        "cần thơ", "can tho", "hậu giang", "hau giang", "sóc trăng", "soc trang", "bạc liêu", "bac lieu", 
+                        "cà mau", "ca mau")) {
+                    shippingFee = BigDecimal.valueOf(25000);
+                }
+                // 3. Miền Bắc
+                else if (containsAny(addrLower, 
+                        "hà nội", "ha noi", "hải phòng", "hai phong", "hải dương", "hai duong", "hưng yên", "hung yen",
+                        "thái bình", "thai binh", "nam định", "nam dinh", "hà nam", "ha nam", "ninh bình", "ninh binh",
+                        "vĩnh phúc", "vinh phuc", "bắc ninh", "bac ninh", "quảng ninh", "quang ninh", "lạng sơn", "lang son",
+                        "cao bằng", "cao bang", "hà giang", "ha giang", "tuyên quang", "tuyen quang", "bắc kạn", "bac kan",
+                        "thái nguyên", "thai nguyen", "phú thọ", "phu tho", "bắc giang", "bac giang", "lai châu", "lai chau",
+                        "điện biên", "dien bien", "sơn la", "son la", "hòa bình", "hoa binh", "yên bái", "yen bai", "lào cai", "lao cai")) {
+                    shippingFee = BigDecimal.valueOf(45000);
+                }
+                // 4. Miền Trung / Tây Nguyên
+                else {
+                    shippingFee = BigDecimal.valueOf(35000);
+                }
+            }
+        }
+        return shippingFee;
     }
 
     @Transactional
-    public void requestReturn(Long orderId, String reason, User user) {
+    public void requestReturn(Long orderId, String reason, String returnType, String evidenceImages, User user) {
         Order order = getOrderById(orderId);
         
         if (!order.getUser().getId().equals(user.getId())) {
@@ -481,22 +594,53 @@ public class OrderService {
         }
 
         // Check if within 7 days
-        // We compare against the current local time relative to order's update/creation time
-        // Since we don't store delivered date, we can check from order's last update time or created_at
-        // Let's use created_at for local checks or assume 7 days from now is allowed
         if (order.getCreatedAt().plusDays(7).isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Đã quá thời hạn 07 ngày đổi trả kể từ khi nhận hàng");
         }
 
         // Check if already requested return
-        if (returnRequestRepository.findByOrderId(orderId).isPresent()) {
-            throw new RuntimeException("Đơn hàng này đã gửi yêu cầu đổi trả trước đó");
+        Optional<ReturnRequest> existingOpt = returnRequestRepository.findByOrderId(orderId);
+        if (existingOpt.isPresent()) {
+            ReturnRequest existing = existingOpt.get();
+            if (existing.getStatus() == ReturnRequest.ReturnStatus.REJECTED) {
+                existing.setStatus(ReturnRequest.ReturnStatus.PENDING);
+                existing.setReason(reason);
+                existing.setEvidenceImages(evidenceImages);
+                existing.setReturnType(returnType);
+                existing.setRejectedReason(null);
+                returnRequestRepository.save(existing);
+
+                order.setStatus(Order.OrderStatus.cancel_requested);
+                orderRepository.save(order);
+
+                auditLogService.log(user, "RETURN_REQUEST_APPEAL", "Kháng nghị yêu cầu đổi trả đơn hàng #" + orderId + ", Loại: " + returnType + ", Lý do: " + reason);
+                notificationService.createNotification(
+                        user,
+                        "Yêu cầu đổi trả đã được gửi lại (Kháng nghị)",
+                        "Yêu cầu đổi trả đơn hàng #" + orderId + " đã được cập nhật thông tin và gửi lại để xem xét.",
+                        Notification.NotificationType.RETURN,
+                        "orders",
+                        orderId
+                );
+                notificationService.notifyManagersAndAdmins(
+                        "Kháng nghị yêu cầu đổi trả",
+                        "Khách hàng đã gửi kháng nghị đổi trả cho đơn hàng #" + orderId,
+                        Notification.NotificationType.RETURN,
+                        "orders",
+                        orderId
+                );
+                return;
+            } else {
+                throw new RuntimeException("Đơn hàng này đã gửi yêu cầu đổi trả trước đó");
+            }
         }
 
         ReturnRequest returnRequest = ReturnRequest.builder()
                 .order(order)
                 .user(user)
                 .reason(reason)
+                .returnType(returnType)
+                .evidenceImages(evidenceImages)
                 .status(ReturnRequest.ReturnStatus.PENDING)
                 .build();
         
@@ -505,14 +649,21 @@ public class OrderService {
         order.setStatus(Order.OrderStatus.cancel_requested); // Or mapping to pending return request
         orderRepository.save(order);
 
-        auditLogService.log(user, "RETURN_REQUEST", "Yêu cầu đổi trả đơn hàng #" + orderId + ", Lý do: " + reason);
+        auditLogService.log(user, "RETURN_REQUEST", "Yêu cầu đổi trả đơn hàng #" + orderId + ", Loại: " + returnType + ", Lý do: " + reason);
         notificationService.createNotification(
                 user,
                 "Yêu cầu đổi trả đã được ghi nhận",
                 "Yêu cầu đổi trả đơn hàng #" + orderId + " đang được xem xét xử lý.",
                 Notification.NotificationType.RETURN,
-                "return_requests",
-                returnRequest.getId()
+                "orders",
+                orderId
+        );
+        notificationService.notifyManagersAndAdmins(
+                "Yêu cầu đổi trả mới",
+                "Khách hàng đã gửi yêu cầu đổi trả cho đơn hàng #" + orderId,
+                Notification.NotificationType.RETURN,
+                "orders",
+                orderId
         );
     }
 
@@ -525,9 +676,29 @@ public class OrderService {
         if (status == ReturnRequest.ReturnStatus.REJECTED) {
             request.setRejectedReason(rejectedReason);
             request.getOrder().setStatus(Order.OrderStatus.delivered); // Restore delivered
+            request.getOrder().setDeliveredAt(LocalDateTime.now());
         } else if (status == ReturnRequest.ReturnStatus.APPROVED) {
             request.getOrder().setStatus(Order.OrderStatus.refunded);
+            request.getOrder().setRefundedAt(LocalDateTime.now());
             
+            // Refund to user's wallet if returnType is RETURN_REFUND
+            if ("RETURN_REFUND".equals(request.getReturnType())) {
+                User user = request.getUser();
+                double refundAmount = request.getOrder().getFinalAmount().doubleValue();
+                if (user.getWalletBalance() == null) {
+                    user.setWalletBalance(0.0);
+                }
+                user.setWalletBalance(user.getWalletBalance() + refundAmount);
+                userRepository.save(user);
+                auditLogService.log(manager, "WALLET_REFUND", "Hoàn tiền đơn hàng #" + request.getOrder().getId() + " số tiền: " + refundAmount + "đ vào ví của khách hàng " + user.getEmail());
+                
+                // Set payment status to REFUNDED
+                paymentRepository.findByOrderId(request.getOrder().getId()).ifPresent(p -> {
+                    p.setPaymentStatus(Payment.PaymentStatus.REFUNDED);
+                    paymentRepository.save(p);
+                });
+            }
+
             // Restore inventory stock if approved
             List<OrderItem> items = orderItemRepository.findByOrderId(request.getOrder().getId());
             for (OrderItem item : items) {
@@ -547,13 +718,41 @@ public class OrderService {
                 "Yêu cầu đổi trả đơn hàng #" + request.getOrder().getId() + " đã được: " + status 
                         + (status == ReturnRequest.ReturnStatus.REJECTED ? ". Lý do: " + rejectedReason : ""),
                 Notification.NotificationType.RETURN,
-                "return_requests",
-                requestId
+                "orders",
+                request.getOrder().getId()
+        );
+        notificationService.notifyManagersAndAdmins(
+                "Đã xử lý yêu cầu đổi trả",
+                "Yêu cầu đổi trả đơn hàng #" + request.getOrder().getId() + " đã được xử lý sang: " + status,
+                Notification.NotificationType.RETURN,
+                "orders",
+                request.getOrder().getId()
         );
     }
 
+    public List<ReturnRequest> getAllReturnRequests() {
+        return returnRequestRepository.findAll();
+    }
+
+    public List<ReturnRequest> getUserReturnRequests(Long userId) {
+        return returnRequestRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    public Optional<ReturnRequest> getReturnRequestByOrderId(Long orderId) {
+        return returnRequestRepository.findByOrderId(orderId);
+    }
+
     public List<OrderItem> getOrderItems(Long orderId) {
-        return orderItemRepository.findByOrderId(orderId);
+        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order != null && order.getUser() != null) {
+            Long userId = order.getUser().getId();
+            for (OrderItem item : items) {
+                boolean isReviewed = reviewRepository.existsByUserIdAndProductIdAndOrderId(userId, item.getProduct().getId(), orderId);
+                item.setReviewed(isReviewed);
+            }
+        }
+        return items;
     }
 
     public List<Order> getAllOrders() {
@@ -564,8 +763,25 @@ public class OrderService {
     public void deliverOrder(Long orderId, User manager) {
         Order order = getOrderById(orderId);
         order.setStatus(Order.OrderStatus.delivered);
+        order.setDeliveredAt(LocalDateTime.now());
         orderRepository.save(order);
         auditLogService.log(manager, "DELIVER_ORDER", "Đánh dấu đơn hàng #" + orderId + " đã giao hàng thành công.");
+        
+        notificationService.createNotification(
+                order.getUser(),
+                "Giao hàng thành công",
+                "Đơn hàng #" + orderId + " đã được giao thành công.",
+                Notification.NotificationType.ORDER,
+                "orders",
+                orderId
+        );
+        notificationService.notifyManagersAndAdmins(
+                "Đơn hàng đã giao thành công",
+                "Đơn hàng #" + orderId + " đã được giao thành công.",
+                Notification.NotificationType.ORDER,
+                "orders",
+                orderId
+        );
     }
 
     @Transactional
@@ -574,9 +790,6 @@ public class OrderService {
         Shipper shipper = shipperRepository.findById(shipperId)
                 .orElseThrow(() -> new RuntimeException("Shipper không tồn tại"));
         order.setShipper(shipper);
-        if (order.getStatus() == Order.OrderStatus.pending || order.getStatus() == Order.OrderStatus.confirmed) {
-            order.setStatus(Order.OrderStatus.shipping);
-        }
         orderRepository.save(order);
         auditLogService.log(manager, "ASSIGN_SHIPPER", "Phân công shipper " + shipper.getFullName() + " cho đơn hàng #" + orderId);
     }
@@ -590,7 +803,22 @@ public class OrderService {
             return;
         }
 
+        if (status == Order.OrderStatus.shipping && order.getShipper() == null) {
+            throw new RuntimeException("Không thể chuyển sang trạng thái đang giao hàng khi chưa phân công shipper");
+        }
+
         order.setStatus(status);
+        if (status == Order.OrderStatus.confirmed) {
+            order.setConfirmedAt(LocalDateTime.now());
+        } else if (status == Order.OrderStatus.preparing) {
+            order.setPreparingAt(LocalDateTime.now());
+        } else if (status == Order.OrderStatus.shipping) {
+            order.setShippingAt(LocalDateTime.now());
+        } else if (status == Order.OrderStatus.delivered) {
+            order.setDeliveredAt(LocalDateTime.now());
+        } else if (status == Order.OrderStatus.refunded) {
+            order.setRefundedAt(LocalDateTime.now());
+        }
         orderRepository.save(order);
         auditLogService.log(manager, "UPDATE_ORDER_STATUS", "Cập nhật trạng thái đơn hàng #" + orderId + " sang: " + status);
         
@@ -616,5 +844,17 @@ public class OrderService {
             case refunded: return "Đã hoàn tiền";
             default: return status.name();
         }
+    }
+
+    private boolean containsAny(String target, String... keywords) {
+        if (target == null || keywords == null) {
+            return false;
+        }
+        for (String keyword : keywords) {
+            if (target.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

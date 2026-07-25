@@ -76,8 +76,14 @@ const Register = () => {
     setError('');
     setMessage('');
     try {
-      await api.post('/auth/forgot-password', { email });
-      setMessage('OTP đã được gửi lại tới email. Vui lòng kiểm tra hộp thư.');
+      await api.post('/auth/register', {
+        fullName,
+        email,
+        phone,
+        address,
+        password
+      });
+      setMessage('Mã OTP mới đã được gửi tới email. Vui lòng kiểm tra hộp thư.');
     } catch (err) {
       setError(err.response?.data?.error || 'Không thể gửi lại mã OTP.');
     } finally {

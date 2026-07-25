@@ -149,7 +149,12 @@ public class ProductService {
 
     @Transactional
     public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+        try {
+            productRepository.deleteById(id);
+            productRepository.flush();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new RuntimeException("Không thể xóa sản phẩm này vì đã tồn tại trong lịch sử mua hàng. Hãy chuyển trạng thái sản phẩm sang ẩn hoặc ngừng bán.");
+        }
     }
 
     @Transactional

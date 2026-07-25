@@ -77,6 +77,9 @@ public class Order {
     @Column(name = "shipping_address", nullable = false, length = 500)
     private String shippingAddress;
 
+    @Column(name = "recipient_phone", length = 20)
+    private String recipientPhone;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
@@ -86,6 +89,24 @@ public class Order {
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
+    @Column(name = "preparing_at")
+    private LocalDateTime preparingAt;
+
+    @Column(name = "shipping_at")
+    private LocalDateTime shippingAt;
+
+    @Column(name = "delivered_at")
+    private LocalDateTime deliveredAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "refunded_at")
+    private LocalDateTime refundedAt;
 
     @PrePersist
     protected void onCreate() {
@@ -108,7 +129,7 @@ public class Order {
     }
 
     public enum PaymentMethod {
-        COD, VNPAY
+        COD, VNPAY, WALLET
     }
 
     public enum OrderStatus {

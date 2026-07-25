@@ -65,7 +65,8 @@ public class UserController {
                     "address", user.getAddress() != null ? user.getAddress() : "",
                     "avatarUrl", user.getAvatarUrl() != null ? user.getAvatarUrl() : "",
                     "role", user.getRole().name(),
-                    "rewardPoints", user.getRewardPoints() != null ? user.getRewardPoints() : 0
+                    "rewardPoints", user.getRewardPoints() != null ? user.getRewardPoints() : 0,
+                    "walletBalance", user.getWalletBalance() != null ? user.getWalletBalance() : 0.0
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

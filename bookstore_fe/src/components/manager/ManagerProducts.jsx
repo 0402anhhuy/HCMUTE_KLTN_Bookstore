@@ -17,6 +17,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
   // Form states
   const [productForm, setProductForm] = useState({
@@ -113,16 +114,18 @@ const ManagerProducts = ({ products, categories, loadData }) => {
     }
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-      try {
-        await api.delete(`/products/${id}`);
-        showToast('Xóa sản phẩm thành công!', 'success');
-        loadData();
-      } catch (error) {
-        console.error(error);
-        showToast('Lỗi khi xóa sản phẩm!', 'error');
-      }
+  const handleDeleteProduct = async () => {
+    if (!showDeleteConfirm) return;
+    try {
+      await api.delete(`/products/${showDeleteConfirm}`);
+      showToast('Xóa sản phẩm thành công!', 'success');
+      setShowDeleteConfirm(null);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      const errMsg = error.response?.data?.error || error.response?.data?.message || 'Lỗi khi xóa sản phẩm!';
+      showToast(errMsg, 'error');
+      setShowDeleteConfirm(null);
     }
   };
 
@@ -406,7 +409,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
                       {/* Delete */}
                       <button 
-                        onClick={() => handleDeleteProduct(p.id)}
+                        onClick={() => setShowDeleteConfirm(p.id)}
                         style={{
                           padding: '6px',
                           borderRadius: '6px',
@@ -1046,6 +1049,90 @@ const ManagerProducts = ({ products, categories, loadData }) => {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '400px',
+            padding: '28px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: '#fef2f2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px auto'
+            }}>
+              <Trash2 size={28} style={{ color: '#ef4444' }} />
+            </div>
+            
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>
+              Xác nhận xóa sản phẩm
+            </h3>
+            
+            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 24px 0', lineHeight: '1.5' }}>
+              Bạn có chắc chắn muốn xóa sản phẩm này? Thao tác này không thể hoàn tác và sẽ gỡ bỏ sản phẩm vĩnh viễn khỏi cửa hàng.
+            </p>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  backgroundColor: '#ffffff',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteProduct}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: '#ef4444',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Xác nhận xóa
+              </button>
+            </div>
           </div>
         </div>
       )}

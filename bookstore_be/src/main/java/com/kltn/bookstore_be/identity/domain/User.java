@@ -77,6 +77,9 @@ public class User {
     @Column(name = "reward_points")
     private Integer rewardPoints;
 
+    @Column(name = "wallet_balance")
+    private Double walletBalance;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -86,6 +89,9 @@ public class User {
         }
         if (rewardPoints == null) {
             rewardPoints = 0;
+        }
+        if (walletBalance == null) {
+            walletBalance = 0.0;
         }
     }
 

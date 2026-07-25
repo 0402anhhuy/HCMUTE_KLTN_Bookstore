@@ -154,6 +154,37 @@ class OrderServiceTest {
         }
 
         @Test
+        @DisplayName("Hủy đơn hàng đã thanh toán bằng VNPAY - hoàn tiền về ví và cập nhật REFUNDED")
+        void cancelOrder_paidVNPay_refundsToWalletAndSetsRefunded() {
+            sampleOrder.setPaymentMethod(Order.PaymentMethod.VNPAY);
+            sampleOrder.setFinalAmount(BigDecimal.valueOf(105000));
+            sampleUser.setWalletBalance(50000.0);
+
+            Payment payment = Payment.builder()
+                    .id(1L)
+                    .order(sampleOrder)
+                    .paymentMethod(Payment.PaymentMethod.VNPAY)
+                    .amount(BigDecimal.valueOf(105000))
+                    .paymentStatus(Payment.PaymentStatus.PAID)
+                    .build();
+
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
+            when(orderItemRepository.findByOrderId(1L)).thenReturn(List.of());
+            when(paymentRepository.findByOrderId(1L)).thenReturn(Optional.of(payment));
+            when(orderRepository.save(any(Order.class))).thenReturn(sampleOrder);
+            when(userRepository.save(any(User.class))).thenReturn(sampleUser);
+            when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
+
+            orderService.cancelOrder(1L, "Đổi ý", sampleUser);
+
+            assertEquals(Order.OrderStatus.cancelled, sampleOrder.getStatus());
+            assertEquals(155000.0, sampleUser.getWalletBalance());
+            assertEquals(Payment.PaymentStatus.REFUNDED, payment.getPaymentStatus());
+            verify(userRepository).save(sampleUser);
+            verify(paymentRepository).save(payment);
+        }
+
+        @Test
         @DisplayName("User hủy đơn hàng ở trạng thái confirmed thành công")
         void cancelOrder_confirmedStatus_success() {
             sampleOrder.setStatus(Order.OrderStatus.confirmed);
@@ -272,7 +303,7 @@ class OrderServiceTest {
             });
             when(orderRepository.save(any(Order.class))).thenReturn(sampleOrder);
 
-            orderService.requestReturn(1L, "Sách bị hư", sampleUser);
+            orderService.requestReturn(1L, "Sách bị hư", "RETURN_REFUND", "", sampleUser);
 
             assertEquals(Order.OrderStatus.cancel_requested, sampleOrder.getStatus());
             verify(returnRequestRepository).save(any(ReturnRequest.class));
@@ -288,7 +319,7 @@ class OrderServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
 
             assertThrows(RuntimeException.class, () -> {
-                orderService.requestReturn(1L, "Sách bị hư", sampleUser);
+                orderService.requestReturn(1L, "Sách bị hư", "RETURN_REFUND", "", sampleUser);
             });
         }
 
@@ -299,7 +330,7 @@ class OrderServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
 
             assertThrows(RuntimeException.class, () -> {
-                orderService.requestReturn(1L, "Muốn trả", sampleUser);
+                orderService.requestReturn(1L, "Muốn trả", "RETURN_REFUND", "", sampleUser);
             });
         }
 
@@ -314,7 +345,7 @@ class OrderServiceTest {
                     Optional.of(ReturnRequest.builder().id(1L).build()));
 
             assertThrows(RuntimeException.class, () -> {
-                orderService.requestReturn(1L, "Trả lại", sampleUser);
+                orderService.requestReturn(1L, "Trả lại", "RETURN_REFUND", "", sampleUser);
             });
         }
     }
@@ -412,7 +443,7 @@ class OrderServiceTest {
             orderService.assignShipper(1L, 1L, managerUser);
 
             assertEquals(shipper, sampleOrder.getShipper());
-            assertEquals(Order.OrderStatus.shipping, sampleOrder.getStatus());
+            assertEquals(Order.OrderStatus.pending, sampleOrder.getStatus());
             verify(auditLogService).log(eq(managerUser), eq("ASSIGN_SHIPPER"), anyString());
         }
 

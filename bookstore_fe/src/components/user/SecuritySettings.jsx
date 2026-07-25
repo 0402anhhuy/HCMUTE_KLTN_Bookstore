@@ -16,6 +16,11 @@ const SecuritySettings = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    if (newPassword === oldPassword) {
+      showToast('Mật khẩu mới không được trùng với mật khẩu cũ.', 'error');
+      setLoading(false);
+      return;
+    }
     if (newPassword !== confirmNewPassword) {
       showToast('Mật khẩu xác nhận không khớp.', 'error');
       setLoading(false);
@@ -42,32 +47,32 @@ const SecuritySettings = () => {
 
       <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#4b5563', marginBottom: '4px' }}>Đổi mật khẩu</div>
-        <input 
-          type="password" 
-          placeholder="Mật khẩu hiện tại" 
-          value={oldPassword} 
-          onChange={(e) => setOldPassword(e.target.value)} 
-          style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }} 
-          required 
+        <input
+          type="password"
+          placeholder="Mật khẩu hiện tại"
+          value={oldPassword}
+          onChange={(e) => setOldPassword(e.target.value)}
+          style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }}
+          required
         />
-        <input 
-          type="password" 
-          placeholder="Mật khẩu mới" 
-          value={newPassword} 
-          onChange={(e) => setNewPassword(e.target.value)} 
-          style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }} 
-          required 
+        <input
+          type="password"
+          placeholder="Mật khẩu mới"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }}
+          required
         />
-        <input 
-          type="password" 
-          placeholder="Xác nhận mật khẩu mới" 
-          value={confirmNewPassword} 
-          onChange={(e) => setConfirmNewPassword(e.target.value)} 
-          style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }} 
-          required 
+        <input
+          type="password"
+          placeholder="Xác nhận mật khẩu mới"
+          value={confirmNewPassword}
+          onChange={(e) => setConfirmNewPassword(e.target.value)}
+          style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }}
+          required
         />
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           disabled={loading}
           style={{ padding: '8px', backgroundColor: '#374151', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', marginTop: '4px' }}
         >
@@ -75,37 +80,7 @@ const SecuritySettings = () => {
         </button>
       </form>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginTop: '16px' }}>
-        <div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827' }}>Xác thực hai lớp</div>
-          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '2px' }}>Đang hoạt động</div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setTwoFactor(!twoFactor)}
-          style={{
-            width: '44px',
-            height: '24px',
-            borderRadius: '12px',
-            backgroundColor: twoFactor ? '#10b981' : '#d1d5db',
-            border: 'none',
-            position: 'relative',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}
-        >
-          <div style={{
-            width: '18px',
-            height: '18px',
-            borderRadius: '50%',
-            backgroundColor: '#fff',
-            position: 'absolute',
-            top: '3px',
-            left: twoFactor ? '23px' : '3px',
-            transition: 'left 0.2s'
-          }} />
-        </button>
-      </div>
+
     </div>
   );
 };
