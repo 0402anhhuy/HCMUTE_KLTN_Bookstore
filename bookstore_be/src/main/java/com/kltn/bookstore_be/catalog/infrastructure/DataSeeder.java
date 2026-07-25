@@ -518,26 +518,25 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
 
             Product p21 = Product.builder()
-                    .category(businessCat)
-                    .name("Cuộc chiến vi mạch")
-                    .author("Chris Miller")
-                    .publisher("NXB Khoa Học Kỹ Thuật")
-                    .isbn(generateIsbn("Cuộc chiến vi mạch"))
-                    .description("Lịch sử cạnh tranh công nghệ đằng sau những con chip quyết định thời đại số.")
-                    .price(new BigDecimal("229000.00"))
-                    .stockQuantity(95)
-                    .imageUrls(List.of(
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-01.jpg",
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-02.jpg",
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-03.jpg",
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-04.jpg",
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-05.jpg",
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-06.jpg",
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-07.jpg",
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-08.jpg"
-                    ))
-                    .status(Product.ProductStatus.ACTIVE)
-                    .build();
+                .category(businessCat)
+                .name("Cuộc chiến vi mạch")
+                .author("Chris Miller")
+                .publisher("NXB Khoa Học Kỹ Thuật")
+                .isbn(generateIsbn("Cuộc chiến vi mạch"))
+                .description("Lịch sử cạnh tranh công nghệ đằng sau những con chip quyết định thời đại số.")
+                .price(new BigDecimal("229000.00"))
+                .stockQuantity(95)
+                .imageUrls(List.of(
+                    "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-01.jpg",
+                    "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-02.jpg",
+                    "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-03.jpg",
+                    "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-04.jpg",                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-05.jpg",
+                    "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-06.jpg",
+                    "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-07.jpg",
+                    "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/cuoc-chien-vi-mach--Chris-Miller/ccvm-08.jpg"
+                ))
+                .status(Product.ProductStatus.ACTIVE)
+                .build();
 
             Product p22 = Product.builder()
                     .category(businessCat)
@@ -800,17 +799,17 @@ public class DataSeeder implements CommandLineRunner {
 
         if (couponRepository.findByCode("GIAM50K").isEmpty()) {
             Coupon c3 = Coupon.builder()
-                    .code("GIAM50K")
-                    .description("Giảm cực khủng 50.000đ cho đơn hàng từ 300.000đ")
-                    .discountType(Coupon.DiscountType.FIXED)
-                    .discountValue(new BigDecimal("50000.00"))
-                    .minOrderValue(new BigDecimal("300000.00"))
-                    .maxDiscountAmount(new BigDecimal("50000.00"))
-                    .usageLimit(1000)
-                    .startDate(LocalDateTime.now().minusDays(5))
-                    .endDate(LocalDateTime.now().plusMonths(12))
-                    .status(Coupon.CouponStatus.ACTIVE)
-                    .build();
+                .code("GIAM50K")
+                .description("Giảm cực khủng 50.000đ cho đơn hàng từ 300.000đ")
+                .discountType(Coupon.DiscountType.FIXED)
+                .discountValue(new BigDecimal("50000.00"))
+                .minOrderValue(new BigDecimal("300000.00"))
+                .maxDiscountAmount(new BigDecimal("50000.00"))
+                .usageLimit(1000)
+                .startDate(LocalDateTime.now().minusDays(5))
+                .endDate(LocalDateTime.now().plusMonths(12))
+                .status(Coupon.CouponStatus.ACTIVE)
+                .build();
             couponRepository.save(c3);
         }
     }
