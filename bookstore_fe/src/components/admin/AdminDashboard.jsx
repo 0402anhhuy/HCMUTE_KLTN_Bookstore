@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../../services/api";
 import { useApp } from "../../context/AppContext";
 import {
     LayoutDashboard,
     Users,
-    Tag,
-    ShoppingBag,
-    ClipboardList,
-    ShieldAlert,
+    Package,
+    Percent,
+    Megaphone,
+    Banknote,
     LogOut,
-    Home,
     Bell,
     ShieldCheck,
 } from "lucide-react";
@@ -22,7 +21,7 @@ import AdminCoupons from "./AdminCoupons";
 import AdminAuditLogs from "./AdminAuditLogs";
 
 // Reuse Catalog & Order management from manager for complete admin control
-import ManagerProducts from "../manager/ManagerProducts";
+import AdminProducts from "./AdminProducts";
 import ManagerOrders from "../manager/ManagerOrders";
 
 const AdminDashboard = () => {
@@ -30,37 +29,24 @@ const AdminDashboard = () => {
         user,
         logoutUser,
         showToast,
-        notifications,
-        unreadCount,
-        markNotificationRead,
-        markAllNotificationsAsRead,
     } = useApp();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    // Tab & Notification State
-    const [activeTab, setActiveTab] = useState("dashboard");
-    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const [activeTab, setActiveTab] = useState(
+        () => searchParams.get("tab") || "dashboard",
+    );
 
-    useEffect(() => {
-        const tabParam = searchParams.get("tab");
-        if (tabParam) {
-            setActiveTab(tabParam);
-        }
-    }, [searchParams]);
-
-    // Loading & Data State
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [orders, setOrders] = useState([]);
     const [coupons, setCoupons] = useState([]);
-    const [promotions, setPromotions] = useState([]);
+    const [promotions] = useState([]);
     const [auditLogs, setAuditLogs] = useState([]);
     const [shippers, setShippers] = useState([]);
 
-    // Authorization Check
     useEffect(() => {
         if (!user) {
             navigate("/login");
@@ -72,18 +58,11 @@ const AdminDashboard = () => {
             if (user.role === "MANAGER") navigate("/manager");
             else navigate("/");
         }
-    }, [user, navigate]);
+    }, [user, navigate, showToast]);
 
-    useEffect(() => {
-        if (user && user.role === "ADMIN") {
-            loadData();
-        }
-    }, [activeTab]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            // 1. Fetch Users
             try {
                 const userRes = await api.get("/admin/users");
                 setUsers(userRes.data || []);
@@ -91,18 +70,15 @@ const AdminDashboard = () => {
                 console.error("Error loading users", err);
             }
 
-            // 2. Fetch Categories & Products
             const catRes = await api.get("/categories");
             setCategories(catRes.data || []);
 
             const prodRes = await api.get("/products");
             setProducts(prodRes.data.content || prodRes.data || []);
 
-            // 3. Fetch Orders
             const orderRes = await api.get("/orders/all");
             setOrders(orderRes.data || []);
 
-            // 4. Fetch Coupons
             try {
                 const couponRes = await api.get("/coupons");
                 setCoupons(couponRes.data || []);
@@ -110,7 +86,6 @@ const AdminDashboard = () => {
                 console.error("Error loading coupons", err);
             }
 
-            // 5. Fetch Audit Logs
             try {
                 const logRes = await api.get("/admin/audit-logs");
                 setAuditLogs(logRes.data || []);
@@ -118,7 +93,6 @@ const AdminDashboard = () => {
                 console.error("Error loading audit logs", err);
             }
 
-            // 6. Fetch Shippers
             try {
                 const shipperRes = await api.get("/shippers");
                 setShippers(shipperRes.data || []);
@@ -131,7 +105,16 @@ const AdminDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
+
+    useEffect(() => {
+        if (user?.role === "ADMIN") {
+            const timer = window.setTimeout(() => {
+                loadData();
+            }, 0);
+            return () => window.clearTimeout(timer);
+        }
+    }, [user, activeTab, loadData]);
 
     const handleLogout = () => {
         logoutUser();
@@ -143,18 +126,16 @@ const AdminDashboard = () => {
             style={{
                 display: "flex",
                 minHeight: "100vh",
-                backgroundColor: "#f1f5f9",
+                backgroundColor: "#f4f6f8",
                 fontFamily: "'Outfit', sans-serif",
-                color: "#0f172a",
+                color: "#111827",
             }}
         >
-            {/* Executive Dark Sapphire Sidebar */}
             <aside
                 style={{
-                    width: "270px",
-                    background:
-                        "linear-gradient(180deg, #0f172a 0%, #1e293b 100%)",
-                    borderRight: "1px solid #334155",
+                    width: "240px",
+                    backgroundColor: "#f8fafc",
+                    borderRight: "1px solid #e5e7eb",
                     display: "flex",
                     flexDirection: "column",
                     position: "fixed",
@@ -165,59 +146,57 @@ const AdminDashboard = () => {
                     color: "#ffffff",
                 }}
             >
-                {/* Brand Header */}
                 <div
                     style={{
-                        padding: "24px 22px",
-                        borderBottom: "1px solid #334155",
+                        padding: "18px 14px 14px",
+                        borderBottom: "1px solid #d7def0",
                         display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
+                        flexDirection: "column",
+                        gap: "8px",
                     }}
                 >
-                    <div
-                        style={{
-                            width: "40px",
-                            height: "40px",
-                            borderRadius: "10px",
-                            background:
-                                "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.4)",
-                        }}
-                    >
-                        <ShieldCheck size={22} color="#ffffff" />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div
                             style={{
-                                fontSize: "1.2rem",
-                                fontWeight: 800,
-                                color: "#ffffff",
-                                letterSpacing: "-0.02em",
+                                width: "36px",
+                                height: "36px",
+                                borderRadius: "10px",
+                                backgroundColor: "#ef4444",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                             }}
                         >
-                            Admin UTEShop
-                        </span>
-                        <span
-                            style={{
-                                fontSize: "0.72rem",
-                                fontWeight: 600,
-                                color: "#93c5fd",
-                                letterSpacing: "0.5px",
-                            }}
-                        >
-                            EXECUTIVE PORTAL
-                        </span>
+                            <ShieldCheck size={20} color="#ffffff" />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                            <span
+                                style={{
+                                    fontSize: "1.1rem",
+                                    fontWeight: 700,
+                                    color: "#ef4444",
+                                    letterSpacing: "-0.01em",
+                                    lineHeight: 1.2,
+                                }}
+                            >
+                                Quản trị UTEShop
+                            </span>
+                            <span
+                                style={{
+                                    fontSize: "0.72rem",
+                                    color: "#6b7280",
+                                    fontWeight: 500,
+                                }}
+                            >
+                                Quản trị hệ thống
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Navigation List */}
                 <nav
                     style={{
-                        padding: "24px 14px",
+                        padding: "16px 12px",
                         flex: 1,
                         display: "flex",
                         flexDirection: "column",
@@ -225,36 +204,12 @@ const AdminDashboard = () => {
                     }}
                 >
                     {[
-                        {
-                            id: "dashboard",
-                            label: "Tổng quan Hệ thống",
-                            icon: LayoutDashboard,
-                        },
-                        {
-                            id: "users",
-                            label: "Người dùng & Quyền",
-                            icon: Users,
-                        },
-                        {
-                            id: "coupons",
-                            label: "Mã Giảm Giá & Khuyến Mãi",
-                            icon: Tag,
-                        },
-                        {
-                            id: "products",
-                            label: "Kho Sách & Danh Mục",
-                            icon: ShoppingBag,
-                        },
-                        {
-                            id: "orders",
-                            label: "Đơn Hàng Toàn Sàn",
-                            icon: ClipboardList,
-                        },
-                        {
-                            id: "audit-logs",
-                            label: "Nhật Ký Giám Sát",
-                            icon: ShieldAlert,
-                        },
+                        { id: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
+                        { id: "users", label: "Người dùng", icon: Users },
+                        { id: "products", label: "Sản phẩm", icon: Package },
+                        { id: "coupons", label: "Mã giảm giá", icon: Percent },
+                        { id: "orders", label: "Khuyến mãi", icon: Megaphone },
+                        { id: "audit-logs", label: "Doanh thu", icon: Banknote },
                     ].map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -265,44 +220,28 @@ const AdminDashboard = () => {
                                 style={{
                                     display: "flex",
                                     alignItems: "center",
-                                    gap: "14px",
+                                    gap: "12px",
                                     width: "100%",
-                                    padding: "13px 18px",
+                                    padding: "12px 14px",
                                     borderRadius: "10px",
                                     border: "none",
-                                    backgroundColor: isActive
-                                        ? "#1e40af"
-                                        : "transparent",
-                                    color: isActive ? "#ffffff" : "#cbd5e1",
-                                    fontWeight: isActive ? 700 : 500,
-                                    fontSize: "0.925rem",
+                                    backgroundColor: isActive ? "#ef4444" : "transparent",
+                                    color: isActive ? "#ffffff" : "#4b5563",
+                                    fontWeight: isActive ? 600 : 500,
+                                    fontSize: "0.875rem",
                                     cursor: "pointer",
                                     textAlign: "left",
                                     transition: "all 0.2s ease",
-                                    boxShadow: isActive
-                                        ? "0 4px 12px rgba(30, 64, 175, 0.35)"
-                                        : "none",
                                 }}
                             >
-                                <Icon
-                                    size={19}
-                                    style={{
-                                        color: isActive ? "#ffffff" : "#94a3b8",
-                                    }}
-                                />
+                                <Icon size={18} />
                                 <span>{tab.label}</span>
                             </button>
                         );
                     })}
                 </nav>
 
-                {/* Footer Actions */}
-                <div
-                    style={{
-                        padding: "20px 16px",
-                        borderTop: "1px solid #334155",
-                    }}
-                >
+                <div style={{ padding: "12px 12px 16px" }}>
                     <button
                         onClick={handleLogout}
                         style={{
@@ -311,212 +250,81 @@ const AdminDashboard = () => {
                             justifyContent: "center",
                             gap: "8px",
                             width: "100%",
-                            padding: "12px",
+                            padding: "8px 10px",
                             borderRadius: "10px",
-                            border: "1px solid #ef4444",
-                            backgroundColor: "rgba(239, 68, 68, 0.15)",
-                            color: "#f87171",
-                            fontWeight: 600,
-                            fontSize: "0.875rem",
+                            border: "1px solid #ffb4b1",
+                            backgroundColor: "#ffffff",
+                            color: "#ff5a57",
+                            fontWeight: 700,
+                            fontSize: "0.8rem",
                             cursor: "pointer",
-                            transition: "all 0.2s",
                         }}
                     >
-                        <LogOut size={16} />
-                        <span>Đăng xuất Admin</span>
+                        <LogOut size={15} />
+                        <span>Đăng xuất</span>
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content Area */}
             <div
                 style={{
                     flex: 1,
-                    marginLeft: "270px",
+                    marginLeft: "240px",
                     minHeight: "100vh",
                     display: "flex",
                     flexDirection: "column",
                 }}
             >
-                {/* Top Navbar */}
                 <header
                     style={{
-                        height: "68px",
-                        backgroundColor: "#ffffff",
-                        borderBottom: "1px solid #e2e8f0",
+                        height: "64px",
+                        backgroundColor: "#f4f6f8",
+                        borderBottom: "1px solid #e5e7eb",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        padding: "0 36px",
+                        padding: "0 24px",
                         position: "sticky",
                         top: 0,
                         zIndex: 90,
-                        boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.03)",
                     }}
                 >
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "12px",
-                        }}
-                    >
-                        <span
-                            style={{
-                                padding: "4px 12px",
-                                borderRadius: "6px",
-                                backgroundColor: "#1e40af",
-                                color: "#ffffff",
-                                fontSize: "0.75rem",
-                                fontWeight: 800,
-                                letterSpacing: "1px",
-                            }}
-                        >
-                            ADMIN EXECUTIVE
-                        </span>
-                        <span
-                            style={{
-                                fontWeight: 700,
-                                fontSize: "1.15rem",
-                                color: "#0f172a",
-                            }}
-                        >
-                            Trung Tâm Quản Trị Tối Cao
+                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                        <span style={{ fontWeight: 800, fontSize: "1.25rem", color: "#ef4444", letterSpacing: "-0.5px" }}>
+                            UTEShop
                         </span>
                     </div>
 
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "18px",
-                        }}
-                    >
-                        {/* Home button */}
-                        <Link
-                            to="/"
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                        <button style={{ background: "none", border: "none", color: "#4b5563", cursor: "pointer" }}>
+                            <Bell size={20} />
+                        </button>
+                        <div style={{ width: "34px", height: "34px", borderRadius: "999px", overflow: "hidden", border: "1px solid #d7def0", backgroundColor: "#f3f4f6" }}>
+                            {user?.avatar ? (
+                                <img src={user.avatar} alt={user.fullName || "Admin"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : null}
+                        </div>
+                        <button
+                            onClick={handleLogout}
                             style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                width: "38px",
-                                height: "38px",
-                                borderRadius: "10px",
-                                backgroundColor: "#f1f5f9",
-                                color: "#475569",
-                                transition: "all 0.2s",
+                                padding: "6px 16px",
+                                borderRadius: "6px",
+                                border: "1px solid #fca5a5",
+                                backgroundColor: "transparent",
+                                color: "#ef4444",
+                                fontWeight: 500,
+                                fontSize: "0.875rem",
+                                cursor: "pointer"
                             }}
                         >
-                            <Home size={18} />
-                        </Link>
-
-                        {/* Notifications */}
-                        <div style={{ position: "relative" }}>
-                            <button
-                                onClick={() =>
-                                    setShowNotifDropdown(!showNotifDropdown)
-                                }
-                                style={{
-                                    background: "none",
-                                    border: "none",
-                                    cursor: "pointer",
-                                    color: "#475569",
-                                    position: "relative",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "4px",
-                                    borderRadius: "10px",
-                                }}
-                            >
-                                <Bell size={21} />
-                                {unreadCount > 0 && (
-                                    <span
-                                        style={{
-                                            position: "absolute",
-                                            top: "-2px",
-                                            right: "-2px",
-                                            width: "17px",
-                                            height: "17px",
-                                            backgroundColor: "#ef4444",
-                                            color: "#ffffff",
-                                            borderRadius: "50%",
-                                            fontSize: "0.65rem",
-                                            fontWeight: 700,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            border: "1.5px solid #ffffff",
-                                        }}
-                                    >
-                                        {unreadCount}
-                                    </span>
-                                )}
-                            </button>
-                        </div>
-
-                        {/* Admin Avatar */}
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "10px",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "10px",
-                                    backgroundColor: "#1e40af",
-                                    color: "#ffffff",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontWeight: 800,
-                                    fontSize: "0.9rem",
-                                }}
-                            >
-                                {user
-                                    ? user.fullName.charAt(0).toUpperCase()
-                                    : "A"}
-                            </div>
-                            <div>
-                                <div
-                                    style={{
-                                        fontSize: "0.875rem",
-                                        fontWeight: 700,
-                                        color: "#0f172a",
-                                    }}
-                                >
-                                    {user ? user.fullName : "Admin Executive"}
-                                </div>
-                                <div
-                                    style={{
-                                        fontSize: "0.7rem",
-                                        fontWeight: 600,
-                                        color: "#2563eb",
-                                    }}
-                                >
-                                    Quản Trị Viên
-                                </div>
-                            </div>
-                        </div>
+                            Đăng xuất
+                        </button>
                     </div>
                 </header>
 
-                {/* Content Body */}
-                <main style={{ padding: "36px", flex: 1 }}>
+                <main style={{ padding: "24px 32px", flex: 1, maxWidth: "1200px" }}>
                     {loading ? (
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                height: "350px",
-                                color: "#64748b",
-                                fontWeight: 600,
-                            }}
-                        >
+                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "300px", color: "#64748b", fontWeight: 600 }}>
                             Đang tải dữ liệu Quản trị viên...
                         </div>
                     ) : (
@@ -546,7 +354,7 @@ const AdminDashboard = () => {
                                 />
                             )}
                             {activeTab === "products" && (
-                                <ManagerProducts
+                                <AdminProducts
                                     products={products}
                                     categories={categories}
                                     loadData={loadData}
