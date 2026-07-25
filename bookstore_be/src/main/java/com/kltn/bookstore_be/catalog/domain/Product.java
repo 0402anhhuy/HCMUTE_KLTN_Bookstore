@@ -23,6 +23,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -58,8 +60,30 @@ public class Product {
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url")
-    private String imageUrl;
+    @Builder.Default
+    private List<String> imageUrls = new ArrayList<>();
+
+    @Transient
+    public String getImageUrl() {
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            return imageUrls.get(0);
+        }
+        return null;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        if (imageUrl != null && !imageUrl.isBlank()) {
+            if (this.imageUrls == null) {
+                this.imageUrls = new ArrayList<>();
+            }
+            if (!this.imageUrls.contains(imageUrl)) {
+                this.imageUrls.add(0, imageUrl);
+            }
+        }
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

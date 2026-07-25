@@ -7,7 +7,6 @@ import com.kltn.bookstore_be.payment.domain.*;
 import com.kltn.bookstore_be.review.domain.*;
 import com.kltn.bookstore_be.notification.domain.*;
 import com.kltn.bookstore_be.audit.domain.*;
-import com.kltn.bookstore_be.identity.application.*;
 import com.kltn.bookstore_be.catalog.application.*;
 import com.kltn.bookstore_be.ordering.application.*;
 import com.kltn.bookstore_be.payment.application.*;
@@ -19,7 +18,6 @@ import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
 
 
-import com.kltn.bookstore_be.identity.application.*;
 import com.kltn.bookstore_be.ordering.application.*;
 import com.kltn.bookstore_be.review.application.*;
 import com.kltn.bookstore_be.ordering.domain.Cart;
