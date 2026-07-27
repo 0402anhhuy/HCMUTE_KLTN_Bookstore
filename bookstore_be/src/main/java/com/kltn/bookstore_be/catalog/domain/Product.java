@@ -1,7 +1,6 @@
 package com.kltn.bookstore_be.catalog.domain;
 
 import com.kltn.bookstore_be.identity.domain.*;
-import com.kltn.bookstore_be.catalog.domain.*;
 import com.kltn.bookstore_be.ordering.domain.*;
 import com.kltn.bookstore_be.payment.domain.*;
 import com.kltn.bookstore_be.review.domain.*;
@@ -17,7 +16,6 @@ import com.kltn.bookstore_be.audit.application.*;
 import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
-
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -69,7 +67,7 @@ public class Product {
     @Transient
     public String getImageUrl() {
         if (imageUrls != null && !imageUrls.isEmpty()) {
-            return imageUrls.get(0);
+            return imageUrls.getFirst();
         }
         return null;
     }
@@ -80,7 +78,7 @@ public class Product {
                 this.imageUrls = new ArrayList<>();
             }
             if (!this.imageUrls.contains(imageUrl)) {
-                this.imageUrls.add(0, imageUrl);
+                this.imageUrls.addFirst(imageUrl);
             }
         }
     }
