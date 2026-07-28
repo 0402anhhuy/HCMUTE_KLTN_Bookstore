@@ -14,22 +14,15 @@ import {
     ShieldCheck,
 } from "lucide-react";
 
-// Import Admin Subcomponents
 import AdminHome from "./AdminHome";
 import AdminUsers from "./AdminUsers";
 import AdminCoupons from "./AdminCoupons";
 import AdminAuditLogs from "./AdminAuditLogs";
-
-// Reuse Catalog & Order management from manager for complete admin control
 import AdminProducts from "./AdminProducts";
 import ManagerOrders from "../manager/ManagerOrders";
 
 const AdminDashboard = () => {
-    const {
-        user,
-        logoutUser,
-        showToast,
-    } = useApp();
+    const { user, loading: appLoading, logoutUser, showToast } = useApp();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -39,6 +32,7 @@ const AdminDashboard = () => {
 
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState([]);
+    const [userCount, setUserCount] = useState(0);
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [orders, setOrders] = useState([]);
@@ -48,26 +42,21 @@ const AdminDashboard = () => {
     const [shippers, setShippers] = useState([]);
 
     useEffect(() => {
+        if (appLoading) return;
         if (!user) {
             navigate("/login");
-        } else if (user.role !== "ADMIN") {
-            showToast(
-                "Kênh Quản Trị Viên (Admin) chỉ dành cho tài khoản ADMIN!",
-                "error",
-            );
-            if (user.role === "MANAGER") navigate("/manager");
-            else navigate("/");
-        }
-    }, [user, navigate, showToast]);
+        } else if (user.role == "ADMIN") navigate("/admin");
+        else navigate("/");
+    }, [user, appLoading, navigate]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
             try {
-                const userRes = await api.get("/admin/users");
-                setUsers(userRes.data || []);
+                const userRes = await api.get("/users/count");
+                setUserCount(userRes.data || 0);
             } catch (err) {
-                console.error("Error loading users", err);
+                console.error("Error loading user count", err);
             }
 
             const catRes = await api.get("/categories");
@@ -155,7 +144,13 @@ const AdminDashboard = () => {
                         gap: "8px",
                     }}
                 >
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                        }}
+                    >
                         <div
                             style={{
                                 width: "36px",
@@ -169,7 +164,9 @@ const AdminDashboard = () => {
                         >
                             <ShieldCheck size={20} color="#ffffff" />
                         </div>
-                        <div style={{ display: "flex", flexDirection: "column" }}>
+                        <div
+                            style={{ display: "flex", flexDirection: "column" }}
+                        >
                             <span
                                 style={{
                                     fontSize: "1.1rem",
@@ -204,12 +201,20 @@ const AdminDashboard = () => {
                     }}
                 >
                     {[
-                        { id: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
+                        {
+                            id: "dashboard",
+                            label: "Tổng quan",
+                            icon: LayoutDashboard,
+                        },
                         { id: "users", label: "Người dùng", icon: Users },
                         { id: "products", label: "Sản phẩm", icon: Package },
                         { id: "coupons", label: "Mã giảm giá", icon: Percent },
-                        { id: "orders", label: "Khuyến mãi", icon: Megaphone },
-                        { id: "audit-logs", label: "Doanh thu", icon: Banknote },
+                        { id: "orders", label: "Đơn hàng", icon: Megaphone },
+                        {
+                            id: "audit-logs",
+                            label: "Lịch sử hoạt động",
+                            icon: Banknote,
+                        },
                     ].map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -225,7 +230,9 @@ const AdminDashboard = () => {
                                     padding: "12px 14px",
                                     borderRadius: "10px",
                                     border: "none",
-                                    backgroundColor: isActive ? "#ef4444" : "transparent",
+                                    backgroundColor: isActive
+                                        ? "#ef4444"
+                                        : "transparent",
                                     color: isActive ? "#ffffff" : "#4b5563",
                                     fontWeight: isActive ? 600 : 500,
                                     fontSize: "0.875rem",
@@ -289,19 +296,62 @@ const AdminDashboard = () => {
                         zIndex: 90,
                     }}
                 >
-                    <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                        <span style={{ fontWeight: 800, fontSize: "1.25rem", color: "#ef4444", letterSpacing: "-0.5px" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "14px",
+                        }}
+                    >
+                        <span
+                            style={{
+                                fontWeight: 800,
+                                fontSize: "1.25rem",
+                                color: "#ef4444",
+                                letterSpacing: "-0.5px",
+                            }}
+                        >
                             UTEShop
                         </span>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                        <button style={{ background: "none", border: "none", color: "#4b5563", cursor: "pointer" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                        }}
+                    >
+                        <button
+                            style={{
+                                background: "none",
+                                border: "none",
+                                color: "#4b5563",
+                                cursor: "pointer",
+                            }}
+                        >
                             <Bell size={20} />
                         </button>
-                        <div style={{ width: "34px", height: "34px", borderRadius: "999px", overflow: "hidden", border: "1px solid #d7def0", backgroundColor: "#f3f4f6" }}>
+                        <div
+                            style={{
+                                width: "34px",
+                                height: "34px",
+                                borderRadius: "999px",
+                                overflow: "hidden",
+                                border: "1px solid #d7def0",
+                                backgroundColor: "#f3f4f6",
+                            }}
+                        >
                             {user?.avatar ? (
-                                <img src={user.avatar} alt={user.fullName || "Admin"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                <img
+                                    src={user.avatar}
+                                    alt={user.fullName || "Admin"}
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                    }}
+                                />
                             ) : null}
                         </div>
                         <button
@@ -314,7 +364,7 @@ const AdminDashboard = () => {
                                 color: "#ef4444",
                                 fontWeight: 500,
                                 fontSize: "0.875rem",
-                                cursor: "pointer"
+                                cursor: "pointer",
                             }}
                         >
                             Đăng xuất
@@ -322,9 +372,24 @@ const AdminDashboard = () => {
                     </div>
                 </header>
 
-                <main style={{ padding: "24px 32px", flex: 1, maxWidth: "1200px" }}>
+                <main
+                    style={{
+                        padding: "24px 32px",
+                        flex: 1,
+                        maxWidth: "1200px",
+                    }}
+                >
                     {loading ? (
-                        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "300px", color: "#64748b", fontWeight: 600 }}>
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                height: "300px",
+                                color: "#64748b",
+                                fontWeight: 600,
+                            }}
+                        >
                             Đang tải dữ liệu Quản trị viên...
                         </div>
                     ) : (
@@ -333,6 +398,7 @@ const AdminDashboard = () => {
                                 <AdminHome
                                     user={user}
                                     users={users}
+                                    userCount={userCount}
                                     products={products}
                                     orders={orders}
                                     auditLogs={auditLogs}
