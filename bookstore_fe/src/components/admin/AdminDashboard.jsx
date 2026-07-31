@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import api from "../../services/api";
+import { userService } from "../../services/userService";
+import { categoryService } from "../../services/categoryService";
+import { productService } from "../../services/productService";
+import { orderService } from "../../services/orderService";
+import { couponService } from "../../services/couponService";
+import { auditLogService } from "../../services/auditLogService";
+import { shipperService } from "../../services/shipperService";
 import { useApp } from "../../context/AppContext";
 import {
     LayoutDashboard,
@@ -12,6 +18,7 @@ import {
     LogOut,
     Bell,
     ShieldCheck,
+    FileText,
 } from "lucide-react";
 
 import AdminHome from "./AdminHome";
@@ -20,6 +27,7 @@ import AdminCoupons from "./AdminCoupons";
 import AdminAuditLogs from "./AdminAuditLogs";
 import AdminProducts from "./AdminProducts";
 import ManagerOrders from "../manager/ManagerOrders";
+import AdminRevenue from "./AdminRevenue";
 
 const AdminDashboard = () => {
     const { user, loading: appLoading, logoutUser, showToast } = useApp();
@@ -32,7 +40,7 @@ const AdminDashboard = () => {
 
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState([]);
-    const [userCount, setUserCount] = useState(0);
+    const [totalUsers, setTotalUsers] = useState(0);
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [orders, setOrders] = useState([]);
@@ -53,37 +61,39 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             try {
-                const userRes = await api.get("/users/count");
-                setUserCount(userRes.data || 0);
+                const userRes = await userService.getTotalUsers();
+                const usersRes = await userService.getUsers();
+                setUsers(usersRes.data || []);
+                setTotalUsers(userRes.data || 0);
             } catch (err) {
-                console.error("Error loading user count", err);
+                console.error("Error loading total users", err);
             }
 
-            const catRes = await api.get("/categories");
+            const catRes = await categoryService.getCategories();
             setCategories(catRes.data || []);
 
-            const prodRes = await api.get("/products");
+            const prodRes = await productService.getPendingProducts();
             setProducts(prodRes.data.content || prodRes.data || []);
 
-            const orderRes = await api.get("/orders/all");
+            const orderRes = await orderService.getOrders();
             setOrders(orderRes.data || []);
 
             try {
-                const couponRes = await api.get("/coupons");
+                const couponRes = await couponService.getCoupons();
                 setCoupons(couponRes.data || []);
             } catch (err) {
                 console.error("Error loading coupons", err);
             }
 
             try {
-                const logRes = await api.get("/admin/audit-logs");
+                const logRes = await auditLogService.getAuditLogs();
                 setAuditLogs(logRes.data || []);
             } catch (err) {
                 console.error("Error loading audit logs", err);
             }
 
             try {
-                const shipperRes = await api.get("/shippers");
+                const shipperRes = await shipperService.getShippers();
                 setShippers(shipperRes.data || []);
             } catch (err) {
                 console.error("Error loading shippers", err);
@@ -138,7 +148,6 @@ const AdminDashboard = () => {
                 <div
                     style={{
                         padding: "18px 14px 14px",
-                        borderBottom: "1px solid #d7def0",
                         display: "flex",
                         flexDirection: "column",
                         gap: "8px",
@@ -210,10 +219,11 @@ const AdminDashboard = () => {
                         { id: "products", label: "Sản phẩm", icon: Package },
                         { id: "coupons", label: "Mã giảm giá", icon: Percent },
                         { id: "orders", label: "Đơn hàng", icon: Megaphone },
+                        { id: "revenue", label: "Doanh thu", icon: Banknote },
                         {
                             id: "audit-logs",
                             label: "Lịch sử hoạt động",
-                            icon: Banknote,
+                            icon: FileText,
                         },
                     ].map((tab) => {
                         const Icon = tab.icon;
@@ -398,7 +408,7 @@ const AdminDashboard = () => {
                                 <AdminHome
                                     user={user}
                                     users={users}
-                                    userCount={userCount}
+                                    userCount={totalUsers}
                                     products={products}
                                     orders={orders}
                                     auditLogs={auditLogs}
@@ -432,6 +442,9 @@ const AdminDashboard = () => {
                                     shippers={shippers}
                                     loadData={loadData}
                                 />
+                            )}
+                            {activeTab === "revenue" && (
+                                <AdminRevenue orders={orders} />
                             )}
                             {activeTab === "audit-logs" && (
                                 <AdminAuditLogs
