@@ -11,7 +11,6 @@ const AdminRevenue = ({ orders }) => {
     const totalOrders = deliveredOrders.length;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
-    // Spoofed "Số dư ví" for Admin based on platform cut/revenue
     const soDuVi = totalRevenue * 0.68;
 
     const recentTransactions = [...deliveredOrders].sort((a, b) => {
