@@ -98,7 +98,7 @@ public class Product {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (status == null) {
-            status = ProductStatus.ACTIVE;
+            status = ProductStatus.PENDING;
         }
         if (stockQuantity == null) {
             stockQuantity = 0;
@@ -111,6 +111,6 @@ public class Product {
     }
 
     public enum ProductStatus {
-        ACTIVE, INACTIVE
+        PENDING, ACTIVE, REJECTED, INACTIVE
     }
 }
