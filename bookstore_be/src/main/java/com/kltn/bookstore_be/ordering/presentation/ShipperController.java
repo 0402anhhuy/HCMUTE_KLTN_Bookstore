@@ -11,16 +11,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/shippers")
 public class ShipperController {
 
-    @Autowired
-    private ShipperRepository shipperRepository;
+    private final ShipperRepository shipperRepository;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
     private User getAuthenticatedUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
