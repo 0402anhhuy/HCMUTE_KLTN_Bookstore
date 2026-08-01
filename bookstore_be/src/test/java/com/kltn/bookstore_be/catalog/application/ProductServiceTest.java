@@ -61,7 +61,9 @@ class ProductServiceTest {
                 .description("Truyện tranh Doraemon tập 1")
                 .price(BigDecimal.valueOf(25000))
                 .stockQuantity(100)
-                .imageUrl("http://example.com/doraemon.jpg")
+                .imageUrls(List.of(
+                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"
+                ))
                 .status(Product.ProductStatus.ACTIVE)
                 .category(sampleCategory)
                 .build();
@@ -197,7 +199,9 @@ class ProductServiceTest {
                     .description("Tái bản 2026")
                     .price(BigDecimal.valueOf(30000))
                     .stockQuantity(200)
-                    .imageUrl("http://example.com/doraemon-v2.jpg")
+                    .imageUrls(List.of(
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"
+                    ))
                     .status(Product.ProductStatus.ACTIVE)
                     .build();
 
@@ -225,7 +229,9 @@ class ProductServiceTest {
                     .description("Mô tả")
                     .price(BigDecimal.valueOf(25000))
                     .stockQuantity(100)
-                    .imageUrl("http://example.com/doraemon.jpg")
+                    .imageUrls(List.of(
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"
+                    ))
                     .status(Product.ProductStatus.ACTIVE)
                     .build();
 
@@ -253,7 +259,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("Nhập kho (IMPORT) - tăng số lượng tồn kho")
         void adjustStock_import_increasesStock() {
-            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct)); 
             when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);
             when(stockMovementRepository.save(any(StockMovement.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
