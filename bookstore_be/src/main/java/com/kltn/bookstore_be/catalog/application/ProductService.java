@@ -8,7 +8,6 @@ import com.kltn.bookstore_be.review.domain.*;
 import com.kltn.bookstore_be.notification.domain.*;
 import com.kltn.bookstore_be.audit.domain.*;
 import com.kltn.bookstore_be.identity.application.*;
-import com.kltn.bookstore_be.catalog.application.*;
 import com.kltn.bookstore_be.ordering.application.*;
 import com.kltn.bookstore_be.payment.application.*;
 import com.kltn.bookstore_be.review.application.*;
@@ -17,8 +16,6 @@ import com.kltn.bookstore_be.audit.application.*;
 import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
-
-
 import com.kltn.bookstore_be.catalog.domain.Category;
 import com.kltn.bookstore_be.catalog.domain.Product;
 import com.kltn.bookstore_be.catalog.domain.StockMovement;
@@ -26,7 +23,8 @@ import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.catalog.domain.CategoryRepository;
 import com.kltn.bookstore_be.catalog.domain.ProductRepository;
 import com.kltn.bookstore_be.catalog.domain.StockMovementRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,23 +33,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class ProductService {
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private StockMovementRepository stockMovementRepository;
-
-    @Autowired
-    private AuditLogService auditLogService;
-
-    @Autowired
-    private NotificationService notificationService;
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final StockMovementRepository stockMovementRepository;
+    private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     public Page<Product> searchProducts(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
         return productRepository.searchProducts(keyword, categoryId, minPrice, maxPrice, pageable);
@@ -99,39 +91,29 @@ public class ProductService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
         product.setCategory(category);
-        product.setName(updatedDetails.getName());
-        product.setAuthor(updatedDetails.getAuthor());
-        product.setPublisher(updatedDetails.getPublisher());
-        product.setIsbn(updatedDetails.getIsbn());
-        product.setDescription(updatedDetails.getDescription());
-        product.setPrice(updatedDetails.getPrice());
-        product.setImageUrl(updatedDetails.getImageUrl());
-        product.setStatus(updatedDetails.getStatus());
-        product.setStockQuantity(updatedDetails.getStockQuantity());
-        Product saved = productRepository.save(product);
-        if (saved.getStatus() == Product.ProductStatus.ACTIVE && oldStatus != Product.ProductStatus.ACTIVE) {
-            notificationService.notifyManagersAndAdmins(
-                    "Sản phẩm đã duyệt",
-                    "Sách '" + saved.getName() + "' đã được duyệt và hoạt động (ACTIVE).",
-                    Notification.NotificationType.SYSTEM,
-                    "products",
-                    saved.getId()
-            );
-        }
-        return saved;
+        return getProduct(updatedDetails, product, oldStatus);
     }
 
     @Transactional
     public Product updateProduct(Long id, Product updatedDetails) {
         Product product = getProductById(id);
         Product.ProductStatus oldStatus = product.getStatus();
+        return getProduct(updatedDetails, product, oldStatus);
+    }
+
+    @NonNull
+    private Product getProduct(Product updatedDetails, Product product, Product.ProductStatus oldStatus) {
         product.setName(updatedDetails.getName());
         product.setAuthor(updatedDetails.getAuthor());
         product.setPublisher(updatedDetails.getPublisher());
         product.setIsbn(updatedDetails.getIsbn());
         product.setDescription(updatedDetails.getDescription());
         product.setPrice(updatedDetails.getPrice());
-        product.setImageUrl(updatedDetails.getImageUrl());
+        if (updatedDetails.getImageUrls() != null && !updatedDetails.getImageUrls().isEmpty()) {
+            product.setImageUrls(new java.util.ArrayList<>(updatedDetails.getImageUrls()));
+        } else {
+            product.setImageUrl(updatedDetails.getImageUrl());
+        }
         product.setStatus(updatedDetails.getStatus());
         product.setStockQuantity(updatedDetails.getStockQuantity());
         Product saved = productRepository.save(product);
@@ -198,5 +180,13 @@ public class ProductService {
 
     public List<StockMovement> getAllStockMovements() {
         return stockMovementRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    public List<Product> getProductsByStatus(Product.ProductStatus status) {
+        return productRepository.findByStatusOrderByIdDesc(status);
+    }
+
+    public long countProductsByStatus(Product.ProductStatus status) {
+        return productRepository.countByStatus(status);
     }
 }
