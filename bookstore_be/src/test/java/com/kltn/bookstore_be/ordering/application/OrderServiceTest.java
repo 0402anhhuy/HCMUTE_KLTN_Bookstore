@@ -255,7 +255,7 @@ class OrderServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
             when(orderRepository.save(any(Order.class))).thenReturn(sampleOrder);
 
-            orderService.updateOrderAddress(1L, "456 New Street", sampleUser);
+            orderService.updateOrderAddress(1L, "456 New Street", "0337686257", sampleUser);
 
             assertEquals("456 New Street", sampleOrder.getShippingAddress());
             verify(auditLogService).log(eq(sampleUser), eq("UPDATE_ORDER_ADDRESS"), anyString());
@@ -268,7 +268,7 @@ class OrderServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
 
             assertThrows(RuntimeException.class, () -> {
-                orderService.updateOrderAddress(1L, "456 New Street", sampleUser);
+                orderService.updateOrderAddress(1L, "456 New Street", "0337686257", sampleUser);
             });
         }
 
@@ -279,7 +279,7 @@ class OrderServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
 
             assertThrows(RuntimeException.class, () -> {
-                orderService.updateOrderAddress(1L, "456 New Street", otherUser);
+                orderService.updateOrderAddress(1L, "456 New Street", "0337686257", sampleUser);
             });
         }
     }

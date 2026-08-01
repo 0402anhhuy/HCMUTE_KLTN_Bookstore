@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import api from '../../services/api';
@@ -61,8 +61,14 @@ const ProductDetail = () => {
   };
 
   const getProductImage = (prod) => {
-    if (!prod || !prod.imageUrl) return null;
-    const url = prod.imageUrl;
+    if (!prod) return null;
+    let url = prod.imageUrl;
+    if (Array.isArray(prod.imageUrls) && prod.imageUrls.length > 0) {
+      url = prod.imageUrls[0];
+    } else if (Array.isArray(url) && url.length > 0) {
+      url = url[0];
+    }
+    if (!url || typeof url !== 'string') return null;
     if (url.includes('mat_ngu_cuoc_doi')) return matNguCover;
     if (url.includes('long_tin')) return longTinCover;
     if (url.includes('nghe_thuat_ve')) return ngheThuatCover;
@@ -101,12 +107,21 @@ const ProductDetail = () => {
   if (!product) return <div style={{ padding: '80px 0', textAlign: 'center' }}>Không tìm thấy sản phẩm</div>;
 
   const getProductImagesList = (prod) => {
-    if (!prod || !prod.imageUrl) return [];
-    return prod.imageUrl.split(' || ').map(s => s.trim()).filter(Boolean);
+    if (!prod) return [];
+    if (Array.isArray(prod.imageUrls) && prod.imageUrls.length > 0) {
+      return prod.imageUrls.filter(Boolean);
+    }
+    if (Array.isArray(prod.imageUrl) && prod.imageUrl.length > 0) {
+      return prod.imageUrl.filter(Boolean);
+    }
+    if (typeof prod.imageUrl === 'string' && prod.imageUrl) {
+      return prod.imageUrl.split(' || ').map(s => s.trim()).filter(Boolean);
+    }
+    return [];
   };
 
   const resolveSingleImageUrl = (url) => {
-    if (!url) return null;
+    if (!url || typeof url !== 'string') return null;
     if (url.includes('mat_ngu_cuoc_doi')) return matNguCover;
     if (url.includes('long_tin')) return longTinCover;
     if (url.includes('nghe_thuat_ve')) return ngheThuatCover;

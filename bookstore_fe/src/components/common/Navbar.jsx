@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { ShoppingCart, Bell, FileText, Search } from 'lucide-react';
 
 const Navbar = () => {
-  const { user, cart, logoutUser, notifications, unreadCount, markNotificationRead, markAllNotificationsAsRead, showToast, favorites = [] } = useApp();
+  const { user, loading, cart, logoutUser, notifications, unreadCount, markNotificationRead, markAllNotificationsAsRead, showToast, favorites = [] } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [navSearch, setNavSearch] = useState('');
   const navigate = useNavigate();
@@ -98,11 +98,18 @@ const Navbar = () => {
               onMouseLeave={(e) => e.currentTarget.style.color = '#4A5568'}>
           Khám phá kho sách
         </Link>
-        {user && (user.role === 'MANAGER' || user.role === 'ADMIN') && (
-          <Link to="/manager" style={{ color: '#7c3aed', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#6d28d9'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#7c3aed'}>
+        {user && user.role === 'MANAGER' && (
+          <Link to="/manager" style={{ color: '#1C3F24', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#0f2615'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#1C3F24'}>
             Kênh quản lý
+          </Link>
+        )}
+        {user && user.role === 'ADMIN' && (
+          <Link to="/admin" style={{ color: '#1C3F24', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#0f2615'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#1C3F24'}>
+            Kênh quản trị
           </Link>
         )}
       </div>
@@ -269,7 +276,11 @@ const Navbar = () => {
           )}
         </Link>
 
-        {user ? (
+        {loading ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '4px', minWidth: '120px' }}>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Đang xác thực...</span>
+            </div>
+        ) : user ? (
           /* User Actions - Display Name & Logout Button Directly */
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '4px' }}>
             <Link 

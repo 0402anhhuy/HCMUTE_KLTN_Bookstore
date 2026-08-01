@@ -1,53 +1,45 @@
 package com.kltn.bookstore_be.ordering.presentation;
 
-import com.kltn.bookstore_be.identity.domain.*;
-import com.kltn.bookstore_be.catalog.domain.*;
-import com.kltn.bookstore_be.ordering.domain.*;
-import com.kltn.bookstore_be.payment.domain.*;
-import com.kltn.bookstore_be.review.domain.*;
-import com.kltn.bookstore_be.notification.domain.*;
-import com.kltn.bookstore_be.audit.domain.*;
-import com.kltn.bookstore_be.identity.application.*;
-import com.kltn.bookstore_be.catalog.application.*;
-import com.kltn.bookstore_be.ordering.application.*;
-import com.kltn.bookstore_be.payment.application.*;
-import com.kltn.bookstore_be.review.application.*;
-import com.kltn.bookstore_be.notification.application.*;
-import com.kltn.bookstore_be.audit.application.*;
-import com.kltn.bookstore_be.identity.infrastructure.*;
-import com.kltn.bookstore_be.payment.infrastructure.*;
-import com.kltn.bookstore_be.common.*;
+import java.util.List;
+import java.util.Map;
 
-
-import com.kltn.bookstore_be.ordering.application.CheckoutRequest;
-import com.kltn.bookstore_be.ordering.application.OrderResponse;
-import com.kltn.bookstore_be.ordering.domain.Order;
-import com.kltn.bookstore_be.ordering.domain.OrderItem;
-import com.kltn.bookstore_be.identity.domain.User;
-import com.kltn.bookstore_be.ordering.application.OrderService;
-import com.kltn.bookstore_be.identity.application.UserService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.kltn.bookstore_be.identity.application.UserService;
+import com.kltn.bookstore_be.identity.domain.User;
+import com.kltn.bookstore_be.ordering.application.CheckoutRequest;
+import com.kltn.bookstore_be.ordering.application.OrderResponse;
+import com.kltn.bookstore_be.ordering.application.OrderService;
+import com.kltn.bookstore_be.ordering.domain.Coupon;
+import com.kltn.bookstore_be.ordering.domain.CouponRepository;
+import com.kltn.bookstore_be.ordering.domain.Order;
+import com.kltn.bookstore_be.ordering.domain.OrderItem;
+import com.kltn.bookstore_be.ordering.domain.ReturnRequest;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/orders")
 public class OrderController {
 
-    @Autowired
-    private OrderService orderService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private CouponRepository couponRepository;
+    private final OrderService orderService;
+    private final UserService userService;
+    private final CouponRepository couponRepository;
 
     private User getAuthenticatedUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -86,9 +78,9 @@ public class OrderController {
         try {
             User user = getAuthenticatedUser();
             Order order = orderService.getOrderById(id);
-            
+
             // Check authorization
-            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER") 
+            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")
                     && !order.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền xem đơn hàng này"));
             }
@@ -116,7 +108,7 @@ public class OrderController {
 
     @PutMapping("/{id}/address")
     public ResponseEntity<?> updateAddress(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam String address,
             @RequestParam(required = false) String phone) {
         try {
@@ -130,7 +122,7 @@ public class OrderController {
 
     @PostMapping("/{id}/return")
     public ResponseEntity<?> requestReturn(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestParam String reason,
             @RequestParam(required = false, defaultValue = "RETURN_REFUND") String returnType,
             @RequestParam(required = false) String evidenceImages) {
@@ -190,9 +182,9 @@ public class OrderController {
         try {
             User user = getAuthenticatedUser();
             Order order = orderService.getOrderById(id);
-            
+
             // Check authorization
-            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER") 
+            if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")
                     && !order.getUser().getId().equals(user.getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền xem thông tin đổi trả của đơn hàng này"));
             }

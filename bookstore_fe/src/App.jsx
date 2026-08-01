@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import {
     BrowserRouter as Router,
     Routes,
@@ -24,12 +25,25 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 
 function AppContent() {
     const location = useLocation();
-    const { toast } = useApp();
+    const { toast, user, loading: appLoading } = useApp();
+    const navigate = useNavigate();
+    const path = location.pathname.toLowerCase();
     const isAuthPage =
-        location.pathname === "/login" || location.pathname === "/register";
-    const isManagerPage = location.pathname.startsWith("/manager");
-    const isAdminPage = location.pathname.startsWith("/admin");
+        path === "/login" || path === "/register";
+    const isManagerPage = path.startsWith("/manager");
+    const isAdminPage = path.startsWith("/admin");
     const hideLayout = isAuthPage || isManagerPage || isAdminPage;
+
+    useEffect(() => {
+        if (appLoading) return;
+        if (user) {
+            if (user.role === 'ADMIN' && !isAdminPage) {
+                navigate('/admin', { replace: true });
+            } else if (user.role === 'MANAGER' && !isManagerPage) {
+                navigate('/manager', { replace: true });
+            }
+        }
+    }, [user, appLoading, isAdminPage, isManagerPage, navigate]);
 
     return (
         <div
