@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import api from '../services/api';
-import { Lock, Mail, User as UserIcon, Send, Eye, EyeOff } from 'lucide-react';
+import { User as Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const { loginUser, showToast } = useApp();
@@ -38,7 +38,9 @@ const Login = () => {
         status: response.data.status
       };
       loginUser(response.data.token, userData);
-      if (userData.role === 'MANAGER' || userData.role === 'ADMIN') {
+      if (userData.role === 'ADMIN') {
+        navigate('/admin');
+      } else if (userData.role === 'MANAGER') {
         navigate('/manager');
       } else {
         navigate('/');
