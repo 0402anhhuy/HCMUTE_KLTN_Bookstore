@@ -17,15 +17,13 @@ import com.kltn.bookstore_be.audit.application.*;
 import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
-
-
-import com.kltn.bookstore_be.catalog.domain.Category;
 import com.kltn.bookstore_be.catalog.domain.Product;
 import com.kltn.bookstore_be.catalog.domain.StockMovement;
 import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.catalog.application.ProductService;
 import com.kltn.bookstore_be.identity.application.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,27 +31,32 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api")
+@RequiredArgsConstructor
+@RequestMapping("/api/products")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private FavoriteProductRepository favoriteProductRepository;
+    private final ProductService productService;
+    private final UserService userService;
+    private final FavoriteProductRepository favoriteProductRepository;
 
     private User getAuthenticatedUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return getUser(userService);
+    }
+
+    @NonNull
+    public static User getUser(UserService userService) {
+        Object principal = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
         if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
             String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
             return userService.findByEmail(email)
@@ -62,7 +65,7 @@ public class ProductController {
         throw new RuntimeException("Người dùng chưa được xác thực");
     }
 
-    @GetMapping("/products")
+    @GetMapping
     public ResponseEntity<?> searchProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
@@ -89,7 +92,7 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/products/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable Long id) {
         try {
             Product product = productService.getProductById(id);
@@ -99,17 +102,33 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/categories")
-    public ResponseEntity<?> getAllCategories() {
+    @GetMapping("/status/{status}")
+    public ResponseEntity<?> getProductsByStatus(@PathVariable String status) {
         try {
-            List<Category> categories = productService.getAllCategories();
-            return ResponseEntity.ok(categories);
+            Product.ProductStatus productStatus = Product.ProductStatus.valueOf(status.toUpperCase());
+            List<Product> products = productService.getProductsByStatus(productStatus);
+            return ResponseEntity.ok(products);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Trạng thái không hợp lệ"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    @GetMapping("/products/stock-movements")
+    @GetMapping("/count/status/{status}")
+    public ResponseEntity<?> countProductsByStatus(@PathVariable String status) {
+        try {
+            Product.ProductStatus productStatus = Product.ProductStatus.valueOf(status.toUpperCase());
+            long count = productService.countProductsByStatus(productStatus);
+            return ResponseEntity.ok(Map.of("count", count));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Trạng thái không hợp lệ"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/stock-movements")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> getAllStockMovements() {
         try {
@@ -120,7 +139,7 @@ public class ProductController {
         }
     }
 
-    @PostMapping("/products/{id}/adjust-stock")
+    @PostMapping("/{id}/adjust-stock")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> adjustStock(
             @PathVariable Long id,
@@ -137,7 +156,7 @@ public class ProductController {
         }
     }
 
-    @PostMapping("/products")
+    @PostMapping
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> createProduct(
             @RequestBody Product product,
@@ -151,7 +170,7 @@ public class ProductController {
         }
     }
 
-    @PutMapping("/products/{id}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> updateProduct(
             @PathVariable Long id,
@@ -166,7 +185,7 @@ public class ProductController {
         }
     }
 
-    @DeleteMapping("/products/{id}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         try {
@@ -211,7 +230,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/favorites")
-    @jakarta.transaction.Transactional
+    @Transactional
     public ResponseEntity<?> removeFavorite(@RequestParam Long productId) {
         try {
             User user = getAuthenticatedUser();

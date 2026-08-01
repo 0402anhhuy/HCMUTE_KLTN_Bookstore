@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { Edit2, Search, Trash2, UserPlus } from "lucide-react";
 import api from "../../services/api";
+import { useApp } from "../../context/AppContext";
+import AdminEditProfile from "./AdminEditProfile";
 
 const AdminUsers = ({ users = [], loadData, showToast }) => {
+    const { user: currentUser } = useApp();
     const [searchTerm, setSearchTerm] = useState("");
     const [updatingId, setUpdatingId] = useState(null);
+    const [editingUser, setEditingUser] = useState(null);
 
     const filteredUsers = users.filter((user) => {
         const keyword = searchTerm.toLowerCase();
@@ -32,6 +36,20 @@ const AdminUsers = ({ users = [], loadData, showToast }) => {
             setUpdatingId(null);
         }
     };
+
+    if (editingUser) {
+        return (
+            <AdminEditProfile 
+                user={editingUser} 
+                onCancel={() => setEditingUser(null)}
+                onSave={(data) => {
+                    // Placeholder for now
+                    showToast("Giao diện đã lưu tạm thời! (Chưa gọi API backend)", "success");
+                    setEditingUser(null);
+                }}
+            />
+        );
+    }
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
@@ -90,10 +108,10 @@ const AdminUsers = ({ users = [], loadData, showToast }) => {
                     <thead>
                         <tr style={{ backgroundColor: "#f8faff", color: "#94a3b8" }}>
                             <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700 }}>Người dùng</th>
-                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700 }}>Vai trò</th>
-                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700 }}>Trạng thái</th>
-                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700 }}>Điểm</th>
-                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700 }}>Hành động</th>
+                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700, textAlign: "center" }}>Vai trò</th>
+                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700, textAlign: "center" }}>Trạng thái</th>
+                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700, textAlign: "center" }}>Điểm</th>
+                            <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700, textAlign: "center" }}>Hành động</th>
                             <th style={{ padding: "12px 18px", fontSize: "0.72rem", fontWeight: 700, textAlign: "right" }}>Thao tác</th>
                         </tr>
                     </thead>
@@ -108,6 +126,7 @@ const AdminUsers = ({ users = [], loadData, showToast }) => {
                             filteredUsers.map((user) => {
                                 const initials = (user.fullName || user.email || "U").trim().charAt(0).toUpperCase();
                                 const isLocked = user.status === "LOCKED";
+                                const isCurrentUser = currentUser?.id === user.id || currentUser?.email === user.email;
                                 return (
                                     <tr key={user.id} style={{ borderTop: "1px solid #edf2f7" }}>
                                         <td style={{ padding: "14px 18px" }}>
@@ -125,23 +144,29 @@ const AdminUsers = ({ users = [], loadData, showToast }) => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td style={{ padding: "14px 18px" }}>
-                                            <span style={{ display: "inline-flex", alignItems: "center", borderRadius: "999px", padding: "5px 10px", backgroundColor: user.role === "ADMIN" ? "#fee2e2" : user.role === "MANAGER" ? "#dbeafe" : "#eef2ff", color: user.role === "ADMIN" ? "#dc2626" : user.role === "MANAGER" ? "#2563eb" : "#4f46e5", fontWeight: 700, fontSize: "0.76rem" }}>
+                                        <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                                            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "999px", padding: "5px 10px", backgroundColor: user.role === "ADMIN" ? "#fee2e2" : user.role === "MANAGER" ? "#dbeafe" : "#eef2ff", color: user.role === "ADMIN" ? "#dc2626" : user.role === "MANAGER" ? "#2563eb" : "#4f46e5", fontWeight: 700, fontSize: "0.76rem" }}>
                                                 {user.role === "ADMIN" ? "Quản trị viên" : user.role === "MANAGER" ? "Người quản lý" : "Người dùng"}
                                             </span>
                                         </td>
-                                        <td style={{ padding: "14px 18px" }}>
-                                            <span style={{ display: "inline-flex", alignItems: "center", borderRadius: "999px", padding: "5px 10px", backgroundColor: isLocked ? "#fff1f2" : "#ecfdf5", color: isLocked ? "#ef4444" : "#16a34a", fontWeight: 700, fontSize: "0.76rem" }}>
+                                        <td style={{ padding: "14px 18px", textAlign: "center" }}>
+                                            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "999px", padding: "5px 10px", backgroundColor: isLocked ? "#fff1f2" : "#ecfdf5", color: isLocked ? "#ef4444" : "#16a34a", fontWeight: 700, fontSize: "0.76rem" }}>
                                                 {isLocked ? "Đã khóa" : "Hoạt động"}
                                             </span>
                                         </td>
-                                        <td style={{ padding: "14px 18px", color: "#334155", fontWeight: 700 }}>
-                                            120
+                                        <td style={{ padding: "14px 18px", color: "#334155", fontWeight: 700, textAlign: "center" }}>
+                                            {user.rewardPoints || 0}
                                         </td>
                                         <td style={{ padding: "14px 18px" }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#1d4ed8" }}>
-                                                <Edit2 size={15} />
-                                                <Trash2 size={15} color="#ef4444" />
+                                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#1d4ed8" }}>
+                                                {isCurrentUser && (
+                                                    <Edit2 
+                                                        size={15} 
+                                                        style={{ cursor: "pointer" }} 
+                                                        onClick={() => setEditingUser(user)}
+                                                    />
+                                                )}
+                                                <Trash2 size={15} color="#ef4444" style={{ cursor: "pointer" }} />
                                             </div>
                                         </td>
                                         <td style={{ padding: "14px 18px", textAlign: "right" }}>

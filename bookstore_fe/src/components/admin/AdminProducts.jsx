@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Check, X, ClipboardList } from "lucide-react";
+import { productService } from "../../services/productService";
 import AdminDetailProduct from "./AdminDetailProduct";
 
 const AdminProducts = ({ products, categories, loadData }) => {
@@ -12,6 +13,29 @@ const AdminProducts = ({ products, categories, loadData }) => {
 
     // Modal states
     const [selectedProductId, setSelectedProductId] = useState(null);
+
+    // Stats states
+    const [pendingCount, setPendingCount] = useState(0);
+    const [approvedCount, setApprovedCount] = useState(0);
+    const [rejectedCount, setRejectedCount] = useState(0);
+
+    useEffect(() => {
+        const fetchCounts = async () => {
+            try {
+                const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
+                    productService.getPendingCount(),
+                    productService.getApprovedCount(),
+                    productService.getRejectedCount(),
+                ]);
+                setPendingCount(pendingRes.data?.count || 0);
+                setApprovedCount(approvedRes.data?.count || 0);
+                setRejectedCount(rejectedRes.data?.count || 0);
+            } catch (error) {
+                console.error("Lỗi khi tải số lượng sản phẩm theo trạng thái:", error);
+            }
+        };
+        fetchCounts();
+    }, [products]);
 
     const getImagesList = (urlStr) => {
         if (!urlStr) return [];
@@ -150,7 +174,7 @@ const AdminProducts = ({ products, categories, loadData }) => {
                             marginBottom: "8px",
                         }}
                     >
-                        5
+                        {pendingCount}
                     </div>
                     <div
                         style={{
@@ -159,7 +183,7 @@ const AdminProducts = ({ products, categories, loadData }) => {
                             color: "#10b981",
                         }}
                     >
-                        +5 hôm nay
+                        theo thời gian thực
                     </div>
                 </div>
 
@@ -200,7 +224,7 @@ const AdminProducts = ({ products, categories, loadData }) => {
                             marginBottom: "8px",
                         }}
                     >
-                        52
+                        {approvedCount}
                     </div>
                     <div
                         style={{
@@ -250,7 +274,7 @@ const AdminProducts = ({ products, categories, loadData }) => {
                             marginBottom: "8px",
                         }}
                     >
-                        0
+                        {rejectedCount}
                     </div>
                     <div
                         style={{

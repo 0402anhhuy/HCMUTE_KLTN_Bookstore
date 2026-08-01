@@ -1,58 +1,34 @@
 package com.kltn.bookstore_be.identity.application;
 
-import com.kltn.bookstore_be.identity.domain.*;
-import com.kltn.bookstore_be.catalog.domain.*;
-import com.kltn.bookstore_be.ordering.domain.*;
-import com.kltn.bookstore_be.payment.domain.*;
-import com.kltn.bookstore_be.review.domain.*;
-import com.kltn.bookstore_be.notification.domain.*;
-import com.kltn.bookstore_be.audit.domain.*;
-import com.kltn.bookstore_be.catalog.application.*;
-import com.kltn.bookstore_be.ordering.application.*;
-import com.kltn.bookstore_be.payment.application.*;
-import com.kltn.bookstore_be.review.application.*;
-import com.kltn.bookstore_be.notification.application.*;
-import com.kltn.bookstore_be.audit.application.*;
-import com.kltn.bookstore_be.identity.infrastructure.*;
-import com.kltn.bookstore_be.payment.infrastructure.*;
-import com.kltn.bookstore_be.common.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
-
-import com.kltn.bookstore_be.ordering.application.*;
-import com.kltn.bookstore_be.review.application.*;
-import com.kltn.bookstore_be.ordering.domain.Cart;
-import com.kltn.bookstore_be.identity.domain.OtpToken;
-import com.kltn.bookstore_be.identity.domain.User;
-import com.kltn.bookstore_be.ordering.domain.CartRepository;
-import com.kltn.bookstore_be.identity.domain.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import com.kltn.bookstore_be.audit.application.AuditLogService;
+import com.kltn.bookstore_be.identity.domain.OtpToken;
+import com.kltn.bookstore_be.identity.domain.User;
+import com.kltn.bookstore_be.identity.domain.UserRepository;
+import com.kltn.bookstore_be.notification.application.NotificationService;
+import com.kltn.bookstore_be.notification.domain.Notification;
+import com.kltn.bookstore_be.ordering.domain.Cart;
+import com.kltn.bookstore_be.ordering.domain.CartRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private OtpService otpService;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private AuditLogService auditLogService;
-
-    @Autowired
-    private NotificationService notificationService;
+    private final UserRepository userRepository;
+    private final CartRepository cartRepository;
+    private final OtpService otpService;
+    private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     @Transactional
     public User register(RegisterRequest request) {
@@ -83,7 +59,7 @@ public class UserService {
         }
 
         User savedUser = userRepository.save(user);
-        
+
         // Generate and send OTP code
         otpService.generateAndSendOtp(savedUser, OtpToken.OtpType.REGISTER);
 
@@ -170,7 +146,7 @@ public class UserService {
         if (request.getAvatarUrl() != null) {
             user.setAvatarUrl(request.getAvatarUrl());
         }
-        
+
         User updatedUser = userRepository.save(user);
         auditLogService.log(updatedUser, "UPDATE_PROFILE", "Cập nhật thông tin cá nhân");
         return updatedUser;
@@ -202,6 +178,10 @@ public class UserService {
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
     @Transactional

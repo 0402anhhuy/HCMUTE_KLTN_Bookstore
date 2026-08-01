@@ -8,10 +8,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-
     @Query("SELECT p FROM Product p WHERE p.status = 'ACTIVE' " +
            "AND (:keyword IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
@@ -26,4 +26,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable
     );
+    List<Product> findByStatusOrderByIdDesc(Product.ProductStatus status);
+    
+    long countByStatus(Product.ProductStatus status);
 }
