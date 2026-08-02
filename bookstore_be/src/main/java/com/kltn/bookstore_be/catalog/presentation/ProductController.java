@@ -50,20 +50,6 @@ public class ProductController {
     private final UserService userService;
     private final FavoriteProductRepository favoriteProductRepository;
 
-    private User getAuthenticatedUser() {
-        return getUser(userService);
-    }
-
-    @NonNull
-    public static User getUser(UserService userService) {
-        Object principal = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
-        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-            String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
-            return userService.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
-        }
-        throw new RuntimeException("Người dùng chưa được xác thực");
-    }
 
     @GetMapping
     public ResponseEntity<?> searchProducts(
@@ -148,7 +134,7 @@ public class ProductController {
             @RequestParam String note
     ) {
         try {
-            User manager = getAuthenticatedUser();
+            User manager = userService.getAuthenticatedUser();
             productService.adjustStock(id, quantity, movementType, note, manager);
             return ResponseEntity.ok(Map.of("message", "Điều chỉnh kho thành công"));
         } catch (Exception e) {
@@ -199,7 +185,7 @@ public class ProductController {
     @GetMapping("/favorites")
     public ResponseEntity<?> getFavorites() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             List<FavoriteProduct> list = favoriteProductRepository.findByUserId(user.getId());
             return ResponseEntity.ok(list);
         } catch (Exception e) {
@@ -210,7 +196,7 @@ public class ProductController {
     @PostMapping("/favorites")
     public ResponseEntity<?> addFavorite(@RequestParam Long productId) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             Product product = productService.getProductById(productId);
             
             java.util.Optional<FavoriteProduct> existing = favoriteProductRepository.findByUserIdAndProductId(user.getId(), productId);
@@ -233,7 +219,7 @@ public class ProductController {
     @Transactional
     public ResponseEntity<?> removeFavorite(@RequestParam Long productId) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             favoriteProductRepository.deleteByUserIdAndProductId(user.getId(), productId);
             return ResponseEntity.ok(Map.of("message", "Đã xóa khỏi danh sách yêu thích"));
         } catch (Exception e) {
