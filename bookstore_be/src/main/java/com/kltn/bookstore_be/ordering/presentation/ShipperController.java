@@ -22,18 +22,9 @@ public class ShipperController {
 
     private final UserService userService;
 
-    private User getAuthenticatedUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-            String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
-            return userService.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
-        }
-        throw new RuntimeException("Người dùng chưa được xác thực");
-    }
 
     private void checkManagerOrAdmin() {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
             throw new RuntimeException("Bạn không có quyền thực hiện chức năng này");
         }

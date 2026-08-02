@@ -9,7 +9,6 @@ import com.kltn.bookstore_be.notification.domain.*;
 import com.kltn.bookstore_be.audit.domain.*;
 import com.kltn.bookstore_be.identity.application.*;
 import com.kltn.bookstore_be.catalog.application.*;
-import com.kltn.bookstore_be.ordering.application.*;
 import com.kltn.bookstore_be.payment.application.*;
 import com.kltn.bookstore_be.review.application.*;
 import com.kltn.bookstore_be.notification.application.*;
@@ -17,14 +16,13 @@ import com.kltn.bookstore_be.audit.application.*;
 import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
-
-
 import com.kltn.bookstore_be.ordering.domain.Cart;
 import com.kltn.bookstore_be.ordering.domain.CartItem;
 import com.kltn.bookstore_be.catalog.domain.Product;
 import com.kltn.bookstore_be.ordering.domain.CartItemRepository;
 import com.kltn.bookstore_be.ordering.domain.CartRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,16 +30,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CartService {
 
-    @Autowired
-    private CartRepository cartRepository;
-
-    @Autowired
-    private CartItemRepository cartItemRepository;
-
-    @Autowired
-    private ProductService productService;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductService productService;
 
     @Transactional
     public Cart getCartForUser(Long userId) {

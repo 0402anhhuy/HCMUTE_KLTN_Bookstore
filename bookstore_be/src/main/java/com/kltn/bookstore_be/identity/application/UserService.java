@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -178,6 +181,16 @@ public class UserService {
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    public User getAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserDetails) {
+            String email = ((UserDetails) auth.getPrincipal()).getUsername();
+            return this.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
+        }
+        throw new RuntimeException("Xin lỗi, bạn cần đăng nhập trước");
     }
 
     public List<User> getAllUsers() {

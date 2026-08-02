@@ -23,7 +23,6 @@ import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 
-import static com.kltn.bookstore_be.catalog.presentation.ProductController.getUser;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,14 +32,11 @@ public class UserController {
     private final UserService userService;
     private final NotificationService notificationService;
 
-    private User getAuthenticatedUser() {
-        return getUser(userService);
-    }
 
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             return ResponseEntity.ok(Map.of(
                     "email", user.getEmail(),
                     "fullName", user.getFullName(),
@@ -59,7 +55,7 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             User updated = userService.updateProfile(user, request);
             java.util.Map<String, Object> response = new java.util.HashMap<>();
             response.put("message", "Cập nhật hồ sơ cá nhân thành công");
@@ -76,7 +72,7 @@ public class UserController {
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             userService.changePassword(user, request);
             return ResponseEntity.ok(Map.of("message", "Thay đổi mật khẩu thành công"));
         } catch (Exception e) {
@@ -87,7 +83,7 @@ public class UserController {
     @GetMapping("/notifications")
     public ResponseEntity<?> getNotifications() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             List<Notification> list = notificationService.getNotificationsForUser(user.getId());
             // Map to avoid lazy initialization issues with User object inside Notification if any
             // We can return a simplified projection or list directly
@@ -110,7 +106,7 @@ public class UserController {
     @PutMapping("/notifications/read-all")
     public ResponseEntity<?> readAllNotifications() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             notificationService.markAllAsRead(user.getId());
             return ResponseEntity.ok(Map.of("message", "Đã đọc tất cả thông báo"));
         } catch (Exception e) {

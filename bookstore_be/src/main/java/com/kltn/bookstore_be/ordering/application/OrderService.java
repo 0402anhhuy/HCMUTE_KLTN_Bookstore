@@ -9,7 +9,6 @@ import com.kltn.bookstore_be.notification.domain.*;
 import com.kltn.bookstore_be.audit.domain.*;
 import com.kltn.bookstore_be.identity.application.*;
 import com.kltn.bookstore_be.catalog.application.*;
-import com.kltn.bookstore_be.ordering.application.*;
 import com.kltn.bookstore_be.payment.application.*;
 import com.kltn.bookstore_be.review.application.*;
 import com.kltn.bookstore_be.notification.application.*;
@@ -17,11 +16,7 @@ import com.kltn.bookstore_be.audit.application.*;
 import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
-
-
 import com.kltn.bookstore_be.payment.infrastructure.VNPayUtil;
-import com.kltn.bookstore_be.ordering.application.CheckoutRequest;
-import com.kltn.bookstore_be.ordering.application.OrderResponse;
 import com.kltn.bookstore_be.identity.domain.*;
 import com.kltn.bookstore_be.catalog.domain.*;
 import com.kltn.bookstore_be.ordering.domain.*;
@@ -36,8 +31,9 @@ import com.kltn.bookstore_be.payment.domain.*;
 import com.kltn.bookstore_be.review.domain.*;
 import com.kltn.bookstore_be.notification.domain.*;
 import com.kltn.bookstore_be.audit.domain.*;
+
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,46 +46,22 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
-
-    @Autowired
-    private CartService cartService;
-
-    @Autowired
-    private ProductService productService;
-
-    @Autowired
-    private CouponRepository couponRepository;
-
-    @Autowired
-    private PromotionRepository promotionRepository;
-
-    @Autowired
-    private PaymentRepository paymentRepository;
-
-    @Autowired
-    private ReturnRequestRepository returnRequestRepository;
-
-    @Autowired
-    private ProductReviewRepository reviewRepository;
-
-    @Autowired
-    private AuditLogService auditLogService;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private ShipperRepository shipperRepository;
+    private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final CartService cartService;
+    private final ProductService productService;
+    private final CouponRepository couponRepository;
+    private final PromotionRepository promotionRepository;
+    private final PaymentRepository paymentRepository;
+    private final ReturnRequestRepository returnRequestRepository;
+    private final ProductReviewRepository reviewRepository;
+    private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
+    private final ShipperRepository shipperRepository;
 
     @Value("${vnpay.tmn-code}")
     private String vnp_TmnCode;
@@ -419,7 +391,7 @@ public class OrderService {
         while (itr.hasNext()) {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+            if ((fieldValue != null) && (!fieldValue.isEmpty())) {
                 // Build hash data
                 hashData.append(fieldName);
                 hashData.append('=');
@@ -833,17 +805,16 @@ public class OrderService {
     }
 
     private String getStatusName(Order.OrderStatus status) {
-        switch(status) {
-            case pending: return "Chờ xác nhận";
-            case confirmed: return "Đã xác nhận";
-            case preparing: return "Đang chuẩn bị";
-            case shipping: return "Đang giao hàng";
-            case delivered: return "Đã giao hàng";
-            case cancelled: return "Đã hủy";
-            case cancel_requested: return "Yêu cầu hủy";
-            case refunded: return "Đã hoàn tiền";
-            default: return status.name();
-        }
+        return switch (status) {
+            case pending -> "Chờ xác nhận";
+            case confirmed -> "Đã xác nhận";
+            case preparing -> "Đang chuẩn bị";
+            case shipping -> "Đang giao hàng";
+            case delivered -> "Đã giao hàng";
+            case cancelled -> "Đã hủy";
+            case cancel_requested -> "Yêu cầu hủy";
+            case refunded -> "Đã hoàn tiền";
+        };
     }
 
     private boolean containsAny(String target, String... keywords) {

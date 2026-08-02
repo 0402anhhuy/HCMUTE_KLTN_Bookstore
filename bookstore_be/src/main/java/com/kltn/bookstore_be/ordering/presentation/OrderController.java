@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +18,6 @@ import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.ordering.application.CheckoutRequest;
 import com.kltn.bookstore_be.ordering.application.OrderResponse;
 import com.kltn.bookstore_be.ordering.application.OrderService;
-import com.kltn.bookstore_be.ordering.domain.Coupon;
 import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 import com.kltn.bookstore_be.ordering.domain.Order;
 import com.kltn.bookstore_be.ordering.domain.OrderItem;
@@ -28,9 +26,6 @@ import com.kltn.bookstore_be.ordering.domain.ReturnRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -41,20 +36,10 @@ public class OrderController {
     private final UserService userService;
     private final CouponRepository couponRepository;
 
-    private User getAuthenticatedUser() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-            String email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
-            return userService.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Người dùng chưa được xác thực"));
-        }
-        throw new RuntimeException("Người dùng chưa được xác thực");
-    }
-
     @PostMapping("/checkout")
     public ResponseEntity<?> checkout(@Valid @RequestBody CheckoutRequest request, HttpServletRequest httpRequest) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             OrderResponse response = orderService.checkout(user, request, httpRequest);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -65,7 +50,7 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<?> getMyOrders() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             List<Order> orders = orderService.getUserOrders(user.getId());
             return ResponseEntity.ok(orders);
         } catch (Exception e) {
@@ -76,7 +61,7 @@ public class OrderController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getOrderDetails(@PathVariable Long id) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             Order order = orderService.getOrderById(id);
 
             // Check authorization
@@ -98,7 +83,7 @@ public class OrderController {
     @PostMapping("/{id}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable Long id, @RequestParam String reason) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             orderService.cancelOrder(id, reason, user);
             return ResponseEntity.ok(Map.of("message", "Đơn hàng đã được hủy thành công"));
         } catch (Exception e) {
@@ -112,7 +97,7 @@ public class OrderController {
             @RequestParam String address,
             @RequestParam(required = false) String phone) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             orderService.updateOrderAddress(id, address, phone, user);
             return ResponseEntity.ok(Map.of("message", "Cập nhật địa chỉ nhận hàng thành công"));
         } catch (Exception e) {
@@ -127,7 +112,7 @@ public class OrderController {
             @RequestParam(required = false, defaultValue = "RETURN_REFUND") String returnType,
             @RequestParam(required = false) String evidenceImages) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             orderService.requestReturn(id, reason, returnType, evidenceImages, user);
             return ResponseEntity.ok(Map.of("message", "Yêu cầu đổi trả đã được gửi thành công"));
         } catch (Exception e) {
@@ -138,7 +123,7 @@ public class OrderController {
     @GetMapping("/returns/my")
     public ResponseEntity<?> getMyReturnRequests() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             List<ReturnRequest> returns = orderService.getUserReturnRequests(user.getId());
             return ResponseEntity.ok(returns);
         } catch (Exception e) {
@@ -149,7 +134,7 @@ public class OrderController {
     @GetMapping("/returns")
     public ResponseEntity<?> getAllReturnRequests() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
             }
@@ -166,7 +151,7 @@ public class OrderController {
             @RequestParam ReturnRequest.ReturnStatus status,
             @RequestParam(required = false) String rejectedReason) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
             }
@@ -180,7 +165,7 @@ public class OrderController {
     @GetMapping("/{id}/return")
     public ResponseEntity<?> getOrderReturnRequest(@PathVariable Long id) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             Order order = orderService.getOrderById(id);
 
             // Check authorization
@@ -199,7 +184,7 @@ public class OrderController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllOrders() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
             }
@@ -213,7 +198,7 @@ public class OrderController {
     @PostMapping("/{id}/deliver")
     public ResponseEntity<?> deliverOrder(@PathVariable Long id) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
             }
@@ -227,7 +212,7 @@ public class OrderController {
     @PostMapping("/{id}/assign-shipper")
     public ResponseEntity<?> assignShipper(@PathVariable Long id, @RequestParam Long shipperId) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
             }
@@ -241,23 +226,12 @@ public class OrderController {
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam Order.OrderStatus status) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
             }
             orderService.updateOrderStatus(id, status, user);
             return ResponseEntity.ok(Map.of("message", "Cập nhật trạng thái đơn hàng thành công"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @GetMapping("/coupons")
-    public ResponseEntity<?> getCoupons() {
-        try {
-            User user = getAuthenticatedUser();
-            List<Coupon> coupons = couponRepository.findByUserIdOrUserIsNull(user.getId());
-            return ResponseEntity.ok(coupons);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
