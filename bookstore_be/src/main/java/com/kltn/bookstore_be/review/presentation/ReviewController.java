@@ -25,7 +25,6 @@ import com.kltn.bookstore_be.review.domain.ProductReview;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import static com.kltn.bookstore_be.catalog.presentation.ProductController.getUser;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,9 +34,6 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final UserService userService;
 
-    private User getAuthenticatedUser() {
-        return getUser(userService);
-    }
 
     @GetMapping("/product/{productId}")
     public ResponseEntity<?> getProductReviews(@PathVariable Long productId) {
@@ -52,7 +48,7 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<?> addReview(@Valid @RequestBody ReviewRequest request) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             ProductReview review = reviewService.addReview(user, request);
             return ResponseEntity.ok(Map.of(
                     "message", "Cảm ơn bạn đã đánh giá sản phẩm!",
@@ -66,7 +62,7 @@ public class ReviewController {
     @GetMapping
     public ResponseEntity<?> getAllReviews() {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (!user.getRole().name().equals("ADMIN") && !user.getRole().name().equals("MANAGER")) {
                 return ResponseEntity.status(403).body(Map.of("error", "Bạn không có quyền thực hiện chức năng này"));
             }
@@ -81,7 +77,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> deleteReview(@PathVariable Long id, @RequestParam String reason) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             if (reason == null || reason.trim().isEmpty()) {
                 throw new RuntimeException("Lý do xóa không được để trống");
             }
@@ -96,7 +92,7 @@ public class ReviewController {
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> replyReview(@PathVariable Long id, @RequestBody Map<String, String> body) {
         try {
-            User user = getAuthenticatedUser();
+            User user = userService.getAuthenticatedUser();
             String reply = body.get("reply");
             if (reply == null || reply.trim().isEmpty()) {
                 throw new RuntimeException("Nội dung phản hồi không được để trống");
