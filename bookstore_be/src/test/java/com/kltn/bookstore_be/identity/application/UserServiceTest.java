@@ -5,6 +5,7 @@ import com.kltn.bookstore_be.identity.domain.*;
 import com.kltn.bookstore_be.notification.application.NotificationService;
 import com.kltn.bookstore_be.ordering.domain.Cart;
 import com.kltn.bookstore_be.ordering.domain.CartRepository;
+import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,6 +32,9 @@ class UserServiceTest {
 
     @Mock
     private CartRepository cartRepository;
+
+    @Mock
+    private CouponRepository couponRepository;
 
     @Mock
     private OtpService otpService;
@@ -153,6 +157,7 @@ class UserServiceTest {
             when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(lockedUser));
             when(otpService.verifyOtp(1L, "123456", OtpToken.OtpType.REGISTER)).thenReturn(true);
             when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+            when(couponRepository.findByCode(anyString())).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(lockedUser);
             when(cartRepository.save(any(Cart.class))).thenReturn(Cart.builder().id(1L).build());
 
@@ -162,6 +167,7 @@ class UserServiceTest {
             assertEquals(User.UserStatus.ACTIVE, lockedUser.getStatus());
             assertNull(lockedUser.getLockedReason());
             verify(cartRepository).save(any(Cart.class));
+            verify(couponRepository, times(2)).save(any());
             verify(auditLogService).log(eq(lockedUser), eq("REGISTER"), anyString());
             verify(notificationService).createNotification(eq(lockedUser), anyString(), anyString(), any(), any(), any());
         }
