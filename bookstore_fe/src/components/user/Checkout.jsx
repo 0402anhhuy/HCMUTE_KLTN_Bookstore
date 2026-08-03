@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
@@ -34,18 +34,39 @@ const Checkout = () => {
   const [usePoints, setUsePoints] = useState(searchParams.get('usePoints') === 'true');
   const [bestCoupon, setBestCoupon] = useState(null);
   const [recipientPhone, setRecipientPhone] = useState('');
+  const couponVersionRef = useRef('');
+
+  const fetchCoupons = async (notifyChange = false) => {
+    try {
+      const res = await api.get('/coupons');
+      const nextCoupons = res.data || [];
+      const nextVersion = JSON.stringify(nextCoupons.map(c => ({
+        id: c.id,
+        code: c.code,
+        discountType: c.discountType,
+        discountValue: c.discountValue,
+        minOrderValue: c.minOrderValue,
+        maxDiscountAmount: c.maxDiscountAmount,
+        status: c.status,
+        endDate: c.endDate,
+        usageLimit: c.usageLimit,
+        usedCount: c.usedCount,
+      })));
+      if (notifyChange && couponVersionRef.current && couponVersionRef.current !== nextVersion) {
+        showToast('Voucher đã được cập nhật. Hệ thống đang tính lại ưu đãi tốt nhất.', 'info');
+      }
+      couponVersionRef.current = nextVersion;
+      setCoupons(nextCoupons);
+    } catch (err) {
+      console.error("Failed to fetch coupons", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchCoupons = async () => {
-      try {
-        const res = await api.get('/orders/coupons');
-        setCoupons(res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch coupons", err);
-      }
-    };
     if (user) {
       fetchCoupons();
+      const refreshTimer = setInterval(() => fetchCoupons(true), 10000);
+      return () => clearInterval(refreshTimer);
     }
   }, [user]);
 
@@ -64,6 +85,7 @@ const Checkout = () => {
           setBuyNowProduct(res.data);
         } catch (err) {
           console.error("Failed to fetch buy-now product details", err);
+          showToast(err.response?.data?.error || 'Sản phẩm này không còn khả dụng hoặc đã được tạm ẩn.', 'error');
           setError("Không thể tải thông tin sản phẩm mua ngay.");
         } finally {
           setFetchingProduct(false);
@@ -201,6 +223,13 @@ const Checkout = () => {
         recipientPhone: recipientPhone.trim(),
         paymentMethod,
         couponCode: couponCode.trim() || null,
+        couponSnapshot: activeCouponObj ? {
+          id: activeCouponObj.id,
+          discountType: activeCouponObj.discountType,
+          discountValue: activeCouponObj.discountValue,
+          minOrderValue: activeCouponObj.minOrderValue,
+          maxDiscountAmount: activeCouponObj.maxDiscountAmount,
+        } : null,
         usePoints,
         ...(productId ? { productId: Number(productId), quantity: qty } : { cartItemIds: selectedCartItemIds })
       };
@@ -214,7 +243,14 @@ const Checkout = () => {
         navigate('/orders');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+      const message = err.response?.data?.error || 'Không thể đặt hàng. Vui lòng thử lại.';
+      setError(message);
+      showToast(message, 'error');
+      await fetchCart();
+      if (message.toLowerCase().includes('mã giảm giá')) {
+        setCouponCode('');
+        await fetchCoupons();
+      }
     } finally {
       setLoading(false);
     }

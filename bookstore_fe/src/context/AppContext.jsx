@@ -55,6 +55,11 @@ export const AppProvider = ({ children }) => {
     // Load cart and notifications when user logs in
     useEffect(() => {
         if (user) {
+            // Sessions created before phone/address were included in the login
+            // response need one profile refresh so checkout can prefill them.
+            if (!Object.prototype.hasOwnProperty.call(user, "phone")) {
+                reloadUserProfile();
+            }
             fetchCart();
             fetchNotifications();
             fetchFavorites();
