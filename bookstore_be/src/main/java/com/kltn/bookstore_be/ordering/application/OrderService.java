@@ -163,6 +163,10 @@ public class OrderService {
         if (request.getCouponCode() != null && !request.getCouponCode().trim().isEmpty()) {
             Coupon coupon = couponRepository.findByCode(request.getCouponCode().trim())
                     .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
+
+            if (couponWasChangedSinceSelection(coupon, request.getCouponSnapshot())) {
+                throw new RuntimeException("Mã giảm giá đã được thay đổi. Vui lòng tải lại thông tin voucher và thực hiện đặt hàng lại.");
+            }
             
             if (coupon.getStatus() != Coupon.CouponStatus.ACTIVE 
                     || coupon.getStartDate().isAfter(LocalDateTime.now()) 
@@ -349,6 +353,24 @@ public class OrderService {
                 .paymentUrl(paymentUrl)
                 .createdAt(savedOrder.getCreatedAt())
                 .build();
+    }
+
+    private boolean couponWasChangedSinceSelection(Coupon coupon, CheckoutRequest.CouponSnapshot snapshot) {
+        if (snapshot == null) {
+            return true;
+        }
+        return !Objects.equals(coupon.getId(), snapshot.getId())
+                || !coupon.getDiscountType().name().equals(snapshot.getDiscountType())
+                || differs(coupon.getDiscountValue(), snapshot.getDiscountValue())
+                || differs(coupon.getMinOrderValue(), snapshot.getMinOrderValue())
+                || differs(coupon.getMaxDiscountAmount(), snapshot.getMaxDiscountAmount());
+    }
+
+    private boolean differs(BigDecimal current, BigDecimal selected) {
+        if (current == null || selected == null) {
+            return current != selected;
+        }
+        return current.compareTo(selected) != 0;
     }
 
     private String generateVNPayUrl(Order order, HttpServletRequest httpRequest) {
