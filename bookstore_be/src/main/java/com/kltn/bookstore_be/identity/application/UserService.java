@@ -42,7 +42,8 @@ public class UserService {
         User user;
         if (existingUserOpt.isPresent()) {
             User existingUser = existingUserOpt.get();
-            if (existingUser.getStatus() == User.UserStatus.LOCKED && "Đang chờ xác thực mã OTP qua Email".equals(existingUser.getLockedReason())) {
+            if (existingUser.getStatus() == User.UserStatus.LOCKED
+                    && "Đang chờ xác thực mã OTP qua Email".equals(existingUser.getLockedReason())) {
                 existingUser.setFullName(request.getFullName());
                 existingUser.setPhone(request.getPhone());
                 existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -94,8 +95,6 @@ public class UserService {
             cartRepository.save(cart);
         }
 
-        createWelcomeCoupons();
-
         // Log and Notify
         auditLogService.log(user, "REGISTER", "Đăng ký tài khoản thành công qua xác thực OTP");
         notificationService.createNotification(
@@ -104,58 +103,9 @@ public class UserService {
                 "Tài khoản của bạn đã được kích hoạt thành công. Bắt đầu mua sắm ngay!",
                 Notification.NotificationType.ACCOUNT,
                 "users",
-                user.getId()
-        );
+                user.getId());
 
         return true;
-    }
-
-    private void createWelcomeCoupons() {
-        LocalDateTime now = LocalDateTime.now();
-        createWelcomeCouponIfMissing(
-                "WELCOME20",
-                "Ưu đãi chào mừng: giảm 20.000đ cho đơn từ 150.000đ",
-                Coupon.DiscountType.FIXED,
-                new java.math.BigDecimal("20000"),
-                new java.math.BigDecimal("150000"),
-                new java.math.BigDecimal("20000"),
-                now
-        );
-        createWelcomeCouponIfMissing(
-                "WELCOME10",
-                "Ưu đãi chào mừng: giảm 10% tối đa 50.000đ cho đơn từ 300.000đ",
-                Coupon.DiscountType.PERCENT,
-                new java.math.BigDecimal("10"),
-                new java.math.BigDecimal("300000"),
-                new java.math.BigDecimal("50000"),
-                now
-        );
-    }
-
-    private void createWelcomeCouponIfMissing(
-            String code,
-            String description,
-            Coupon.DiscountType discountType,
-            java.math.BigDecimal discountValue,
-            java.math.BigDecimal minOrderValue,
-            java.math.BigDecimal maxDiscountAmount,
-            LocalDateTime now) {
-        if (couponRepository.findByCode(code).isPresent()) {
-            return;
-        }
-        couponRepository.save(Coupon.builder()
-                .code(code)
-                .description(description)
-                .discountType(discountType)
-                .discountValue(discountValue)
-                .minOrderValue(minOrderValue)
-                .maxDiscountAmount(maxDiscountAmount)
-                .usageLimit(1)
-                .usedCount(0)
-                .startDate(now)
-                .endDate(now.plusDays(30))
-                .status(Coupon.CouponStatus.ACTIVE)
-                .build());
     }
 
     @Transactional
@@ -188,8 +138,7 @@ public class UserService {
                 "Mật khẩu của bạn đã được thay đổi thành công thông qua chức năng khôi phục mật khẩu.",
                 Notification.NotificationType.ACCOUNT,
                 "users",
-                user.getId()
-        );
+                user.getId());
 
         return true;
     }
@@ -228,8 +177,7 @@ public class UserService {
                 "Mật khẩu của bạn đã được thay đổi thành công.",
                 Notification.NotificationType.ACCOUNT,
                 "users",
-                user.getId()
-        );
+                user.getId());
     }
 
     public Optional<User> findByEmail(String email) {
