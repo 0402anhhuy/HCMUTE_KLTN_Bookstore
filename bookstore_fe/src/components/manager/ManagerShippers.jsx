@@ -144,7 +144,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             }}
           >
             <Plus size={16} />
-            <span>+ Thêm người giao hàng</span>
+            <span>Thêm người giao hàng</span>
           </button>
         </div>
       </div>

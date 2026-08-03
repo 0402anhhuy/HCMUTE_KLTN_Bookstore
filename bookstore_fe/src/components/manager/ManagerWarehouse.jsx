@@ -120,8 +120,7 @@ const ManagerWarehouse = ({ stockMovements, products, loadData, setStockMovement
               cursor: 'pointer'
             }}
           >
-            <Plus size={16} />
-            <span> Điều chỉnh tồn kho</span>
+            <span>Điều chỉnh tồn kho</span>
           </button>
         </div>
       </div>
