@@ -15,9 +15,7 @@ import com.kltn.bookstore_be.review.application.*;
 import com.kltn.bookstore_be.notification.application.*;
 import com.kltn.bookstore_be.audit.application.*;
 import com.kltn.bookstore_be.identity.infrastructure.*;
-import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
-
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -69,11 +67,11 @@ public class VNPayUtil {
         while (itr.hasNext()) {
             String fieldName = itr.next();
             String fieldValue = fields.get(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+            if ((fieldValue != null) && (!fieldValue.isEmpty())) {
                 sb.append(fieldName);
                 sb.append("=");
                 try {
-                    sb.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
+                    sb.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
                 } catch (Exception e) {
                     sb.append(fieldValue);
                 }
