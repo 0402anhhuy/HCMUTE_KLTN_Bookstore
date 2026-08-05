@@ -99,9 +99,10 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedCatalog() {
         System.out.println("===> Seeding/Checking Catalog...");
-        if (productRepository.count() < 34) {
-            productRepository.deleteAll();
-            categoryRepository.deleteAll();
+        // Never replace an existing catalog at application startup. Products can
+        // already be referenced by cart items, orders, reviews, and favorites.
+        // Seed only a brand-new database, otherwise preserve operational data.
+        if (productRepository.count() == 0) {
 
             Category scienceCat = categoryRepository.save(Category.builder().name("Khoa học").build());
             Category businessCat = categoryRepository.save(Category.builder().name("Kinh tế & Chính trị").build());

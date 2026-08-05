@@ -4,6 +4,7 @@ import com.kltn.bookstore_be.catalog.application.ProductService;
 import com.kltn.bookstore_be.catalog.domain.Product;
 import com.kltn.bookstore_be.catalog.domain.Category;
 import com.kltn.bookstore_be.identity.domain.User;
+import com.kltn.bookstore_be.identity.domain.UserRepository;
 import com.kltn.bookstore_be.ordering.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,9 @@ class CartServiceTest {
 
     @Mock
     private ProductService productService;
+
+    @Mock
+    private UserRepository userRepository;
 
     private User sampleUser;
     private Cart sampleCart;
@@ -83,13 +87,21 @@ class CartServiceTest {
         }
 
         @Test
-        @DisplayName("User chưa có giỏ hàng - ném exception")
-        void getCartForUser_noCart_throwsException() {
+        @DisplayName("User chưa có giỏ hàng - tự tạo giỏ hàng")
+        void getCartForUser_noCart_createsCart() {
             when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
-
-            assertThrows(RuntimeException.class, () -> {
-                cartService.getCartForUser(1L);
+            when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser));
+            when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> {
+                Cart cart = invocation.getArgument(0);
+                cart.setId(2L);
+                return cart;
             });
+
+            Cart result = cartService.getCartForUser(1L);
+
+            assertEquals(2L, result.getId());
+            assertEquals(sampleUser, result.getUser());
+            verify(cartRepository).save(any(Cart.class));
         }
     }
 

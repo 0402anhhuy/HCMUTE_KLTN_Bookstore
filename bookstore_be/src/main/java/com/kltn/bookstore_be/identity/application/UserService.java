@@ -24,6 +24,8 @@ import com.kltn.bookstore_be.review.domain.ProductReviewRepository;
 import com.kltn.bookstore_be.identity.domain.OtpTokenRepository;
 import com.kltn.bookstore_be.audit.domain.AuditLogRepository;
 import com.kltn.bookstore_be.notification.domain.NotificationRepository;
+import com.kltn.bookstore_be.ordering.domain.Coupon;
+import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +35,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final CartRepository cartRepository;
+    private final CouponRepository couponRepository;
     private final OtpService otpService;
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
@@ -49,7 +52,8 @@ public class UserService {
         User user;
         if (existingUserOpt.isPresent()) {
             User existingUser = existingUserOpt.get();
-            if (existingUser.getStatus() == User.UserStatus.LOCKED && "Đang chờ xác thực mã OTP qua Email".equals(existingUser.getLockedReason())) {
+            if (existingUser.getStatus() == User.UserStatus.LOCKED
+                    && "Đang chờ xác thực mã OTP qua Email".equals(existingUser.getLockedReason())) {
                 existingUser.setFullName(request.getFullName());
                 existingUser.setPhone(request.getPhone());
                 existingUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -109,8 +113,7 @@ public class UserService {
                 "Tài khoản của bạn đã được kích hoạt thành công. Bắt đầu mua sắm ngay!",
                 Notification.NotificationType.ACCOUNT,
                 "users",
-                user.getId()
-        );
+                user.getId());
 
         return true;
     }
@@ -145,8 +148,7 @@ public class UserService {
                 "Mật khẩu của bạn đã được thay đổi thành công thông qua chức năng khôi phục mật khẩu.",
                 Notification.NotificationType.ACCOUNT,
                 "users",
-                user.getId()
-        );
+                user.getId());
 
         return true;
     }
@@ -185,8 +187,7 @@ public class UserService {
                 "Mật khẩu của bạn đã được thay đổi thành công.",
                 Notification.NotificationType.ACCOUNT,
                 "users",
-                user.getId()
-        );
+                user.getId());
     }
 
     public Optional<User> findByEmail(String email) {
