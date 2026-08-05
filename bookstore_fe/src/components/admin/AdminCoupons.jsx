@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Tag, Plus, Trash2 } from "lucide-react";
-import api from "../../services/api";
+import { Tag, Plus, Trash2, Edit2, Search } from "lucide-react";
+import { couponService } from "../../services/couponService";
+import AdminEditCoupon from "./AdminEditCoupon";
 
 const AdminCoupons = ({
     coupons = [],
@@ -10,6 +11,13 @@ const AdminCoupons = ({
 }) => {
     const [activeSubTab, setActiveSubTab] = useState("coupons");
     const [showForm, setShowForm] = useState(false);
+    const [editingCoupon, setEditingCoupon] = useState(null);
+    const [deletingCoupon, setDeletingCoupon] = useState(null);
+
+    // Filter states
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("ALL");
+    const [typeFilter, setTypeFilter] = useState("ALL");
 
     // New Coupon Form state
     const [formData, setFormData] = useState({
@@ -39,8 +47,22 @@ const AdminCoupons = ({
             showToast("Vui lòng nhập mã giảm giá", "error");
             return;
         }
+
+        if (formData.validFrom && formData.validTo) {
+            if (new Date(formData.validTo) < new Date(formData.validFrom)) {
+                showToast("Ngày hết hạn không được nhỏ hơn ngày bắt đầu", "error");
+                return;
+            }
+        }
+
+        if ((formData.discountPercentage && Number(formData.discountPercentage) < 0) || 
+            (formData.discountAmount && Number(formData.discountAmount) < 0)) {
+            showToast("Giá trị giảm giá không hợp lệ (không được âm)", "error");
+            return;
+        }
+
         try {
-            await api.post("/coupons", {
+            await couponService.createCoupon({
                 code: formData.code.toUpperCase().trim(),
                 discountPercentage: formData.discountPercentage
                     ? Number(formData.discountPercentage)
@@ -80,18 +102,39 @@ const AdminCoupons = ({
         }
     };
 
-    const handleDeleteCoupon = async (id) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa mã giảm giá này?"))
-            return;
+    const handleDeleteCoupon = async () => {
+        if (!deletingCoupon) return;
         try {
-            await api.delete(`/coupons/${id}`);
+            await couponService.deleteCoupon(deletingCoupon.id);
             showToast("Đã xóa mã giảm giá", "success");
+            setDeletingCoupon(null);
             if (loadData) loadData();
         } catch (error) {
             console.error("Failed to delete coupon", error);
             showToast("Không thể xóa mã giảm giá", "error");
         }
     };
+
+    const handleResetFilter = () => {
+        setSearchTerm("");
+        setStatusFilter("ALL");
+        setTypeFilter("ALL");
+    };
+
+    const filteredCoupons = coupons.filter(coupon => {
+        const keyword = searchTerm.toLowerCase();
+        const matchSearch = (coupon.code || "").toLowerCase().includes(keyword);
+        
+        let matchStatus = true;
+        if (statusFilter === "ACTIVE") matchStatus = coupon.status === "ACTIVE";
+        if (statusFilter === "INACTIVE") matchStatus = coupon.status === "INACTIVE";
+
+        let matchType = true;
+        if (typeFilter === "PERCENT") matchType = coupon.discountType === "PERCENT";
+        if (typeFilter === "AMOUNT") matchType = coupon.discountType === "FIXED";
+        
+        return matchSearch && matchStatus && matchType;
+    });
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
@@ -407,6 +450,79 @@ const AdminCoupons = ({
                 </form>
             )}
 
+            {/* Filter and Search Section */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ position: "relative" }}>
+                    <Search
+                        size={18}
+                        color="#64748b"
+                        style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)" }}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm mã giảm giá..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                            width: "100%",
+                            padding: "10px 14px 10px 40px",
+                            borderRadius: "10px",
+                            border: "1px solid #d7def0",
+                            backgroundColor: "#ffffff",
+                            outline: "none",
+                            fontSize: "0.95rem",
+                            boxSizing: "border-box"
+                        }}
+                    />
+                </div>
+                
+                <div style={{
+                    display: "flex", gap: "16px", flexWrap: "wrap", backgroundColor: "#ffffff",
+                    padding: "16px", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                    alignItems: "center"
+                }}>
+                    <div style={{
+                        display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "16px", flex: 1
+                    }}>
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "12px" }}>
+                            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", whiteSpace: "nowrap" }}>Loại giảm giá:</span>
+                            <select
+                                value={typeFilter}
+                                onChange={(e) => setTypeFilter(e.target.value)}
+                                style={{ flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none", cursor: "pointer", backgroundColor: "#f8fafc" }}
+                            >
+                                <option value="ALL">Tất cả các loại</option>
+                                <option value="PERCENT">Theo phần trăm (%)</option>
+                                <option value="AMOUNT">Theo số tiền (VNĐ)</option>
+                            </select>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "12px" }}>
+                            <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569", whiteSpace: "nowrap" }}>Trạng thái:</span>
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                style={{ flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.85rem", outline: "none", cursor: "pointer", backgroundColor: "#f8fafc" }}
+                            >
+                                <option value="ALL">Tất cả trạng thái</option>
+                                <option value="ACTIVE">Đang hoạt động</option>
+                                <option value="INACTIVE">Tạm khóa</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button
+                        onClick={handleResetFilter}
+                        style={{
+                            padding: "8px 16px", borderRadius: "8px", border: "1px solid #cbd5e1", backgroundColor: "#ffffff",
+                            color: "#475569", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer"
+                        }}
+                    >
+                        Khôi phục
+                    </button>
+                </div>
+            </div>
+
             {/* Coupons Table */}
             <div
                 style={{
@@ -501,7 +617,7 @@ const AdminCoupons = ({
                         </tr>
                     </thead>
                     <tbody>
-                        {coupons.length === 0 ? (
+                        {filteredCoupons.length === 0 ? (
                             <tr>
                                 <td
                                     colSpan={6}
@@ -516,7 +632,7 @@ const AdminCoupons = ({
                                 </td>
                             </tr>
                         ) : (
-                            coupons.map((c) => (
+                            filteredCoupons.map((c) => (
                                 <tr
                                     key={c.id}
                                     style={{
@@ -548,9 +664,9 @@ const AdminCoupons = ({
                                             color: "#0f172a",
                                         }}
                                     >
-                                        {c.discountPercentage
-                                            ? `${c.discountPercentage}% (Tối đa ${formatPrice(c.maxDiscountAmount)})`
-                                            : formatPrice(c.discountAmount)}
+                                        {c.discountType === 'PERCENT'
+                                            ? `${c.discountValue}% (Tối đa ${formatPrice(c.maxDiscountAmount)})`
+                                            : formatPrice(c.discountValue)}
                                     </td>
 
                                     <td
@@ -559,7 +675,7 @@ const AdminCoupons = ({
                                             color: "#475569",
                                         }}
                                     >
-                                        {formatPrice(c.minOrderAmount)}
+                                        {formatPrice(c.minOrderValue)}
                                     </td>
 
                                     <td
@@ -580,18 +696,18 @@ const AdminCoupons = ({
                                                 fontSize: "0.75rem",
                                                 fontWeight: 700,
                                                 backgroundColor:
-                                                    c.active !== false
+                                                    c.status === "ACTIVE"
                                                         ? "#ecfdf5"
                                                         : "#fef2f2",
                                                 color:
-                                                    c.active !== false
+                                                    c.status === "ACTIVE"
                                                         ? "#059669"
                                                         : "#dc2626",
                                             }}
                                         >
-                                            {c.active !== false
+                                            {c.status === "ACTIVE"
                                                 ? "Hoạt động"
-                                                : "Hết hạn"}
+                                                : "Đã khóa"}
                                         </span>
                                     </td>
 
@@ -599,12 +715,27 @@ const AdminCoupons = ({
                                         style={{
                                             padding: "16px 20px",
                                             textAlign: "right",
+                                            display: "flex",
+                                            justifyContent: "flex-end",
+                                            gap: "10px",
                                         }}
                                     >
                                         <button
-                                            onClick={() =>
-                                                handleDeleteCoupon(c.id)
-                                            }
+                                            onClick={() => setEditingCoupon(c)}
+                                            style={{
+                                                padding: "6px 10px",
+                                                borderRadius: "6px",
+                                                border: "1px solid #bfdbfe",
+                                                backgroundColor: "#eff6ff",
+                                                color: "#3b82f6",
+                                                cursor: "pointer",
+                                            }}
+                                            title="Sửa Coupon"
+                                        >
+                                            <Edit2 size={15} />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingCoupon(c)}
                                             style={{
                                                 padding: "6px 10px",
                                                 borderRadius: "6px",
@@ -623,6 +754,67 @@ const AdminCoupons = ({
                     </tbody>
                 </table>
             </div>
+
+            {editingCoupon && (
+                <AdminEditCoupon
+                    coupon={editingCoupon}
+                    onClose={() => setEditingCoupon(null)}
+                    onSave={() => {
+                        setEditingCoupon(null);
+                        if (loadData) loadData();
+                    }}
+                    showToast={showToast}
+                />
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deletingCoupon && (
+                <div style={{
+                    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(4px)",
+                    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000
+                }}>
+                    <div style={{
+                        backgroundColor: "#ffffff", borderRadius: "16px", padding: "32px",
+                        width: "400px", maxWidth: "90vw", textAlign: "center",
+                        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
+                    }}>
+                        <div style={{
+                            width: "60px", height: "60px", borderRadius: "30px",
+                            backgroundColor: "#fef2f2", display: "flex", alignItems: "center",
+                            justifyContent: "center", margin: "0 auto 20px"
+                        }}>
+                            <Trash2 size={30} color="#ef4444" />
+                        </div>
+                        <h3 style={{ margin: "0 0 12px", fontSize: "1.25rem", color: "#0f172a", fontWeight: 700 }}>
+                            Xác nhận xóa mã giảm giá
+                        </h3>
+                        <p style={{ margin: "0 0 24px", color: "#64748b", fontSize: "0.95rem", lineHeight: 1.5 }}>
+                            Bạn có chắc chắn muốn xóa vĩnh viễn giới hạn mã <strong>{deletingCoupon.code}</strong> khỏi hệ thống? Khách hàng sẽ không thể sử dụng mã này được nữa.
+                        </p>
+                        <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                            <button
+                                onClick={() => setDeletingCoupon(null)}
+                                style={{
+                                    padding: "10px 24px", borderRadius: "8px", border: "1px solid #cbd5e1",
+                                    backgroundColor: "#ffffff", color: "#334155", fontWeight: 600, cursor: "pointer"
+                                }}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleDeleteCoupon}
+                                style={{
+                                    padding: "10px 24px", borderRadius: "8px", border: "none",
+                                    backgroundColor: "#ef4444", color: "#ffffff", fontWeight: 600, cursor: "pointer"
+                                }}
+                            >
+                                Xóa vĩnh viễn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
