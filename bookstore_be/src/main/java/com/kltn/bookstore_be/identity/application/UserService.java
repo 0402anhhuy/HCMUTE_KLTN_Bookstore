@@ -19,6 +19,11 @@ import com.kltn.bookstore_be.notification.application.NotificationService;
 import com.kltn.bookstore_be.notification.domain.Notification;
 import com.kltn.bookstore_be.ordering.domain.Cart;
 import com.kltn.bookstore_be.ordering.domain.CartRepository;
+import com.kltn.bookstore_be.ordering.domain.OrderRepository;
+import com.kltn.bookstore_be.review.domain.ProductReviewRepository;
+import com.kltn.bookstore_be.identity.domain.OtpTokenRepository;
+import com.kltn.bookstore_be.audit.domain.AuditLogRepository;
+import com.kltn.bookstore_be.notification.domain.NotificationRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +37,11 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
+    private final OrderRepository orderRepository;
+    private final ProductReviewRepository productReviewRepository;
+    private final OtpTokenRepository otpTokenRepository;
+    private final AuditLogRepository auditLogRepository;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public User register(RegisterRequest request) {
@@ -193,8 +203,94 @@ public class UserService {
         throw new RuntimeException("Xin lỗi, bạn cần đăng nhập trước");
     }
 
+    @Transactional
+    public User createUserByAdmin(AdminCreateUserRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email đã tồn tại trong hệ thống");
+        }
+
+        User user = User.builder()
+                .fullName(request.getFullName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .address(request.getAddress())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .status(User.UserStatus.ACTIVE)
+                .rewardPoints(0)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        if (savedUser.getRole() == User.Role.USER) {
+            Cart cart = Cart.builder().user(savedUser).build();
+            cartRepository.save(cart);
+        }
+
+        auditLogService.log(savedUser, "CREATE_USER_BY_ADMIN", "Tài khoản được tạo bởi Quản trị viên");
+        return savedUser;
+    }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Transactional
+    public void deleteUserByAdmin(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+
+        boolean hasOrders = !orderRepository.findByUserIdOrderByCreatedAtDesc(id).isEmpty();
+        boolean hasReviews = productReviewRepository.existsByUserId(id);
+
+        if (hasOrders || hasReviews) {
+            user.setStatus(User.UserStatus.LOCKED);
+            user.setLockedReason("Vi phạm ràng buộc dữ liệu: Tài khoản có lịch sử giao dịch/đánh giá.");
+            user.setLockedAt(LocalDateTime.now());
+            userRepository.save(user);
+            throw new RuntimeException("Tài khoản không thể xóa vĩnh viễn do đã có lịch sử. Hệ thống đã tự động khóa tài khoản thay thế.");
+        }
+
+        cartRepository.findByUserId(id).ifPresent(cartRepository::delete);
+        otpTokenRepository.deleteByUserId(id);
+        notificationRepository.deleteByUserId(id);
+        auditLogRepository.deleteByUserId(id);
+        
+        userRepository.delete(user);
+    }
+
+    @Transactional
+    public User updateUserByAdmin(Long id, UpdateUserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+
+        Optional<User> existingEmailUser = userRepository.findByEmail(request.getEmail());
+        if (existingEmailUser.isPresent() && !existingEmailUser.get().getId().equals(id)) {
+            throw new RuntimeException("Email đã được sử dụng bởi một tài khoản khác trong hệ thống");
+        }
+
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setRole(request.getRole());
+        user.setStatus(request.getStatus());
+
+        User updatedUser = userRepository.save(user);
+        
+        auditLogService.log(updatedUser, "UPDATE_USER_BY_ADMIN", "Tài khoản được cập nhật bởi Quản trị viên");
+        return updatedUser;
+    }
+
+    @Transactional
+    public User updateUserStatusByAdmin(Long id, User.UserStatus status) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng với ID: " + id));
+
+        user.setStatus(status);
+        userRepository.save(user);
+
+        auditLogService.log(user, "UPDATE_STATUS_BY_ADMIN", "Trạng thái được cập nhật bởi Quản trị viên thành " + status.name());
+        return user;
     }
 
     @Transactional
