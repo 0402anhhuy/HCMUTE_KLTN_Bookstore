@@ -19,6 +19,7 @@ import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.identity.domain.UserRepository;
 import com.kltn.bookstore_be.ordering.domain.Coupon;
 import com.kltn.bookstore_be.ordering.domain.CouponRepository;
+import com.kltn.bookstore_be.ordering.domain.PromotionRepository;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -30,17 +31,20 @@ public class DataSeeder implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final CouponRepository couponRepository;
+    private final PromotionRepository promotionRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(UserRepository userRepository,
             CategoryRepository categoryRepository,
             ProductRepository productRepository,
             CouponRepository couponRepository,
+            PromotionRepository promotionRepository,
             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.couponRepository = couponRepository;
+        this.promotionRepository = promotionRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -103,6 +107,7 @@ public class DataSeeder implements CommandLineRunner {
         // already be referenced by cart items, orders, reviews, and favorites.
         // Seed only a brand-new database, otherwise preserve operational data.
         if (productRepository.count() == 0) {
+            promotionRepository.deleteAll();
 
             Category scienceCat = categoryRepository.save(Category.builder().name("Khoa học").build());
             Category businessCat = categoryRepository.save(Category.builder().name("Kinh tế & Chính trị").build());
