@@ -237,7 +237,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
             }}
           >
             <Plus size={16} />
-            <span>+ Thêm sản phẩm</span>
+            <span>Thêm sản phẩm</span>
           </button>
         </div>
       </div>

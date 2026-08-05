@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, Minus, ArrowLeft, Trash2, Coins, Ticket } from 'lucide-react';
@@ -60,18 +60,39 @@ const Cart = () => {
 
   const [coupons, setCoupons] = useState([]);
   const [bestCoupon, setBestCoupon] = useState(null);
+  const couponVersionRef = useRef('');
+
+  const fetchCoupons = async (notifyChange = false) => {
+    try {
+      const res = await api.get('/coupons');
+      const nextCoupons = res.data || [];
+      const nextVersion = JSON.stringify(nextCoupons.map(c => ({
+        id: c.id,
+        code: c.code,
+        discountType: c.discountType,
+        discountValue: c.discountValue,
+        minOrderValue: c.minOrderValue,
+        maxDiscountAmount: c.maxDiscountAmount,
+        status: c.status,
+        endDate: c.endDate,
+        usageLimit: c.usageLimit,
+        usedCount: c.usedCount,
+      })));
+      if (notifyChange && couponVersionRef.current && couponVersionRef.current !== nextVersion) {
+        showToast('Voucher đã được cập nhật. Hệ thống đang tính lại ưu đãi tốt nhất.', 'info');
+      }
+      couponVersionRef.current = nextVersion;
+      setCoupons(nextCoupons);
+    } catch (err) {
+      console.error("Failed to fetch coupons", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchCoupons = async () => {
-      try {
-        const res = await api.get('/orders/coupons');
-        setCoupons(res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch coupons", err);
-      }
-    };
     if (user) {
       fetchCoupons();
+      const refreshTimer = setInterval(() => fetchCoupons(true), 10000);
+      return () => clearInterval(refreshTimer);
     }
   }, [user]);
 

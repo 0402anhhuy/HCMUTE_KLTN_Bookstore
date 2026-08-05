@@ -36,20 +36,15 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductService productService;
+    private final UserRepository userRepository;
 
     @Transactional
     public Cart getCartForUser(Long userId) {
         return cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
-                    // Create dynamic cart if missing
-                    Cart cart = Cart.builder()
-                            .id(userId) // Using user id as cart id for simplicity or standard generation
-                            .build();
-                    // Note: If you generated Cart using builder without User link, you must set it:
-                    // But in our Cart entity we have @OneToOne JoinColumn user.
-                    // So we must fetch the User object. Let's make it throw an exception if User doesn't exist,
-                    // or let it find it.
-                    throw new RuntimeException("Giỏ hàng của người dùng chưa được khởi tạo.");
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+                    return cartRepository.save(Cart.builder().user(user).build());
                 });
     }
 
@@ -59,8 +54,7 @@ public class CartService {
 
     @Transactional
     public CartItem addItemToCart(Long userId, Long productId, Integer quantity) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tìm thấy"));
+        Cart cart = getCartForUser(userId);
         
         Product product = productService.getProductById(productId);
         if (product.getStatus() != Product.ProductStatus.ACTIVE) {
@@ -98,8 +92,7 @@ public class CartService {
             return null;
         }
 
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tìm thấy"));
+        Cart cart = getCartForUser(userId);
         
         Product product = productService.getProductById(productId);
         if (product.getStockQuantity() < quantity) {
@@ -116,8 +109,7 @@ public class CartService {
 
     @Transactional
     public void removeItemFromCart(Long userId, Long productId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Giỏ hàng không tìm thấy"));
+        Cart cart = getCartForUser(userId);
         cartItemRepository.deleteByCartIdAndProductId(cart.getId(), productId);
     }
 
