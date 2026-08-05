@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<AuditLog> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<AuditLog> findAllByOrderByCreatedAtDesc();
+    void deleteByUserId(Long userId);
 }
