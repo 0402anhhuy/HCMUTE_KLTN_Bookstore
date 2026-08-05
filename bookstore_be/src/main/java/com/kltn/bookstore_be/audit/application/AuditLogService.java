@@ -27,6 +27,8 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class AuditLogService {
@@ -45,5 +47,22 @@ public class AuditLogService {
 
     public List<AuditLog> getLogsByUser(Long userId) {
         return auditLogRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    public List<AuditLogResponse> getAllLogs() {
+        return auditLogRepository.findAllByOrderByCreatedAtDesc().stream().map(log -> {
+            String desc = log.getDescription();
+            // Since the existing AuditLog entity only stores action+desc, we pass desc directly as entityName
+            // to show it on the frontend "Đối tượng" column for admin readability.
+            return AuditLogResponse.builder()
+                .id(log.getId())
+                .action(log.getAction())
+                .description(desc)
+                .entityName(desc)
+                .entityId("-")
+                .username(log.getUser() != null ? log.getUser().getFullName() : "Hệ thống")
+                .createdAt(log.getCreatedAt())
+                .build();
+        }).collect(Collectors.toList());
     }
 }
