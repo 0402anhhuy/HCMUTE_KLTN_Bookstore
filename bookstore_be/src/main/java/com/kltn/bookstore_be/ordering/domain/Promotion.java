@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import com.kltn.bookstore_be.catalog.domain.Product;
 
 @Entity
 @Table(name = "promotions")
@@ -49,8 +52,17 @@ public class Promotion {
     private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private PromotionStatus status;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "promotion_products",
+        joinColumns = @JoinColumn(name = "promotion_id"),
+        inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    @Builder.Default
+    private List<Product> applicableProducts = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
@@ -67,6 +79,6 @@ public class Promotion {
     }
 
     public enum PromotionStatus {
-        ACTIVE, INACTIVE
+        PENDING, ACTIVE, INACTIVE, EXPIRED
     }
 }

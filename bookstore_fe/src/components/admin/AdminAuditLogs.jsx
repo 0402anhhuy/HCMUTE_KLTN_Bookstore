@@ -39,7 +39,7 @@ const AdminAuditLogs = ({ auditLogs = [], loadData }) => {
                             margin: 0,
                         }}
                     >
-                        Nhật Ký Giám Sát Hệ Thống (Audit Logs)
+                        Nhật Ký Giám Sát Hệ Thống
                     </h2>
                     <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
                         Ghi nhận toàn bộ thao tác thêm, sửa, xóa quan trọng trên
@@ -150,7 +150,7 @@ const AdminAuditLogs = ({ auditLogs = [], loadData }) => {
                                     textTransform: "uppercase",
                                 }}
                             >
-                                Đối Tượng (Entity)
+                                Đối Tượng
                             </th>
                             <th
                                 style={{

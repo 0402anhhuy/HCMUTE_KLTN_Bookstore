@@ -7,7 +7,6 @@ import com.kltn.bookstore_be.payment.domain.*;
 import com.kltn.bookstore_be.review.domain.*;
 import com.kltn.bookstore_be.notification.domain.*;
 import com.kltn.bookstore_be.audit.domain.*;
-import com.kltn.bookstore_be.identity.application.*;
 import com.kltn.bookstore_be.catalog.application.*;
 import com.kltn.bookstore_be.ordering.application.*;
 import com.kltn.bookstore_be.payment.application.*;
@@ -22,7 +21,8 @@ import com.kltn.bookstore_be.common.*;
 import com.kltn.bookstore_be.identity.domain.OtpToken;
 import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.identity.domain.OtpTokenRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +30,11 @@ import java.time.LocalDateTime;
 import java.util.Random;
 
 @Service
+@RequiredArgsConstructor
 public class OtpService {
 
-    @Autowired
-    private OtpTokenRepository otpTokenRepository;
-
-    @Autowired
-    private MailService mailService;
+    private final OtpTokenRepository otpTokenRepository;
+    private final MailService mailService;
 
     @Transactional
     public String generateAndSendOtp(User user, OtpToken.OtpType type) {

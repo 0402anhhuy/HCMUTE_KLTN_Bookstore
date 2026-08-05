@@ -28,6 +28,7 @@ import AdminAuditLogs from "./AdminAuditLogs";
 import AdminProducts from "./AdminProducts";
 import ManagerOrders from "../manager/ManagerOrders";
 import AdminRevenue from "./AdminRevenue";
+import AdminPromotions from "./AdminPromotions";
 
 const AdminDashboard = () => {
     const { user, loading: appLoading, logoutUser, showToast } = useApp();
@@ -218,7 +219,7 @@ const AdminDashboard = () => {
                         { id: "users", label: "Người dùng", icon: Users },
                         { id: "products", label: "Sản phẩm", icon: Package },
                         { id: "coupons", label: "Mã giảm giá", icon: Percent },
-                        { id: "orders", label: "Đơn hàng", icon: Megaphone },
+                        { id: "promotions", label: "Khuyến mãi", icon: Megaphone },
                         { id: "revenue", label: "Doanh thu", icon: Banknote },
                         {
                             id: "audit-logs",
@@ -435,6 +436,9 @@ const AdminDashboard = () => {
                                     categories={categories}
                                     loadData={loadData}
                                 />
+                            )}
+                            {activeTab === "promotions" && (
+                                <AdminPromotions />
                             )}
                             {activeTab === "orders" && (
                                 <ManagerOrders

@@ -10,7 +10,6 @@ import com.kltn.bookstore_be.audit.domain.*;
 import com.kltn.bookstore_be.identity.application.*;
 import com.kltn.bookstore_be.catalog.application.*;
 import com.kltn.bookstore_be.ordering.application.*;
-import com.kltn.bookstore_be.payment.application.*;
 import com.kltn.bookstore_be.review.application.*;
 import com.kltn.bookstore_be.notification.application.*;
 import com.kltn.bookstore_be.audit.application.*;
@@ -18,13 +17,13 @@ import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
 
-
 import com.kltn.bookstore_be.payment.infrastructure.VNPayUtil;
 import com.kltn.bookstore_be.ordering.domain.Order;
 import com.kltn.bookstore_be.payment.domain.Payment;
 import com.kltn.bookstore_be.ordering.domain.OrderRepository;
 import com.kltn.bookstore_be.payment.domain.PaymentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,19 +32,13 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentService {
 
-    @Autowired
-    private PaymentRepository paymentRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private AuditLogService auditLogService;
-
-    @Autowired
-    private NotificationService notificationService;
+    private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
+    private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     @Value("${vnpay.hash-secret}")
     private String vnp_HashSecret;

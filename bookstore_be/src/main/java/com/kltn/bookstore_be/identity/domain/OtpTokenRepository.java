@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface OtpTokenRepository extends JpaRepository<OtpToken, Long> {
     Optional<OtpToken> findByUserIdAndOtpCodeAndType(Long userId, String otpCode, OtpToken.OtpType type);
     Optional<OtpToken> findTopByUserIdAndTypeOrderByCreatedAtDesc(Long userId, OtpToken.OtpType type);
+    void deleteByUserId(Long userId);
 }

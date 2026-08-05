@@ -1,16 +1,23 @@
 package com.kltn.bookstore_be.ordering.presentation;
 
-import com.kltn.bookstore_be.ordering.domain.Shipper;
-import com.kltn.bookstore_be.ordering.domain.ShipperRepository;
-import com.kltn.bookstore_be.identity.domain.User;
-import com.kltn.bookstore_be.identity.application.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.kltn.bookstore_be.identity.application.UserService;
+import com.kltn.bookstore_be.identity.domain.User;
+import com.kltn.bookstore_be.ordering.domain.Shipper;
+import com.kltn.bookstore_be.ordering.domain.ShipperRepository;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -19,9 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class ShipperController {
 
     private final ShipperRepository shipperRepository;
-
     private final UserService userService;
-
 
     private void checkManagerOrAdmin() {
         User user = userService.getAuthenticatedUser();
@@ -69,7 +74,7 @@ public class ShipperController {
             checkManagerOrAdmin();
             Shipper shipper = shipperRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Người giao hàng không tồn tại"));
-            
+
             if (details.getFullName() != null) {
                 if (details.getFullName().trim().isEmpty()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Tên người giao hàng không được để trống"));
@@ -86,8 +91,12 @@ public class ShipperController {
                 }
                 shipper.setPhone(phone);
             }
-            if (details.getVehicle() != null) shipper.setVehicle(details.getVehicle());
-            if (details.getStatus() != null) shipper.setStatus(details.getStatus());
+            if (details.getVehicle() != null) {
+                shipper.setVehicle(details.getVehicle());
+            }
+            if (details.getStatus() != null) {
+                shipper.setStatus(details.getStatus());
+            }
 
             Shipper updated = shipperRepository.save(shipper);
             return ResponseEntity.ok(updated);
