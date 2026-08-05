@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useCallback } from "react";
 import api from "../services/api";
 
 const AppContext = createContext();
@@ -12,9 +12,9 @@ export const AppProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' | 'info' }
 
-    const showToast = (message, type = "success") => {
+    const showToast = useCallback((message, type = "success") => {
         setToast({ message, type });
-    };
+    }, []);
 
     useEffect(() => {
         if (toast) {
