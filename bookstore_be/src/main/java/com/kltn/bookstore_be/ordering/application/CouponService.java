@@ -1,9 +1,13 @@
 package com.kltn.bookstore_be.ordering.application;
 
+import com.kltn.bookstore_be.audit.application.AuditLogService;
+import com.kltn.bookstore_be.identity.application.UserService;
+import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.ordering.domain.Coupon;
 import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -12,8 +16,8 @@ import java.util.List;
 public class CouponService {
     
     private final CouponRepository couponRepository;
-
-    // Lấy coupon của hệ thống hoặc dành riêng cho 1 user (cho Frontend User Site)
+    private final AuditLogService auditLogService;
+    private final UserService userService;
     public List<Coupon> getCouponsForUser(Long userId) {
         return couponRepository.findByUserIdOrUserIsNull(userId);
     }
@@ -26,6 +30,16 @@ public class CouponService {
     public Coupon createCoupon(CouponRequest request) {
         if (couponRepository.findByCode(request.getCode()).isPresent()) {
             throw new RuntimeException("Mã giảm giá đã tồn tại");
+        }
+        
+        if (request.getValidTo() != null && request.getValidFrom() != null && request.getValidTo().isBefore(request.getValidFrom())) {
+            throw new RuntimeException("Ngày hết hạn không được nhỏ hơn ngày bắt đầu");
+        }
+
+        if ((request.getDiscountPercentage() != null && request.getDiscountPercentage().compareTo(java.math.BigDecimal.ZERO) < 0) || 
+            (request.getDiscountAmount() != null && request.getDiscountAmount().compareTo(java.math.BigDecimal.ZERO) < 0) ||
+            (request.getUsageLimit() != null && request.getUsageLimit() < 0)) {
+            throw new RuntimeException("Các giá trị giảm giá hoặc số lượng mã không được âm");
         }
 
         Coupon coupon = Coupon.builder()
@@ -62,6 +76,16 @@ public class CouponService {
              throw new RuntimeException("Mã giảm giá mới đã bị trùng với một mã khác trong hệ thống");
         }
 
+        if (request.getValidTo() != null && request.getValidFrom() != null && request.getValidTo().isBefore(request.getValidFrom())) {
+            throw new RuntimeException("Ngày hết hạn không được nhỏ hơn ngày bắt đầu");
+        }
+
+        if ((request.getDiscountPercentage() != null && request.getDiscountPercentage().compareTo(java.math.BigDecimal.ZERO) < 0) || 
+            (request.getDiscountAmount() != null && request.getDiscountAmount().compareTo(java.math.BigDecimal.ZERO) < 0) ||
+            (request.getUsageLimit() != null && request.getUsageLimit() < 0)) {
+            throw new RuntimeException("Các giá trị giảm giá hoăc số lượng mã không được âm");
+        }
+
         coupon.setCode(request.getCode());
         coupon.setMinOrderValue(request.getMinOrderAmount());
         coupon.setMaxDiscountAmount(request.getMaxDiscountAmount());
@@ -83,10 +107,19 @@ public class CouponService {
         return couponRepository.save(coupon);
     }
 
+    @Transactional
     public void deleteCoupon(Long id) {
-        if (!couponRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy mã giảm giá");
-        }
+        Coupon coupon = couponRepository.findById(id).orElseThrow(
+            () -> new RuntimeException("Không tìm thấy mã giảm giá")
+        );
+        String code = coupon.getCode();
         couponRepository.deleteById(id);
+
+        try {
+            User admin = userService.getAuthenticatedUser();
+            auditLogService.log(admin, "DELETE_COUPON", "Xóa mã giảm giá: " + code);
+        } catch (Exception e) {
+            // Ignore
+        }
     }
 }
