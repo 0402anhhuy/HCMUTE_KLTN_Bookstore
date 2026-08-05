@@ -20,6 +20,7 @@ import com.kltn.bookstore_be.common.*;
 
 
 import com.kltn.bookstore_be.payment.application.PaymentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,11 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/payment")
 public class PaymentController {
 
-    @Autowired
-    private PaymentService paymentService;
+    private final PaymentService paymentService;
 
     @GetMapping("/vnpay-callback")
     public ResponseEntity<?> handleVNPayCallback(@RequestParam Map<String, String> queryParams) {
