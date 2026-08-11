@@ -14,7 +14,6 @@ import com.kltn.bookstore_be.payment.application.*;
 import com.kltn.bookstore_be.review.application.*;
 import com.kltn.bookstore_be.notification.application.*;
 import com.kltn.bookstore_be.audit.application.*;
-import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
 
