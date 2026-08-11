@@ -24,7 +24,6 @@ import com.kltn.bookstore_be.review.domain.ProductReviewRepository;
 import com.kltn.bookstore_be.identity.domain.OtpTokenRepository;
 import com.kltn.bookstore_be.audit.domain.AuditLogRepository;
 import com.kltn.bookstore_be.notification.domain.NotificationRepository;
-import com.kltn.bookstore_be.ordering.domain.Coupon;
 import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 
 import lombok.RequiredArgsConstructor;

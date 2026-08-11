@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -31,7 +32,7 @@ public class CloudinaryService {
         if (cloudinary == null) {
             throw new IllegalStateException("Cloudinary chưa được cấu hình (thiếu cloud-name trong application.properties).");
         }
-        Map<String, Object> params = new java.util.HashMap<>(ObjectUtils.asMap(
+        HashMap params = new HashMap<>(ObjectUtils.asMap(
                 "folder", folderName,
                 "use_filename", true,
                 "unique_filename", false,

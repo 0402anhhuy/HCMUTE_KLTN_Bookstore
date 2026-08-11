@@ -11,15 +11,11 @@ import com.kltn.bookstore_be.identity.application.*;
 import com.kltn.bookstore_be.catalog.application.*;
 import com.kltn.bookstore_be.ordering.application.*;
 import com.kltn.bookstore_be.payment.application.*;
-import com.kltn.bookstore_be.review.application.*;
 import com.kltn.bookstore_be.notification.application.*;
 import com.kltn.bookstore_be.audit.application.*;
 import com.kltn.bookstore_be.identity.infrastructure.*;
 import com.kltn.bookstore_be.payment.infrastructure.*;
 import com.kltn.bookstore_be.common.*;
-
-
-import com.kltn.bookstore_be.review.application.ReviewRequest;
 import com.kltn.bookstore_be.identity.domain.*;
 import com.kltn.bookstore_be.catalog.domain.*;
 import com.kltn.bookstore_be.ordering.domain.*;
@@ -34,38 +30,26 @@ import com.kltn.bookstore_be.payment.domain.*;
 import com.kltn.bookstore_be.review.domain.*;
 import com.kltn.bookstore_be.notification.domain.*;
 import com.kltn.bookstore_be.audit.domain.*;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ReviewService {
 
-    @Autowired
-    private ProductReviewRepository reviewRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private CouponRepository couponRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private AuditLogService auditLogService;
-
-    @Autowired
-    private NotificationService notificationService;
+    private final ProductReviewRepository reviewRepository;
+    private final UserRepository userRepository;
+    private final CouponRepository couponRepository;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ProductRepository productRepository;
+    private final AuditLogService auditLogService;
+    private final NotificationService notificationService;
 
     public List<ProductReview> getProductReviews(Long productId) {
         return reviewRepository.findByProductIdAndStatusOrderByReviewedAtDesc(productId, ProductReview.ReviewStatus.VISIBLE);
@@ -161,7 +145,7 @@ public class ReviewService {
     public void deleteReview(Long reviewId, String reason, User manager) {
         ProductReview review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Đánh giá không tồn tại"));
-                
+
         notificationService.createNotification(
                 review.getUser(),
                 "Đánh giá của bạn đã bị gỡ",
@@ -185,7 +169,7 @@ public class ReviewService {
                 .orElseThrow(() -> new RuntimeException("Đánh giá không tồn tại"));
         review.setReply(reply);
         review.setRepliedAt(java.time.LocalDateTime.now());
-        
+
         notificationService.createNotification(
                 review.getUser(),
                 "Phản hồi từ cửa hàng",
@@ -194,7 +178,7 @@ public class ReviewService {
                 "reviews",
                 reviewId
         );
-        
+
         auditLogService.log(manager, "REPLY_REVIEW", "Phản hồi đánh giá của " + review.getUser().getFullName() + " trên sách " + review.getProduct().getName());
         return reviewRepository.save(review);
     }
