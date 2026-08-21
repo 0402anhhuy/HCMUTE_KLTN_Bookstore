@@ -1,0 +1,209 @@
+.admin-dashboard-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f4f6f8;
+    font-family: "Outfit", sans-serif;
+    color: #111827;
+}
+
+/* Sidebar Section */
+.admin-dashboard-sidebar {
+    width: 240px;
+    background-color: #f8fafc;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    color: #ffffff;
+}
+
+.admin-dashboard-brand-box {
+    padding: 18px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-dashboard-brand-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-dashboard-brand-icon-wrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background-color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-dashboard-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-dashboard-brand-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ef4444;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+
+.admin-dashboard-brand-subtitle {
+    font-size: 0.72rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Sidebar Navigation */
+.admin-dashboard-nav {
+    padding: 16px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-dashboard-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: none;
+    background-color: transparent;
+    color: #4b5563;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.admin-dashboard-nav-item.active {
+    background-color: #ef4444;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.admin-dashboard-sidebar-footer {
+    padding: 12px 12px 16px;
+}
+
+.admin-dashboard-logout-btn-sidebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #ffb4b1;
+    background-color: #ffffff;
+    color: #ff5a57;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+/* Main Content Area */
+.admin-dashboard-main-wrapper {
+    flex: 1;
+    margin-left: 240px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.admin-dashboard-header {
+    height: 64px;
+    background-color: #f4f6f8;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+}
+
+.admin-dashboard-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.admin-dashboard-header-logo-text {
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: #ef4444;
+    letter-spacing: -0.5px;
+}
+
+.admin-dashboard-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-dashboard-bell-btn {
+    background: none;
+    border: none;
+    color: #4b5563;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.admin-dashboard-avatar-box {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #d7def0;
+    background-color: #f3f4f6;
+}
+
+.admin-dashboard-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-dashboard-logout-btn-header {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid #fca5a5;
+    background-color: transparent;
+    color: #ef4444;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+/* Body / Main view */
+.admin-dashboard-content {
+    padding: 24px 32px;
+    flex: 1;
+    max-width: 1200px;
+}
+
+.admin-dashboard-loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    color: #64748b;
+    font-weight: 600;
+}
