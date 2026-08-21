@@ -1,0 +1,187 @@
+.admin-home-container {
+    padding: 10px 0;
+}
+
+/* Header Area */
+.admin-home-header {
+    margin-bottom: 24px;
+}
+
+.admin-home-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: #111827;
+}
+
+.admin-home-subtitle {
+    font-size: 0.875rem;
+    margin: 0;
+    color: #6b7280;
+}
+
+/* Main Chart Card */
+.admin-home-chart-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.admin-home-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.admin-home-chart-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0;
+    color: #111827;
+}
+
+.admin-home-time-segmented-control {
+    display: flex;
+    background-color: #f3f4f6;
+    border-radius: 999px;
+    padding: 4px;
+}
+
+.admin-home-time-btn {
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: none;
+    background-color: transparent;
+    color: #4b5563;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: none;
+    transition: all 0.2s;
+}
+
+.admin-home-time-btn.active {
+    background-color: #ef4444;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+/* Chart Bars Section */
+.admin-home-chart-bars-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    height: 180px;
+    margin-top: 20px;
+    padding: 0 10px;
+}
+
+.admin-home-chart-bar {
+    width: 12%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.4s ease;
+}
+
+.admin-home-divider {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 24px 0;
+}
+
+/* Chart Bottom Statistics */
+.admin-home-chart-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-home-stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.admin-home-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.admin-home-growth-container {
+    text-align: right;
+}
+
+.admin-home-growth-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #10b981;
+}
+
+/* Three Info Cards Grid */
+.admin-home-cards-grid {
+    display: flex;
+    gap: 20px;
+}
+
+.admin-home-info-card {
+    flex: 1;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.admin-home-info-card.align-start {
+    align-items: flex-start;
+}
+
+.admin-home-card-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.admin-home-card-value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.admin-home-card-warning-sub {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+.admin-home-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin-home-icon-box.users {
+    background-color: #eff6ff;
+}
+
+.admin-home-icon-box.orders {
+    background-color: #ecfdf5;
+}
+
+.admin-home-icon-box.out-of-stock {
+    background-color: #fef2f2;
+}
