@@ -1,0 +1,227 @@
+.admin-view-promotion-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.admin-view-promotion-modal {
+    background-color: #ffffff;
+    border-radius: 16px;
+    width: 650px;
+    max-width: 95vw;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header */
+.admin-view-promotion-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8fafc;
+}
+
+.admin-view-promotion-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.admin-view-promotion-close-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: background-color 0.2s;
+}
+
+.admin-view-promotion-close-btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* Body */
+.admin-view-promotion-body {
+    padding: 24px;
+    overflow-y: auto;
+    min-height: 300px;
+}
+
+.admin-view-promotion-loading {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+
+.admin-view-promotion-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.admin-view-promotion-heading-box {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.admin-view-promotion-name {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0 0 12px;
+}
+
+/* Status Badges */
+.admin-view-promotion-status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.admin-view-promotion-status-badge.status-default {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+
+.admin-view-promotion-status-badge.status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.admin-view-promotion-status-badge.status-active {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.admin-view-promotion-status-badge.status-inactive {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+.admin-view-promotion-status-badge.status-expired {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+/* Grid Cards */
+.admin-view-promotion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.admin-view-promotion-card {
+    background-color: #f8fafc;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-view-promotion-card-revenue {
+    background-color: #fffbeb;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #fde68a;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-view-promotion-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-view-promotion-icon-box.icon-blue {
+    background-color: #3b82f615;
+}
+
+.admin-view-promotion-icon-box.icon-purple {
+    background-color: #8b5cf615;
+}
+
+.admin-view-promotion-icon-box.icon-green {
+    background-color: #10b98115;
+}
+
+.admin-view-promotion-icon-box.icon-amber {
+    background-color: #f59e0b15;
+}
+
+.admin-view-promotion-card-label {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.admin-view-promotion-card-label-amber {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #d97706;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.admin-view-promotion-card-text {
+    margin: 4px 0 0;
+    font-size: 0.95rem;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.admin-view-promotion-card-text-lg {
+    margin: 4px 0 0;
+    font-size: 1.1rem;
+    color: #1e293b;
+    font-weight: 800;
+}
+
+.admin-view-promotion-card-value {
+    margin: 4px 0 0;
+    font-size: 1.5rem;
+    color: #1e293b;
+    font-weight: 800;
+}
+
+.admin-view-promotion-card-unit {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.admin-view-promotion-revenue-value {
+    margin: 4px 0 0;
+    font-size: 1.5rem;
+    color: #b45309;
+    font-weight: 800;
+}

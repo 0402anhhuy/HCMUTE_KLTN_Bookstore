@@ -1,0 +1,381 @@
+.admin-add-promotion-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.admin-add-promotion-modal {
+    background-color: #ffffff;
+    border-radius: 16px;
+    max-width: 95vw;
+    max-height: 90vh;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+.admin-add-promotion-modal.step-1 {
+    width: 600px;
+}
+
+.admin-add-promotion-modal.step-2 {
+    width: 800px;
+}
+
+/* Header */
+.admin-add-promotion-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8fafc;
+}
+
+.admin-add-promotion-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.admin-add-promotion-close-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    color: #64748b;
+}
+
+.admin-add-promotion-close-btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* Body */
+.admin-add-promotion-body {
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    flex: 1;
+    max-height: calc(90vh - 140px);
+}
+
+/* Step 1 */
+.admin-add-promotion-step1-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-add-promotion-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-add-promotion-row {
+    display: flex;
+    gap: 16px;
+}
+
+.admin-add-promotion-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-add-promotion-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.admin-add-promotion-required {
+    color: #ef4444;
+}
+
+.admin-add-promotion-input {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.admin-add-promotion-input:focus {
+    border-color: #ef4444;
+}
+
+.admin-add-promotion-select {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    outline: none;
+    background-color: #fff;
+}
+
+/* Step 2 */
+.admin-add-promotion-step2-container {
+    display: flex;
+    width: 100%;
+    gap: 24px;
+}
+
+.admin-add-promotion-categories-sidebar {
+    width: 200px;
+    border-right: 1px solid #e2e8f0;
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-add-promotion-categories-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #1e293b;
+}
+
+.admin-add-promotion-category-btn {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background-color: transparent;
+    color: #475569;
+    text-align: left;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.admin-add-promotion-category-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.admin-add-promotion-category-btn.active-all {
+    background-color: #ef4444;
+    color: #fff;
+    font-weight: 600;
+}
+
+.admin-add-promotion-category-btn.active-all:hover {
+    background-color: #ef4444;
+}
+
+.admin-add-promotion-category-tree-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #475569;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.admin-add-promotion-category-tree-btn.active {
+    border: 1px solid #ef4444;
+    background-color: #fff1f2;
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.admin-add-promotion-products-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-add-promotion-products-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.admin-add-promotion-products-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.admin-add-promotion-products-counter {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.admin-add-promotion-products-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 350px;
+}
+
+.admin-add-promotion-empty-text {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+}
+
+.admin-add-promotion-product-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    background-color: #ffffff;
+    transition: all 0.2s;
+}
+
+.admin-add-promotion-product-item.selected {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.admin-add-promotion-checkbox-icon {
+    color: #94a3b8;
+}
+
+.admin-add-promotion-checkbox-icon.selected {
+    color: #ef4444;
+}
+
+.admin-add-promotion-product-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background-color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.admin-add-promotion-product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-add-promotion-product-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.admin-add-promotion-product-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-add-promotion-product-price {
+    font-size: 0.8rem;
+    color: #ef4444;
+    font-weight: 600;
+}
+
+/* Pagination */
+.admin-add-promotion-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 16px;
+    gap: 10px;
+}
+
+.admin-add-promotion-page-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #fff;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.admin-add-promotion-page-btn:disabled {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.admin-add-promotion-page-indicator {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+/* Footer */
+.admin-add-promotion-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background-color: #f8fafc;
+}
+
+.admin-add-promotion-btn-cancel {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-add-promotion-btn-next {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-add-promotion-btn-submit {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background-color: #059669;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
