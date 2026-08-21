@@ -1,0 +1,396 @@
+.admin-coupons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Header */
+.admin-coupons-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.admin-coupons-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.admin-coupons-subtitle {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.admin-coupons-create-btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    background-color: #1e40af;
+    color: #ffffff;
+    border: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 10px rgba(30, 64, 175, 0.2);
+}
+
+/* New Coupon Form */
+.admin-coupons-form {
+    background-color: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #93c5fd;
+    padding: 24px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-coupons-form-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 0;
+}
+
+.admin-coupons-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.admin-coupons-form-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.admin-coupons-input-code {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-sizing: border-box;
+}
+
+.admin-coupons-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    box-sizing: border-box;
+}
+
+.admin-coupons-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.admin-coupons-btn-cancel {
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-coupons-btn-submit {
+    padding: 9px 24px;
+    border-radius: 8px;
+    border: none;
+    background-color: #1e40af;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Filter and Search Section */
+.admin-coupons-filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-coupons-search-wrapper {
+    position: relative;
+}
+
+.admin-coupons-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.admin-coupons-search-input {
+    width: 100%;
+    padding: 10px 14px 10px 40px;
+    border-radius: 10px;
+    border: 1px solid #d7def0;
+    background-color: #ffffff;
+    outline: none;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.admin-coupons-filter-box {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    background-color: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    align-items: center;
+}
+
+.admin-coupons-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    flex: 1;
+}
+
+.admin-coupons-filter-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-coupons-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.admin-coupons-filter-select {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    background-color: #f8fafc;
+}
+
+.admin-coupons-reset-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Table Section */
+.admin-coupons-table-wrapper {
+    background-color: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+}
+
+.admin-coupons-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-coupons-table-header-row {
+    background-color: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-coupons-th {
+    padding: 14px 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.admin-coupons-th-right {
+    padding: 14px 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    text-align: right;
+}
+
+.admin-coupons-empty-cell {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+}
+
+.admin-coupons-row {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-coupons-td {
+    padding: 16px 20px;
+}
+
+.admin-coupons-td-discount {
+    padding: 16px 20px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.admin-coupons-td-muted {
+    padding: 16px 20px;
+    color: #475569;
+}
+
+.admin-coupons-code-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background-color: #eff6ff;
+    color: #1e40af;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-coupons-status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.admin-coupons-status-badge.active {
+    background-color: #ecfdf5;
+    color: #059669;
+}
+
+.admin-coupons-status-badge.inactive {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+.admin-coupons-td-actions {
+    padding: 16px 20px;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.admin-coupons-btn-edit {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    background-color: #eff6ff;
+    color: #3b82f6;
+    cursor: pointer;
+}
+
+.admin-coupons-btn-delete {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #fecaca;
+    background-color: #fef2f2;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+/* Delete Modal */
+.admin-coupons-delete-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.admin-coupons-delete-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    width: 400px;
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.admin-coupons-delete-icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background-color: #fef2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.admin-coupons-delete-title {
+    margin: 0 0 12px;
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.admin-coupons-delete-desc {
+    margin: 0 0 24px;
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.admin-coupons-delete-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.admin-coupons-delete-cancel-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-coupons-delete-confirm-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
