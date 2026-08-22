@@ -1,0 +1,299 @@
+.navbar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    z-index: 1000;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    font-family: "Outfit", sans-serif;
+    box-sizing: border-box;
+}
+
+/* Brand Logo */
+.navbar-brand-link {
+    display: flex;
+    align-items: center;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #1c3f24;
+    text-decoration: none;
+}
+
+/* Navigation Links */
+.navbar-links-group {
+    display: flex;
+    gap: 24px;
+    margin-left: 32px;
+}
+
+.navbar-nav-link {
+    color: #4a5568;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.navbar-nav-link:hover {
+    color: #1c3f24;
+}
+
+.navbar-nav-link-role {
+    color: #1c3f24;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.navbar-nav-link-role:hover {
+    color: #0f2615;
+}
+
+/* Search Box */
+.navbar-search-form {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin: 0 auto;
+    width: 320px;
+}
+
+.navbar-search-input {
+    background: #f3f4f6;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 36px 8px 12px;
+    font-size: 0.85rem;
+    color: #1c2e24;
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.navbar-search-icon {
+    position: absolute;
+    right: 12px;
+    color: #718096;
+    cursor: pointer;
+}
+
+/* Right Navigation Elements */
+.navbar-right-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-left: auto;
+    position: relative;
+}
+
+.navbar-icon-wrapper {
+    position: relative;
+}
+
+.navbar-icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-icon-link {
+    position: relative;
+    padding: 8px;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+/* Badges */
+.navbar-unread-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+}
+
+.navbar-count-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 1px 5px;
+    border: 1.5px solid #ffffff;
+}
+
+/* Notifications Dropdown Panel */
+.navbar-notifications-dropdown {
+    position: absolute;
+    top: 48px;
+    right: 0;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1010;
+    padding: 12px 0;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.navbar-notifications-header {
+    padding: 0 16px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-notifications-title {
+    font-weight: 600;
+    color: #111827;
+}
+
+.navbar-notifications-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.navbar-mark-all-read-btn {
+    font-size: 0.75rem;
+    color: #10b981;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0;
+}
+
+.navbar-unread-count-text {
+    font-size: 0.75rem;
+    color: #718096;
+}
+
+.navbar-notifications-empty-box {
+    padding: 24px 16px;
+    text-align: center;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.navbar-notification-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: left;
+}
+
+.navbar-notification-item.unread {
+    background-color: rgba(16, 185, 129, 0.05);
+}
+
+.navbar-notification-item.read {
+    background-color: transparent;
+}
+
+.navbar-notification-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.navbar-notification-item-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+}
+
+.navbar-notification-item-title.read {
+    color: #4b5563;
+}
+
+.navbar-notification-item-title.unread {
+    color: #111827;
+}
+
+.navbar-notification-item-message {
+    font-size: 0.8rem;
+    color: #718096;
+    line-height: 1.2;
+}
+
+/* User Auth Section */
+.navbar-loading-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 4px;
+    min-width: 120px;
+}
+
+.navbar-loading-text {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.navbar-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 4px;
+}
+
+.navbar-user-name-link {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4a5568;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.navbar-user-name-link:hover {
+    color: #1c3f24;
+}
+
+.navbar-auth-btn {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    font-weight: 600;
+    background-color: #1c3f24;
+    color: #ffffff;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s;
+}
+
+.navbar-auth-btn:hover {
+    background-color: #0f2615;
+}
+
+.navbar-guest-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 4px;
+}
