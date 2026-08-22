@@ -1,0 +1,112 @@
+.payment-callback-page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.payment-callback-panel {
+    width: 100%;
+    max-width: 460px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.payment-callback-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Verifying State */
+.payment-callback-spinner {
+    color: var(--primary);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.payment-callback-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.payment-callback-desc-verifying {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Success State */
+.payment-callback-icon-success {
+    color: var(--success);
+    filter: drop-shadow(0 0 10px var(--success-glow));
+}
+
+.payment-callback-title-success {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #34d399;
+    margin: 0;
+}
+
+.payment-callback-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Failed State */
+.payment-callback-icon-failed {
+    color: var(--danger);
+    filter: drop-shadow(0 0 10px var(--danger-glow));
+}
+
+.payment-callback-title-failed {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #f87171;
+    margin: 0;
+}
+
+/* Action Buttons */
+.payment-callback-actions-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.payment-callback-btn-secondary {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    text-decoration: none;
+}
+
+.payment-callback-btn-primary {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    text-decoration: none;
+}
+
+.payment-callback-btn-danger {
+    flex: 1;
+    padding: 10px 0;
+    text-align: center;
+    background-color: var(--danger);
+    background-image: none;
+    text-decoration: none;
+}
