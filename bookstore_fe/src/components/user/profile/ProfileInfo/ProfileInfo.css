@@ -1,0 +1,54 @@
+.profile-info-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.profile-info-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-info-icon {
+    color: #0a422d;
+}
+
+.profile-info-form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-info-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.profile-info-label.disabled {
+    color: #9ca3af;
+}
+
+.profile-info-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.profile-info-input:disabled {
+    border: 1px solid #e5e7eb;
+    background-color: #f3f4f6;
+    color: #9ca3af;
+}
