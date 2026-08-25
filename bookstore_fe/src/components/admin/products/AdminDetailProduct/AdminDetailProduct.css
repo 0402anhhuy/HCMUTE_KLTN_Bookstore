@@ -1,0 +1,213 @@
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-detail-product-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeIn 0.3s;
+}
+
+/* Status loading / empty */
+.admin-detail-product-loading {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+}
+
+.admin-detail-product-empty {
+    padding: 40px;
+    text-align: center;
+    color: #ef4444;
+}
+
+/* Back button */
+.admin-detail-product-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    margin-bottom: 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Main Box */
+.admin-detail-product-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #c8d1de;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header inside card */
+.admin-detail-product-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8fafc;
+}
+
+.admin-detail-product-id-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-detail-product-id-text {
+    font-weight: 800;
+    color: #1e293b;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+}
+
+.admin-detail-product-badges-group {
+    display: flex;
+    gap: 10px;
+}
+
+.admin-detail-product-priority-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    background-color: #ffedd5;
+    color: #9a3412;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.admin-detail-product-category-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    background-color: #dbeafe;
+    color: #1e40af;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Body Content */
+.admin-detail-product-body {
+    display: flex;
+    padding: 32px;
+    gap: 40px;
+}
+
+.admin-detail-product-cover-wrapper {
+    flex-shrink: 0;
+    width: 260px;
+    height: 360px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.admin-detail-product-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-detail-product-info-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-detail-product-name {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+}
+
+.admin-detail-product-author {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 0 0 24px 0;
+}
+
+.admin-detail-product-section-label {
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.admin-detail-product-description {
+    font-size: 0.95rem;
+    color: #334155;
+    line-height: 1.6;
+    margin: 0 0 28px 0;
+    text-align: justify;
+}
+
+.admin-detail-product-price {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.admin-detail-product-specs-grid {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 24px;
+}
+
+.admin-detail-product-spec-item {
+    color: #334155;
+    font-size: 0.92rem;
+}
+
+/* Footer Actions */
+.admin-detail-product-footer {
+    padding: 24px 32px;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.admin-detail-product-btn-reject {
+    padding: 12px 32px;
+    border-radius: 6px;
+    border: 1px solid #ef4444;
+    background-color: #ffffff;
+    color: #ef4444;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.admin-detail-product-btn-approve {
+    padding: 12px 32px;
+    border-radius: 6px;
+    border: none;
+    background-color: #b45309;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}

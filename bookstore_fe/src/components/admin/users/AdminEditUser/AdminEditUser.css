@@ -1,0 +1,173 @@
+.admin-edit-user-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.admin-edit-user-modal {
+    background-color: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-edit-user-header {
+    padding: 24px 32px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background-color: #ffffff;
+    z-index: 10;
+    border-radius: 16px 16px 0 0;
+}
+
+.admin-edit-user-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.admin-edit-user-close-button {
+    border: none;
+    background: none;
+    padding: 8px;
+    cursor: pointer;
+    color: #64748b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.admin-edit-user-close-button:hover {
+    background-color: #f1f5f9;
+}
+
+.admin-edit-user-body {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.admin-edit-user-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.admin-edit-user-field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.admin-edit-user-field-half {
+    width: 50%;
+    padding-right: 12px;
+    box-sizing: border-box;
+    min-width: 200px;
+}
+
+.admin-edit-user-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.admin-edit-user-input-wrapper {
+    position: relative;
+}
+
+.admin-edit-user-input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.admin-edit-user-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px 12px 42px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.admin-edit-user-select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px 12px 42px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    outline: none;
+    background-color: #fff;
+    cursor: pointer;
+    appearance: none;
+}
+
+.admin-edit-user-footer {
+    padding: 24px 32px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background-color: #f8fafc;
+    border-radius: 0 0 16px 16px;
+}
+
+.admin-edit-user-cancel-button {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.admin-edit-user-save-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    opacity: 1;
+}
+
+.admin-edit-user-save-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}

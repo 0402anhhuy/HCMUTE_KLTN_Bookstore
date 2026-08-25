@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,28 @@ public class ProductService {
     private final NotificationService notificationService;
 
     public Page<Product> searchProducts(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
-        return productRepository.searchProducts(keyword, categoryId, minPrice, maxPrice, pageable);
+        List<Long> categoryIds = null;
+        if (categoryId != null) {
+            categoryIds = getAllCategoryAndDescendantIds(categoryId);
+        }
+        return productRepository.searchProducts(keyword, categoryIds, minPrice, maxPrice, pageable);
+    }
+
+    public List<Long> getAllCategoryAndDescendantIds(Long rootCategoryId) {
+        List<Long> allIds = new ArrayList<>();
+        if (rootCategoryId == null) {
+            return allIds;
+        }
+        collectDescendantIds(rootCategoryId, allIds);
+        return allIds;
+    }
+
+    private void collectDescendantIds(Long currentId, List<Long> result) {
+        result.add(currentId);
+        List<Category> children = categoryRepository.findByParentCategoryId(currentId);
+        for (Category child : children) {
+            collectDescendantIds(child.getId(), result);
+        }
     }
 
     public Product getProductById(Long id) {
@@ -58,19 +80,58 @@ public class ProductService {
         return categoryRepository.findAll();
     }
 
+    public List<Category> getRootCategories() {
+        return categoryRepository.findByParentCategoryIsNull();
+    }
+
+    public List<Category> getChildCategories(Long parentId) {
+        return categoryRepository.findByParentCategoryId(parentId);
+    }
+
     @Transactional
     public Category createCategory(String name) {
+        return createCategory(name, null);
+    }
+
+    @Transactional
+    public Category createCategory(String name, Long parentId) {
         if (categoryRepository.findByName(name).isPresent()) {
             throw new RuntimeException("Danh mục đã tồn tại");
         }
-        return categoryRepository.save(Category.builder().name(name).build());
+
+        Category.CategoryBuilder builder = Category.builder().name(name);
+        if (parentId != null) {
+            Category parent = categoryRepository.findById(parentId)
+                    .orElseThrow(() -> new RuntimeException("Danh mục cha không tồn tại"));
+            int parentDepth = getCategoryDepth(parent);
+            if (parentDepth >= 3) {
+                throw new RuntimeException("Cây danh mục chỉ hỗ trợ tối đa 3 cấp");
+            }
+            builder.parentCategory(parent);
+        }
+
+        return categoryRepository.save(builder.build());
+    }
+
+    private int getCategoryDepth(Category category) {
+        int depth = 0;
+        Category current = category;
+        while (current.getParentCategory() != null) {
+            depth++;
+            current = current.getParentCategory();
+        }
+        return depth;
     }
 
     @Transactional
     public Product createProduct(Product product, Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
+        if (category.getChildren() != null && !category.getChildren().isEmpty()) {
+            throw new RuntimeException("Sản phẩm chỉ nên gắn vào category cấp lá (segment 3)");
+        }
         product.setCategory(category);
+        product.setImageUrls(normalizeImageUrls(product));
         Product saved = productRepository.save(product);
         if (saved.getStatus() == Product.ProductStatus.ACTIVE) {
             notificationService.notifyManagersAndAdmins(
@@ -90,6 +151,9 @@ public class ProductService {
         Product.ProductStatus oldStatus = product.getStatus();
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
+        if (category.getChildren() != null && !category.getChildren().isEmpty()) {
+            throw new RuntimeException("Sản phẩm chỉ nên gắn vào category cấp lá (segment 3)");
+        }
         product.setCategory(category);
         return getProduct(updatedDetails, product, oldStatus);
     }
@@ -107,13 +171,16 @@ public class ProductService {
         product.setAuthor(updatedDetails.getAuthor());
         product.setPublisher(updatedDetails.getPublisher());
         product.setIsbn(updatedDetails.getIsbn());
+        product.setSupplierName(updatedDetails.getSupplierName());
+        product.setPublicationYear(updatedDetails.getPublicationYear());
+        product.setWeight(updatedDetails.getWeight());
+        product.setDimensions(updatedDetails.getDimensions());
+        product.setFormat(updatedDetails.getFormat());
         product.setDescription(updatedDetails.getDescription());
         product.setPrice(updatedDetails.getPrice());
-        if (updatedDetails.getImageUrls() != null && !updatedDetails.getImageUrls().isEmpty()) {
-            product.setImageUrls(new java.util.ArrayList<>(updatedDetails.getImageUrls()));
-        } else {
-            product.setImageUrl(updatedDetails.getImageUrl());
-        }
+        product.setPage(updatedDetails.getPage());
+        product.setLanguage(updatedDetails.getLanguage());
+        product.setImageUrls(normalizeImageUrls(updatedDetails));
         product.setStatus(updatedDetails.getStatus());
         product.setStockQuantity(updatedDetails.getStockQuantity());
         Product saved = productRepository.save(product);
@@ -127,6 +194,23 @@ public class ProductService {
             );
         }
         return saved;
+    }
+
+    private List<String> normalizeImageUrls(Product source) {
+        List<String> normalized = new ArrayList<>();
+        if (source.getImageUrls() == null) {
+            return normalized;
+        }
+        for (String imageUrl : source.getImageUrls()) {
+            if (imageUrl == null) {
+                continue;
+            }
+            String candidate = imageUrl.trim();
+            if (!candidate.isBlank() && !normalized.contains(candidate)) {
+                normalized.add(candidate);
+            }
+        }
+        return normalized;
     }
 
     @Transactional
@@ -153,13 +237,12 @@ public class ProductService {
             }
             newStock -= quantity;
         } else if (type == StockMovement.MovementType.ADJUST) {
-            newStock = quantity; // quantity represents the target amount
+            newStock = quantity;
         }
 
         product.setStockQuantity(newStock);
         productRepository.save(product);
 
-        // Record stock movement
         StockMovement movement = StockMovement.builder()
                 .product(product)
                 .manager(manager)
@@ -169,13 +252,12 @@ public class ProductService {
                 .build();
         stockMovementRepository.save(movement);
 
-        // Log audit log
-        auditLogService.log(manager, "STOCK_MOVEMENT", 
-                "Điều chỉnh tồn kho sản phẩm: " + product.getName() + 
-                ", Loại: " + type.name() + 
-                ", Số lượng: " + quantity + 
-                ", Tồn cũ: " + currentStock + 
-                ", Tồn mới: " + newStock);
+        auditLogService.log(manager, "STOCK_MOVEMENT",
+                "Điều chỉnh tồn kho sản phẩm: " + product.getName() +
+                        ", Loại: " + type.name() +
+                        ", Số lượng: " + quantity +
+                        ", Tồn cũ: " + currentStock +
+                        ", Tồn mới: " + newStock);
     }
 
     public List<StockMovement> getAllStockMovements() {

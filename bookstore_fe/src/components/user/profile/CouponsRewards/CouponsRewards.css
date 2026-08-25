@@ -1,0 +1,251 @@
+.coupons-rewards-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Card Header */
+.coupons-rewards-header {
+    background-color: #0a422d;
+    color: #ffffff;
+    padding: 14px 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.coupons-rewards-body {
+    padding: 20px;
+}
+
+/* Top Meta Stack (Wallet + Points) */
+.coupons-rewards-top-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+}
+
+/* Wallet Box */
+.coupons-rewards-wallet-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.coupons-rewards-wallet-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.coupons-rewards-wallet-icon-wrapper {
+    background-color: #10b981;
+    color: #ffffff;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coupons-rewards-wallet-info {
+    text-align: left;
+}
+
+.coupons-rewards-wallet-label {
+    font-size: 0.75rem;
+    color: #166534;
+    font-weight: 600;
+}
+
+.coupons-rewards-wallet-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f5132;
+    margin-top: 2px;
+}
+
+.coupons-rewards-wallet-tag {
+    font-size: 0.7rem;
+    color: #15803d;
+    background-color: #d1e7dd;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* Reward Points Row */
+.coupons-rewards-points-row {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 4px;
+}
+
+.coupons-rewards-points-left {
+    text-align: left;
+}
+
+.coupons-rewards-points-right {
+    text-align: right;
+}
+
+.coupons-rewards-points-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.coupons-rewards-points-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #111827;
+    margin-top: 2px;
+}
+
+.coupons-rewards-cash-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #10b981;
+    margin-top: 2px;
+}
+
+/* Coupons Section */
+.coupons-rewards-list-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 10px;
+}
+
+.coupons-rewards-loading-text {
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-align: center;
+    padding: 10px;
+}
+
+.coupons-rewards-empty-box {
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background-color: #fafafa;
+}
+
+.coupons-rewards-empty-icon {
+    color: #9ca3af;
+    margin: 0 auto 8px auto;
+}
+
+.coupons-rewards-empty-text {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.coupons-rewards-empty-subtext {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
+.coupons-rewards-scroll-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+/* Coupon Item Card */
+.coupon-item-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ffffff;
+    opacity: 1;
+}
+
+.coupon-item-card.inactive {
+    background-color: #f9fafb;
+    opacity: 0.7;
+}
+
+.coupon-item-left {
+    flex: 1;
+    min-width: 0;
+}
+
+.coupon-item-code-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.coupon-item-code-badge {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0a422d;
+    font-family: monospace;
+    background-color: #e6f4ea;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.coupon-item-tag-danger {
+    font-size: 0.65rem;
+    color: #ef4444;
+    background-color: #fee2e2;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+.coupon-item-discount-desc {
+    font-size: 0.8rem;
+    color: #111827;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.coupon-item-min-order {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.coupon-item-copy-btn {
+    padding: 6px 12px;
+    background-color: #0a422d;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.coupon-item-copy-btn.copied {
+    background-color: #e6f4ea;
+    color: #0a422d;
+}
+
+.coupon-item-copy-btn:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}

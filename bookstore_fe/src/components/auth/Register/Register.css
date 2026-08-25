@@ -1,0 +1,225 @@
+.register-card-wrapper {
+    width: 100%;
+    max-width: 440px;
+    padding: 40px 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background-color: #ffffff;
+    text-align: left;
+}
+
+/* Header */
+.register-header-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #111827;
+}
+
+.register-brand-highlight {
+    color: #0056c6;
+}
+
+/* Stepper */
+.register-stepper-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 30px;
+}
+
+.register-step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.register-step-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.register-step-circle.active {
+    background-color: #0056c6;
+    color: #ffffff;
+}
+
+.register-step-circle.inactive {
+    background-color: #e5e7eb;
+    color: #9ca3af;
+}
+
+.register-step-label {
+    font-size: 0.75rem;
+}
+
+.register-step-label.active {
+    font-weight: 600;
+    color: #0056c6;
+}
+
+.register-step-label.inactive {
+    font-weight: 500;
+    color: #9ca3af;
+}
+
+.register-step-divider {
+    flex: 1;
+    height: 1px;
+    background-color: #e5e7eb;
+    max-width: 60px;
+    margin-top: -16px;
+}
+
+.register-step-divider.active {
+    background-color: #0056c6;
+}
+
+/* Alerts */
+.register-alert-error {
+    background: #fef2f2;
+    color: #ef4444;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    border: 1px solid #fee2e2;
+}
+
+.register-alert-info {
+    background: #eef5ff;
+    border: 1px solid #d0e3ff;
+    color: #0056c6;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.register-alert-info-email {
+    text-decoration: underline;
+}
+
+.register-alert-message {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #10b981;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Form Groups & Inputs */
+.register-form-group {
+    margin-bottom: 16px;
+}
+
+.register-form-group-lg {
+    margin-bottom: 24px;
+}
+
+.register-field-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    display: block;
+    color: #374151;
+}
+
+.register-field-label-center {
+    text-align: center;
+}
+
+.register-text-input {
+    width: 100%;
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    padding: 0 14px;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.register-otp-input {
+    width: 100%;
+    height: 48px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 1.25rem;
+    letter-spacing: 8px;
+    text-align: center;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.register-otp-hint {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-align: center;
+    margin-top: 6px;
+}
+
+/* Buttons */
+.register-submit-btn {
+    width: 100%;
+    height: 46px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+}
+
+.register-otp-btn-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.register-btn-verify-otp {
+    flex: 2;
+    height: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.register-btn-resend-otp {
+    flex: 1.2;
+    height: 44px;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    border: none;
+    color: #4b5563;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Footer Links */
+.register-footer-text {
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.85rem;
+    margin-top: 24px;
+}
+
+.register-footer-link {
+    font-weight: 600;
+    color: #0056c6;
+}

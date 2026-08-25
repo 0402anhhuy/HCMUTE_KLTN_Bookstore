@@ -1,4 +1,10 @@
-import { createContext, useState, useEffect, useContext, useCallback } from "react";
+import {
+    createContext,
+    useState,
+    useEffect,
+    useContext,
+    useCallback,
+} from "react";
 import api from "../services/api";
 
 const AppContext = createContext();
@@ -315,33 +321,28 @@ export const AppProvider = ({ children }) => {
     };
 
     const addFavorite = async (productId) => {
-        if (!user) {
-            showToast(
-                "Vui lòng đăng nhập để thêm sản phẩm vào danh sách yêu thích.",
+        try {
+            await api.post(`/products/favorites?productId=${productId}`);
+            const res = await api.get("/products/favorites");
+            setFavorites(res.data || []);
+            showToast?.("Đã thêm vào danh sách yêu thích", "success");
+        } catch (err) {
+            showToast?.(
+                "Không thể thêm vào yêu thích. Vui lòng đăng nhập!",
                 "error",
             );
-            return false;
-        }
-        try {
-            await api.post(`/favorites?productId=${productId}`);
-            await fetchFavorites();
-            showToast("Đã thêm sản phẩm vào danh sách yêu thích!", "success");
-            return true;
-        } catch (error) {
-            console.error("Failed to add favorite:", error);
-            showToast("Không thể thêm sản phẩm vào yêu thích.", "error");
-            return false;
         }
     };
 
     const removeFavorite = async (productId) => {
-        if (!user) return;
         try {
-            await api.delete(`/favorites?productId=${productId}`);
-            await fetchFavorites();
-            showToast("Đã xóa khỏi danh sách yêu thích!", "success");
-        } catch (error) {
-            console.error("Failed to remove favorite:", error);
+            await api.delete(`/products/favorites?productId=${productId}`);
+            setFavorites((prev) =>
+                prev.filter((f) => f.product?.id !== productId),
+            );
+            showToast?.("Đã xóa khỏi danh sách yêu thích", "info");
+        } catch (err) {
+            showToast?.("Lỗi khi xóa khỏi yêu thích", "error");
         }
     };
 

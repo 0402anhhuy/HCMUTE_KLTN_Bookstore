@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import { useApp } from '../../context/AppContext';
+import {
+  buildCategoryTree,
+  flattenCategoryTree,
+  formatCategoryLabel,
+  getCategoryPath,
+} from '../../utils/categoryTree';
 
 const ManagerProducts = ({ products, categories, loadData }) => {
   const { showToast } = useApp();
+
+  const categoryOptions = useMemo(
+    () => flattenCategoryTree(buildCategoryTree(categories)),
+    [categories],
+  );
+  const defaultCategoryId = categoryOptions.find((category) => !category.hasChildren)?.id || '';
 
   // Search & Filter state
   const [productSearch, setProductSearch] = useState('');
@@ -25,8 +37,15 @@ const ManagerProducts = ({ products, categories, loadData }) => {
     author: '',
     publisher: '',
     isbn: '',
+    supplierName: '',
+    publicationYear: '',
+    weight: '',
+    dimensions: '',
+    format: '',
     description: '',
     price: '',
+    page: '',
+    language: 'Tiếng Việt',
     stockQuantity: 0,
     imageUrl: '',
     status: 'ACTIVE',
@@ -39,30 +58,56 @@ const ManagerProducts = ({ products, categories, loadData }) => {
       author: '',
       publisher: '',
       isbn: '',
+      supplierName: '',
+      publicationYear: '',
+      weight: '',
+      dimensions: '',
+      format: '',
       description: '',
       price: '',
+      page: '',
+      language: 'Tiếng Việt',
       stockQuantity: 0,
       imageUrl: '',
       status: 'ACTIVE',
-      categoryId: categories.length > 0 ? categories[0].id : ''
+      categoryId: defaultCategoryId
     });
     setShowAddModal(true);
+  };
+
+  const parseOptionalInt = (value) => {
+    if (value === '' || value === null || value === undefined) return null;
+    const parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const buildProductPayload = () => {
+    const imageList = getImagesList(productForm.imageUrl);
+    return {
+      name: productForm.name,
+      author: productForm.author,
+      publisher: productForm.publisher,
+      isbn: productForm.isbn,
+      supplierName: productForm.supplierName,
+      publicationYear: parseOptionalInt(productForm.publicationYear),
+      weight: parseOptionalInt(productForm.weight),
+      dimensions: productForm.dimensions,
+      format: productForm.format,
+      description: productForm.description,
+      price: parseFloat(productForm.price),
+      page: parseInt(productForm.page, 10),
+      language: productForm.language,
+      stockQuantity: parseInt(productForm.stockQuantity, 10) || 0,
+      imageUrl: imageList[0] || '',
+      imageUrls: imageList,
+      status: productForm.status
+    };
   };
 
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        name: productForm.name,
-        author: productForm.author,
-        publisher: productForm.publisher,
-        isbn: productForm.isbn,
-        description: productForm.description,
-        price: parseFloat(productForm.price),
-        stockQuantity: parseInt(productForm.stockQuantity) || 0,
-        imageUrl: productForm.imageUrl,
-        status: productForm.status
-      };
+      const payload = buildProductPayload();
       await api.post(`/products?categoryId=${productForm.categoryId}`, payload);
       showToast('Thêm sản phẩm mới thành công!', 'success');
       setShowAddModal(false);
@@ -80,10 +125,17 @@ const ManagerProducts = ({ products, categories, loadData }) => {
       author: product.author || '',
       publisher: product.publisher || '',
       isbn: product.isbn || '',
+      supplierName: product.supplierName || '',
+      publicationYear: product.publicationYear ?? '',
+      weight: product.weight ?? '',
+      dimensions: product.dimensions || '',
+      format: product.format || '',
       description: product.description || '',
       price: product.price,
+      page: product.page ?? '',
+      language: product.language || 'Tiếng Việt',
       stockQuantity: product.stockQuantity,
-      imageUrl: product.imageUrl || '',
+      imageUrl: getImagesList(product.imageUrls || product.imageUrl).join(' || '),
       status: product.status || 'ACTIVE',
       categoryId: product.category ? product.category.id : ''
     });
@@ -93,17 +145,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        name: productForm.name,
-        author: productForm.author,
-        publisher: productForm.publisher,
-        isbn: productForm.isbn,
-        description: productForm.description,
-        price: parseFloat(productForm.price),
-        stockQuantity: parseInt(productForm.stockQuantity) || 0,
-        imageUrl: productForm.imageUrl,
-        status: productForm.status
-      };
+      const payload = buildProductPayload();
       await api.put(`/products/${editingProductId}?categoryId=${productForm.categoryId}`, payload);
       showToast('Cập nhật thông tin sản phẩm thành công!', 'success');
       setShowEditModal(false);
@@ -133,7 +175,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
   const getImagesList = (urlStr) => {
     if (!urlStr) return [];
-    return urlStr.split(' || ').map(s => s.trim()).filter(Boolean);
+    if (Array.isArray(urlStr)) return urlStr.filter(Boolean);
+    return String(urlStr).split('||').map(s => s.trim()).filter(Boolean);
   };
 
   const handleImageUpload = async (e) => {
@@ -283,8 +326,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
           }}
         >
           <option value="">Tất cả danh mục</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+                  {categoryOptions.map(c => (
+                    <option key={c.id} value={c.id} disabled={c.hasChildren}>{formatCategoryLabel(c, c.depth)}</option>
           ))}
         </select>
 
@@ -335,7 +378,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <img 
-                        src={getImagesList(p.imageUrl)[0] || 'https://via.placeholder.com/40x60?text=Book'} 
+                        src={getImagesList(p.imageUrls || p.imageUrl)[0] || 'https://via.placeholder.com/40x60?text=Book'} 
                         alt={p.name}
                         style={{ width: '40px', height: '56px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #f1f5f9' }}
                       />
@@ -355,7 +398,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                       backgroundColor: '#f3e8ff',
                       color: '#7c3aed'
                     }}>
-                      {p.category?.name || 'N/A'}
+                      {getCategoryPath(p.category) || p.category?.name || 'N/A'}
                     </span>
                   </td>
                   <td style={{ padding: '16px 24px', fontSize: '0.875rem', color: '#475569', fontWeight: 500 }}>
@@ -586,6 +629,73 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Nhà cung cấp
+                </label>
+                <input
+                  type="text"
+                  placeholder="Nhập tên nhà cung cấp..."
+                  value={productForm.supplierName}
+                  onChange={(e) => setProductForm({ ...productForm, supplierName: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Năm xuất bản
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Ví dụ: 2024"
+                  value={productForm.publicationYear}
+                  onChange={(e) => setProductForm({ ...productForm, publicationYear: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Trọng lượng (gram)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Ví dụ: 320"
+                  value={productForm.weight}
+                  onChange={(e) => setProductForm({ ...productForm, weight: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Kích thước
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: 13 x 20.5 cm"
+                  value={productForm.dimensions}
+                  onChange={(e) => setProductForm({ ...productForm, dimensions: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Định dạng
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Bìa mềm"
+                  value={productForm.format}
+                  onChange={(e) => setProductForm({ ...productForm, format: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                   Danh mục sách *
                 </label>
                 <select
@@ -595,8 +705,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
                 >
                   <option value="">Chọn danh mục</option>
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                  {categoryOptions.map(c => (
+                    <option key={c.id} value={c.id} disabled={c.hasChildren}>{formatCategoryLabel(c, c.depth)}</option>
                   ))}
                 </select>
               </div>
@@ -627,6 +737,35 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   placeholder="Nhập số lượng ban đầu..."
                   value={productForm.stockQuantity}
                   onChange={(e) => setProductForm({ ...productForm, stockQuantity: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Số trang *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  placeholder="Nhập số trang..."
+                  value={productForm.page}
+                  onChange={(e) => setProductForm({ ...productForm, page: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Ngôn ngữ *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ví dụ: Tiếng Việt"
+                  value={productForm.language}
+                  onChange={(e) => setProductForm({ ...productForm, language: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
                 />
               </div>
@@ -855,6 +994,68 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Nhà cung cấp
+                </label>
+                <input
+                  type="text"
+                  value={productForm.supplierName}
+                  onChange={(e) => setProductForm({ ...productForm, supplierName: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Năm xuất bản
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={productForm.publicationYear}
+                  onChange={(e) => setProductForm({ ...productForm, publicationYear: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Trọng lượng (gram)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={productForm.weight}
+                  onChange={(e) => setProductForm({ ...productForm, weight: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Kích thước
+                </label>
+                <input
+                  type="text"
+                  value={productForm.dimensions}
+                  onChange={(e) => setProductForm({ ...productForm, dimensions: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Định dạng
+                </label>
+                <input
+                  type="text"
+                  value={productForm.format}
+                  onChange={(e) => setProductForm({ ...productForm, format: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                   Danh mục sách *
                 </label>
                 <select
@@ -864,8 +1065,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
                 >
                   <option value="">Chọn danh mục</option>
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                  {categoryOptions.map(c => (
+                    <option key={c.id} value={c.id} disabled={c.hasChildren}>{formatCategoryLabel(c, c.depth)}</option>
                   ))}
                 </select>
               </div>
@@ -894,6 +1095,33 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   min="0"
                   value={productForm.stockQuantity}
                   onChange={(e) => setProductForm({ ...productForm, stockQuantity: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Số trang *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={productForm.page}
+                  onChange={(e) => setProductForm({ ...productForm, page: e.target.value })}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+                  Ngôn ngữ *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={productForm.language}
+                  onChange={(e) => setProductForm({ ...productForm, language: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
                 />
               </div>

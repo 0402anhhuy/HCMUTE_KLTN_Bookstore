@@ -1,0 +1,358 @@
+.admin-promotions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Header Section */
+.admin-promotions-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-promotions-title {
+    margin: 0;
+    font-size: 1.75rem;
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.admin-promotions-create-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #ef4444;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+}
+
+/* Filter and Search Section */
+.admin-promotions-filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-promotions-search-wrapper {
+    position: relative;
+}
+
+.admin-promotions-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.admin-promotions-search-input {
+    width: 100%;
+    padding: 10px 14px 10px 40px;
+    border-radius: 10px;
+    border: 1px solid #d7def0;
+    background-color: #ffffff;
+    outline: none;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.admin-promotions-filter-box {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    background-color: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    align-items: center;
+}
+
+.admin-promotions-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    flex: 1;
+}
+
+.admin-promotions-filter-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-promotions-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.admin-promotions-filter-select {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    background-color: #f8fafc;
+}
+
+.admin-promotions-reset-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Table Section */
+.admin-promotions-table-wrapper {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.admin-promotions-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.admin-promotions-table-header-row {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-promotions-th {
+    padding: 16px 20px;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.admin-promotions-loading-cell {
+    text-align: center;
+    padding: 20px;
+}
+
+.admin-promotions-empty-cell {
+    text-align: center;
+    padding: 20px;
+    color: #64748b;
+}
+
+.admin-promotions-row {
+    border-bottom: 1px solid #f1f5f9;
+    background-color: #ffffff;
+    transition: background-color 0.2s;
+}
+
+.admin-promotions-row-last {
+    border-bottom: none;
+    background-color: #ffffff;
+    transition: background-color 0.2s;
+}
+
+.admin-promotions-td-title {
+    padding: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.admin-promotions-td-discount {
+    padding: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+.admin-promotions-td-time {
+    padding: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.admin-promotions-time-container {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.admin-promotions-date-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.admin-promotions-time-separator {
+    margin: 0 8px;
+}
+
+.admin-promotions-subtime-row {
+    display: flex;
+    justify-content: space-between;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0 10px;
+}
+
+.admin-promotions-td-status {
+    padding: 20px;
+    white-space: nowrap;
+}
+
+.admin-promotions-status-badge {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.7rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.admin-promotions-status-badge.status-pending {
+    background-color: #f59e0b;
+}
+
+.admin-promotions-status-badge.status-active {
+    background-color: #4ade80;
+}
+
+.admin-promotions-status-badge.status-inactive {
+    background-color: #94a3b8;
+}
+
+.admin-promotions-status-badge.status-expired {
+    background-color: #ef4444;
+}
+
+.admin-promotions-td-products {
+    padding: 20px;
+    white-space: nowrap;
+}
+
+.admin-promotions-products-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.admin-promotions-td-actions {
+    padding: 20px;
+    white-space: nowrap;
+}
+
+.admin-promotions-actions-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+
+.admin-promotions-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* Delete Modal */
+.admin-promotions-delete-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+}
+
+.admin-promotions-delete-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    width: 400px;
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.admin-promotions-delete-icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background-color: #fef2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.admin-promotions-delete-title {
+    margin: 0 0 12px;
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.admin-promotions-delete-desc {
+    margin: 0 0 24px;
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.admin-promotions-delete-btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.admin-promotions-delete-cancel-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-promotions-delete-confirm-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}

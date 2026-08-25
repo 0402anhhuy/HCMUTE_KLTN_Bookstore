@@ -24,10 +24,6 @@ public class CloudinaryService {
         return cloudinary != null;
     }
 
-    public String uploadFile(MultipartFile file, String folderName) throws IOException {
-        return uploadFile(file, folderName, null);
-    }
-
     public String uploadFile(MultipartFile file, String folderName, String customFilename) throws IOException {
         if (cloudinary == null) {
             throw new IllegalStateException("Cloudinary chưa được cấu hình (thiếu cloud-name trong application.properties).");

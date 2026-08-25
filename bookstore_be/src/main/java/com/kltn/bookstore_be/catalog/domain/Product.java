@@ -49,11 +49,29 @@ public class Product {
 
     private String isbn;
 
+    @Column(name = "supplier_name")
+    private String supplierName;
+
+    @Column(name = "publication_year")
+    private Integer publicationYear;
+
+    private Integer weight;
+
+    private String dimensions;
+
+    private String format;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
+
+    @Column(nullable = false)
+    private Integer page;
+
+    @Column(nullable = false)
+    private String language;
 
     @Column(name = "stock_quantity", nullable = false)
     private Integer stockQuantity;

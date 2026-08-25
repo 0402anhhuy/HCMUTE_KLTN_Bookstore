@@ -1,0 +1,55 @@
+.common-breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    margin-bottom: 16px;
+    font-family: "Outfit", sans-serif;
+    font-size: 0.88rem;
+    color: #64748b;
+}
+
+.common-breadcrumb-list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.common-breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.common-breadcrumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.common-breadcrumb-link:hover {
+    color: #0a422d;
+}
+
+.common-breadcrumb-sep {
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+}
+
+.common-breadcrumb-current {
+    color: #0a422d;
+    font-weight: 700;
+    cursor: default;
+    max-width: 320px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

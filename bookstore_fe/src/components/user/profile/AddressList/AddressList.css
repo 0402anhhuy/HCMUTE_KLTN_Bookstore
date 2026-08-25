@@ -1,0 +1,224 @@
+.address-list-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.address-list-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.address-list-icon {
+    color: #0a422d;
+}
+
+.address-list-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Individual Address Item Card */
+.address-item-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+    background-color: #ffffff;
+    transition: all 0.2s;
+}
+
+.address-item-card.default {
+    border: 1.5px solid #10b981;
+    background-color: #f0fdf4;
+}
+
+.address-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.address-badge {
+    display: inline-block;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.address-badge.default {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.address-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.address-delete-confirm-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.address-delete-confirm-text {
+    font-size: 0.75rem;
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.address-btn-delete-confirm {
+    padding: 2px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    background-color: #ef4444;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.address-btn-cancel-mini {
+    padding: 2px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    background-color: #ffffff;
+    color: #374151;
+    cursor: pointer;
+}
+
+.address-btn-set-default {
+    background: none;
+    border: none;
+    color: #0a422d;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #e6f4ea;
+}
+
+.address-btn-icon-edit {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #4b5563;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.address-btn-icon-trash {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ef4444;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.address-recipient-info {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #111827;
+}
+
+.address-text-display {
+    font-size: 0.85rem;
+    color: #4b5563;
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+/* Edit Address Inline */
+.address-edit-box {
+    margin-top: 10px;
+}
+
+.address-textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    outline: none;
+    box-sizing: border-box;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+.address-edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: flex-end;
+}
+
+.address-btn-action-cancel {
+    padding: 4px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    background-color: #ffffff;
+    color: #374151;
+    cursor: pointer;
+}
+
+.address-btn-action-save {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    background-color: #0a422d;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Add New Address Form Inline */
+.address-add-card {
+    border: 1.5px dashed #0a422d;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #fafafa;
+}
+
+.address-add-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #111827;
+    margin-bottom: 8px;
+}
+
+.address-btn-open-add {
+    margin-top: 14px;
+    width: 100%;
+    padding: 10px;
+    border: 1px dashed #0a422d;
+    border-radius: 8px;
+    background-color: transparent;
+    color: #0a422d;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}

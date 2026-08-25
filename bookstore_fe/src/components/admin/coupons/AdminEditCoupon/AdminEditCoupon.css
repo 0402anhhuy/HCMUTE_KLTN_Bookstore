@@ -1,0 +1,137 @@
+.admin-edit-coupon-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.admin-edit-coupon-modal {
+    background-color: #ffffff;
+    border-radius: 16px;
+    width: 800px;
+    max-width: 95vw;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header */
+.admin-edit-coupon-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8fafc;
+}
+
+.admin-edit-coupon-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.admin-edit-coupon-close-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: background-color 0.2s;
+}
+
+.admin-edit-coupon-close-btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* Form */
+.admin-edit-coupon-form {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-edit-coupon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.admin-edit-coupon-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+}
+
+.admin-edit-coupon-input-code {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-sizing: border-box;
+}
+
+.admin-edit-coupon-select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.admin-edit-coupon-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    box-sizing: border-box;
+}
+
+/* Footer / Actions */
+.admin-edit-coupon-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+    margin-top: 8px;
+}
+
+.admin-edit-coupon-btn-cancel {
+    padding: 9px 24px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-edit-coupon-btn-submit {
+    padding: 9px 24px;
+    border-radius: 8px;
+    border: none;
+    background-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}

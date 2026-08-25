@@ -1,0 +1,362 @@
+.admin-edit-promotion-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.admin-edit-promotion-modal {
+    background-color: #ffffff;
+    border-radius: 16px;
+    max-width: 95vw;
+    max-height: 90vh;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+.admin-edit-promotion-modal.step-1 {
+    width: 600px;
+}
+
+.admin-edit-promotion-modal.step-2 {
+    width: 800px;
+}
+
+/* Header */
+.admin-edit-promotion-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8fafc;
+}
+
+.admin-edit-promotion-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.admin-edit-promotion-close-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    color: #64748b;
+}
+
+.admin-edit-promotion-close-btn:hover {
+    background-color: #e2e8f0;
+}
+
+/* Body */
+.admin-edit-promotion-body {
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    flex: 1;
+    max-height: calc(90vh - 140px);
+}
+
+/* Step 1 */
+.admin-edit-promotion-step1-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.admin-edit-promotion-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-edit-promotion-row {
+    display: flex;
+    gap: 16px;
+}
+
+.admin-edit-promotion-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-edit-promotion-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.admin-edit-promotion-required {
+    color: #ef4444;
+}
+
+.admin-edit-promotion-input {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.admin-edit-promotion-input:focus {
+    border-color: #3b82f6;
+}
+
+.admin-edit-promotion-select {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    outline: none;
+    background-color: #fff;
+}
+
+/* Step 2 */
+.admin-edit-promotion-step2-container {
+    display: flex;
+    width: 100%;
+    gap: 24px;
+}
+
+.admin-edit-promotion-categories-sidebar {
+    width: 200px;
+    border-right: 1px solid #e2e8f0;
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.admin-edit-promotion-categories-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #1e293b;
+}
+
+.admin-edit-promotion-category-btn {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background-color: transparent;
+    color: #475569;
+    text-align: left;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.admin-edit-promotion-category-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.admin-edit-promotion-category-btn.active {
+    background-color: #3b82f6;
+    color: #fff;
+    font-weight: 600;
+}
+
+.admin-edit-promotion-category-btn.active:hover {
+    background-color: #3b82f6;
+}
+
+.admin-edit-promotion-products-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-edit-promotion-products-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.admin-edit-promotion-products-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.admin-edit-promotion-products-counter {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.admin-edit-promotion-products-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 350px;
+}
+
+.admin-edit-promotion-empty-text {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+}
+
+.admin-edit-promotion-product-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    background-color: #ffffff;
+    transition: all 0.2s;
+}
+
+.admin-edit-promotion-product-item.selected {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.admin-edit-promotion-checkbox-icon {
+    color: #94a3b8;
+}
+
+.admin-edit-promotion-checkbox-icon.selected {
+    color: #3b82f6;
+}
+
+.admin-edit-promotion-product-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background-color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.admin-edit-promotion-product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-edit-promotion-product-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.admin-edit-promotion-product-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-edit-promotion-product-price {
+    font-size: 0.8rem;
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+/* Pagination */
+.admin-edit-promotion-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 16px;
+    gap: 10px;
+}
+
+.admin-edit-promotion-page-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #fff;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.admin-edit-promotion-page-btn:disabled {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.admin-edit-promotion-page-indicator {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+/* Footer */
+.admin-edit-promotion-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background-color: #f8fafc;
+}
+
+.admin-edit-promotion-btn-cancel {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-edit-promotion-btn-next {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background-color: #3b82f6;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-edit-promotion-btn-save {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background-color: #059669;
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
