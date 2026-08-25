@@ -14,7 +14,6 @@ import { useHome } from "./useHome";
 import "./Home.css";
 import { RecommendationSection } from "@/components/common";
 import { useNavigate } from "react-router-dom";
-import { categoryService } from "@/services/categoryService";
 
 const Home = () => {
     const {
