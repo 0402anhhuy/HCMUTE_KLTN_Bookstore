@@ -325,6 +325,22 @@ export const useCart = () => {
         navigate(path);
     };
 
+    // Thêm state mở modal vào trong useCart:
+    const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+    const [couponSearchInput, setCouponSearchInput] = useState("");
+
+    const openCouponModal = () => setIsCouponModalOpen(true);
+    const closeCouponModal = () => {
+        setIsCouponModalOpen(false);
+        setCouponSearchInput("");
+    };
+
+    const handleApplyCouponFromModal = (code) => {
+        setCouponCode(code);
+        closeCouponModal();
+        showToast?.(`Đã áp dụng mã ${code}`, "success");
+    };
+
     return {
         cart,
         updateCartQty,
@@ -352,5 +368,11 @@ export const useCart = () => {
         total,
         calculateDiscount,
         handleCheckoutRedirect,
+        isCouponModalOpen,
+        openCouponModal,
+        closeCouponModal,
+        couponSearchInput,
+        setCouponSearchInput,
+        handleApplyCouponFromModal,
     };
 };
