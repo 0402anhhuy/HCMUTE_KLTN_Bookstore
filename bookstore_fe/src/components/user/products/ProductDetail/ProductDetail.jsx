@@ -1,20 +1,22 @@
-import { Link, useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
     ShoppingCart,
     Star,
     Truck,
-    ShieldCheck,
-    RefreshCcw,
-    HeadphonesIcon,
+    RotateCcw,
+    Zap,
+    ChevronDown,
+    ChevronUp,
     Heart,
 } from "lucide-react";
+import { Breadcrumb, RecommendationSection } from "@/components/common";
+import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
 import { useProductDetail } from "./useProductDetail";
-import { useApp } from "@/context/AppContext";
 import "./ProductDetail.css";
 
 const ProductDetail = () => {
     const navigate = useNavigate();
-    const { addToCart } = useApp();
     const {
         product,
         similarProducts,
@@ -22,14 +24,18 @@ const ProductDetail = () => {
         setQty,
         loading,
         reviews,
-        ratingFilter,
-        setRatingFilter,
+        averageRating,
         activeImageIdx,
         setActiveImageIdx,
         productImages,
         mainImageUrl,
         isFavorite,
         formatPrice,
+        discountPercent,
+        originalPrice,
+        timeLeft,
+        isDescExpanded,
+        setIsDescExpanded,
         handleAddToCart,
         handleToggleFavorite,
         handleBuyNow,
@@ -37,522 +43,424 @@ const ProductDetail = () => {
     } = useProductDetail();
 
     if (loading) {
-        return <div className="product-detail-loading-box">Đang tải...</div>;
+        return (
+            <div className="product-detail-loading-box">
+                Đang tải thông tin sách...
+            </div>
+        );
     }
 
     if (!product) {
         return (
             <div className="product-detail-notfound-box">
-                Không tìm thấy sản phẩm
+                Không tìm thấy sản phẩm yêu cầu.
             </div>
         );
     }
 
+    // Tự động xây dựng Breadcrumb đệ quy chuẩn
+    const breadcrumbItems = [
+        { label: "Khám phá kho sách", path: "/catalog" },
+        ...buildCategoryBreadcrumbs(product.category, product.name),
+    ];
+
     return (
         <div className="page-container animate-fade-in product-detail-container">
-            {/* Breadcrumb */}
-            <div className="product-detail-breadcrumb">
-                <Link to="/" className="product-detail-breadcrumb-link">
-                    Trang chủ
-                </Link>
-                <span>&gt;</span>
-                <Link to="/catalog" className="product-detail-breadcrumb-link">
-                    Khám phá kho sách
-                </Link>
-                <span>&gt;</span>
-                <span className="product-detail-breadcrumb-current">
-                    {product.name}
-                </span>
+            {/* Breadcrumb đồng bộ */}
+            <div className="product-detail-breadcrumb-wrapper">
+                <Breadcrumb items={breadcrumbItems} />
             </div>
 
-            <div className="product-detail-main-card">
-                {/* Left: Image Gallery */}
-                <div className="product-detail-gallery-col">
-                    <div className="product-detail-main-image-wrapper">
-                        {mainImageUrl ? (
-                            <img
-                                src={
-                                    productImages[activeImageIdx]?.url ||
-                                    mainImageUrl
-                                }
-                                alt={product.name}
-                                className="product-detail-main-img"
-                            />
-                        ) : (
-                            <div className="product-detail-no-image-text">
-                                Không có ảnh
-                            </div>
-                        )}
+            {/* Top Layout */}
+            <div className="product-detail-main-layout">
+                {/* CỘT TRÁI */}
+                <div className="product-detail-left-card">
+                    <div className="product-detail-main-cover-box">
+                        <img
+                            src={
+                                productImages[activeImageIdx]?.url ||
+                                mainImageUrl
+                            }
+                            alt={product.name}
+                            className="product-detail-main-cover-img"
+                        />
                     </div>
 
-                    {/* Thumbnails */}
-                    <div className="product-detail-thumbs-container">
+                    <div className="product-detail-thumbs-strip">
                         {productImages.map((imgObj, idx) => (
                             <div
                                 key={idx}
                                 onClick={() => setActiveImageIdx(idx)}
-                                className={`product-detail-thumb-item ${
-                                    activeImageIdx === idx ? "active" : ""
-                                }`}
+                                className={`product-detail-thumb-box ${activeImageIdx === idx ? "active" : ""}`}
                             >
-                                {mainImageUrl && (
-                                    <div className="product-detail-thumb-box">
-                                        <img
-                                            src={imgObj.url}
-                                            alt="thumb"
-                                            className={`product-detail-thumb-img ${
-                                                activeImageIdx === idx
-                                                    ? "active"
-                                                    : ""
-                                            }`}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Right: Info */}
-                <div className="product-detail-info-col">
-                    <div className="product-detail-tag-bestseller">
-                        Sách bán chạy
-                    </div>
-
-                    <h1 className="product-detail-title">{product.name}</h1>
-
-                    <div className="product-detail-author-text">
-                        Tác giả:{" "}
-                        <span className="product-detail-author-name">
-                            {product.author}
-                        </span>
-                    </div>
-
-                    <div className="product-detail-rating-row">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                            <Star
-                                key={i}
-                                size={16}
-                                fill="currentColor"
-                                stroke="none"
-                            />
-                        ))}
-                        <span className="product-detail-rating-label">
-                            (5.0 / 1.205 đánh giá)
-                        </span>
-                    </div>
-
-                    <div className="product-detail-price">
-                        {formatPrice(product.price)}
-                    </div>
-
-                    <p className="product-detail-desc">
-                        {product.description
-                            ? product.description.substring(0, 250) + "..."
-                            : "Bản in đặc biệt kỷ niệm, bao gồm các hình vẽ nguyên bản. Tác phẩm kinh điển này là một bức tranh sống động về tình thương và sự kiên cường. Một cuốn sách không thể thiếu trong tủ sách của mọi gia đình Việt."}
-                    </p>
-
-                    {/* Details Grid */}
-                    <div className="product-detail-specs-grid">
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Định dạng
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.format || "Đang cập nhật"}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Số trang
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.page
-                                    ? `${product.page} trang`
-                                    : "Đang cập nhật"}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Ngôn ngữ
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.language || "Đang cập nhật"}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Nhà xuất bản
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.publisher || "Đang cập nhật"}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Nhà cung cấp
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.supplierName || "Đang cập nhật"}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Năm xuất bản
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.publicationYear || "Đang cập nhật"}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Kích thước
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.dimensions || "Đang cập nhật"}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="product-detail-spec-label">
-                                Trọng lượng
-                            </div>
-                            <div className="product-detail-spec-val">
-                                {product.weight
-                                    ? `${product.weight} g`
-                                    : "Đang cập nhật"}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Quantity */}
-                    <div className="product-detail-qty-row">
-                        <span className="product-detail-qty-label">
-                            Số lượng:
-                        </span>
-                        <div className="product-detail-qty-control">
-                            <button
-                                type="button"
-                                onClick={() => setQty(Math.max(1, qty - 1))}
-                                className="product-detail-qty-btn"
-                            >
-                                -
-                            </button>
-                            <div className="product-detail-qty-val">{qty}</div>
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setQty(
-                                        Math.min(
-                                            product.stockQuantity,
-                                            qty + 1,
-                                        ),
-                                    )
-                                }
-                                className="product-detail-qty-btn"
-                            >
-                                +
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="product-detail-actions-stack">
-                        <div className="product-detail-actions-top-row">
-                            <button
-                                type="button"
-                                onClick={handleAddToCart}
-                                disabled={product.stockQuantity === 0}
-                                className="product-detail-btn-cart"
-                            >
-                                <ShoppingCart size={18} /> Thêm vào giỏ hàng
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleToggleFavorite}
-                                className={`product-detail-btn-favorite ${
-                                    isFavorite ? "active" : ""
-                                }`}
-                                title={
-                                    isFavorite
-                                        ? "Xóa khỏi danh sách yêu thích"
-                                        : "Thêm vào danh sách yêu thích"
-                                }
-                            >
-                                <Heart
-                                    size={20}
-                                    fill={isFavorite ? "#ef4444" : "none"}
+                                <img
+                                    src={imgObj.url}
+                                    alt="thumb"
+                                    className="product-detail-thumb-img"
                                 />
-                            </button>
-                        </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="product-detail-cta-group">
+                        <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            disabled={product.stockQuantity === 0}
+                            className="product-detail-btn-outline-cart"
+                        >
+                            <ShoppingCart size={18} /> Thêm vào giỏ hàng
+                        </button>
                         <button
                             type="button"
                             onClick={handleBuyNow}
                             disabled={product.stockQuantity === 0}
-                            className="product-detail-btn-buynow"
+                            className="product-detail-btn-solid-buy"
                         >
                             Mua ngay
                         </button>
                     </div>
+                </div>
 
-                    {/* Features */}
-                    <div className="product-detail-features-grid">
-                        <div className="product-detail-feature-item">
-                            <Truck size={18} />{" "}
-                            <span>Miễn phí vận chuyển toàn quốc</span>
+                {/* CỘT PHẢI */}
+                <div className="product-detail-right-col">
+                    <div className="product-detail-card-box">
+                        <div className="product-detail-header-block">
+                            <div className="product-detail-title-row">
+                                <h1 className="product-detail-book-title">
+                                    {product.name}
+                                </h1>
+                                <button
+                                    type="button"
+                                    onClick={handleToggleFavorite}
+                                    className={`product-detail-btn-fav-round ${isFavorite ? "active" : ""}`}
+                                    title={
+                                        isFavorite ? "Bỏ thích" : "Yêu thích"
+                                    }
+                                >
+                                    <Heart
+                                        size={18}
+                                        fill={isFavorite ? "#ef4444" : "none"}
+                                        color={
+                                            isFavorite ? "#ef4444" : "#94a3b8"
+                                        }
+                                    />
+                                </button>
+                            </div>
+
+                            <div className="product-detail-meta-line">
+                                <span>
+                                    Nhà cung cấp:{" "}
+                                    <strong>
+                                        {product.supplierName ||
+                                            product.publisher ||
+                                            "Chưa cập nhật"}
+                                    </strong>
+                                </span>
+                                <span>
+                                    Tác giả:{" "}
+                                    <strong>
+                                        {product.author || "Chưa rõ tác giả"}
+                                    </strong>
+                                </span>
+                            </div>
+
+                            <div className="product-detail-rating-meta-row">
+                                <div className="product-detail-stars-list">
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                        <Star
+                                            key={i}
+                                            size={14}
+                                            fill={
+                                                averageRating >= i
+                                                    ? "#ecc94b"
+                                                    : "none"
+                                            }
+                                            stroke={
+                                                averageRating >= i
+                                                    ? "none"
+                                                    : "#cbd5e1"
+                                            }
+                                        />
+                                    ))}
+                                </div>
+                                <span className="product-detail-review-count-text">
+                                    ({reviews.length} đánh giá)
+                                </span>
+                                <span className="product-detail-divider-dot">
+                                    |
+                                </span>
+                                <span className="product-detail-sold-stat">
+                                    Còn lại:{" "}
+                                    <strong>{product.stockQuantity}</strong>
+                                </span>
+                            </div>
                         </div>
-                        <div className="product-detail-feature-item">
-                            <ShieldCheck size={18} />{" "}
-                            <span>Bảo vệ khách hàng 100%</span>
+
+                        {/* Flash Sale Banner */}
+                        {discountPercent > 0 && (
+                            <div className="product-detail-flashsale-banner">
+                                <div className="product-detail-flashsale-label">
+                                    <Zap size={16} fill="#ffffff" /> FLASH SALE
+                                </div>
+                                <div className="product-detail-flashsale-timer">
+                                    <span>Kết thúc trong</span>
+                                    <span className="timer-badge">
+                                        {timeLeft.hours}
+                                    </span>{" "}
+                                    :
+                                    <span className="timer-badge">
+                                        {timeLeft.minutes}
+                                    </span>{" "}
+                                    :
+                                    <span className="timer-badge">
+                                        {timeLeft.seconds}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Giá tiền */}
+                        <div className="product-detail-pricing-box">
+                            <span className="product-detail-sale-price">
+                                {formatPrice(product.price)}
+                            </span>
+                            {originalPrice && (
+                                <span className="product-detail-old-price">
+                                    {formatPrice(originalPrice)}
+                                </span>
+                            )}
+                            {discountPercent > 0 && (
+                                <span className="product-detail-discount-tag">
+                                    -{discountPercent}%
+                                </span>
+                            )}
                         </div>
-                        <div className="product-detail-feature-item">
-                            <RefreshCcw size={18} />{" "}
-                            <span>Đổi trả dễ dàng 30 ngày</span>
+
+                        {/* Số lượng */}
+                        <div className="product-detail-quantity-row">
+                            <span className="product-detail-qty-title">
+                                Số lượng:
+                            </span>
+                            <div className="product-detail-qty-picker">
+                                <button
+                                    type="button"
+                                    onClick={() => setQty(Math.max(1, qty - 1))}
+                                    className="qty-picker-btn"
+                                >
+                                    -
+                                </button>
+                                <span className="qty-picker-val">{qty}</span>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setQty(
+                                            Math.min(
+                                                product.stockQuantity || 99,
+                                                qty + 1,
+                                            ),
+                                        )
+                                    }
+                                    className="qty-picker-btn"
+                                    disabled={qty >= product.stockQuantity}
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
-                        <div className="product-detail-feature-item">
-                            <HeadphonesIcon size={18} />{" "}
-                            <span>Hỗ trợ khách hàng 24/7</span>
+                    </div>
+
+                    {/* Thông tin vận chuyển */}
+                    <div className="product-detail-card-box">
+                        <h4 className="product-detail-card-heading">
+                            Thông tin vận chuyển
+                        </h4>
+                        <div className="product-detail-shipping-list">
+                            <div className="product-detail-shipping-item">
+                                <Truck size={18} className="shipping-icon" />
+                                <div className="shipping-text-box">
+                                    <p className="shipping-main-txt">
+                                        Giao hàng đến{" "}
+                                        <strong>Hồ Chí Minh</strong>
+                                    </p>
+                                    <p className="shipping-sub-txt">
+                                        Giao nhanh và uy tín trong ngày với các
+                                        đơn hàng tại TP.HCM và Hà Nội.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="product-detail-shipping-item">
+                                <RotateCcw
+                                    size={18}
+                                    className="shipping-icon"
+                                />
+                                <div className="shipping-text-box">
+                                    <p className="shipping-main-txt">
+                                        Đổi trả miễn phí toàn quốc 30 ngày
+                                    </p>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* Thông số sách */}
+                    <div className="product-detail-card-box">
+                        <h4 className="product-detail-card-heading">
+                            Thông tin chi tiết
+                        </h4>
+                        <table className="product-detail-specs-table">
+                            <tbody>
+                                <tr>
+                                    <td className="spec-name">Nhà xuất bản</td>
+                                    <td className="spec-value">
+                                        {product.publisher || "Chưa cập nhật"}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="spec-name">Hình thức bìa</td>
+                                    <td className="spec-value">
+                                        {product.format || "Bìa Mềm"}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="spec-name">Năm xuất bản</td>
+                                    <td className="spec-value">
+                                        {product.publicationYear ||
+                                            "Chưa cập nhật"}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="spec-name">Ngôn ngữ</td>
+                                    <td className="spec-value">
+                                        {product.language || "Tiếng Việt"}
+                                    </td>
+                                </tr>
+                                {product.page && (
+                                    <tr>
+                                        <td className="spec-name">Số trang</td>
+                                        <td className="spec-value">
+                                            {product.page} trang
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            {/* Product Reviews Section */}
-            <div className="product-detail-reviews-card">
-                <h2 className="product-detail-reviews-title">
-                    <Star size={24} fill="#ecc94b" stroke="none" /> Đánh giá sản
-                    phẩm
-                </h2>
+            {/* Mô tả sản phẩm */}
+            <div className="product-detail-section-card">
+                <h3 className="product-detail-section-heading">
+                    Mô tả sản phẩm
+                </h3>
+                <div className="product-detail-desc-content">
+                    <h4 className="product-detail-desc-book-name">
+                        {product.name}
+                    </h4>
+                    <div
+                        className={`product-detail-desc-text ${!isDescExpanded ? "clamped" : ""}`}
+                    >
+                        {product.description ||
+                            "Chưa có mô tả cho tác phẩm này."}
+                    </div>
 
-                {/* Rating Summary Card */}
-                <div className="product-detail-rating-summary-card">
-                    <div className="product-detail-rating-left-box">
-                        <div className="product-detail-big-rating-score">
-                            {reviews.length > 0
-                                ? (
-                                      reviews.reduce(
-                                          (acc, r) => acc + r.rating,
-                                          0,
-                                      ) / reviews.length
-                                  ).toFixed(1)
-                                : "5.0"}
-                        </div>
-                        <div className="product-detail-rating-scale-text">
-                            trên 5
-                        </div>
-                        <div className="product-detail-summary-stars">
+                    {product.description &&
+                        product.description.length > 200 && (
+                            <button
+                                type="button"
+                                className="product-detail-desc-toggle-btn"
+                                onClick={() =>
+                                    setIsDescExpanded(!isDescExpanded)
+                                }
+                            >
+                                {isDescExpanded ? "Thu gọn" : "Xem thêm"}{" "}
+                                {isDescExpanded ? (
+                                    <ChevronUp size={16} />
+                                ) : (
+                                    <ChevronDown size={16} />
+                                )}
+                            </button>
+                        )}
+                </div>
+            </div>
+
+            {/* Đánh giá sản phẩm */}
+            <div className="product-detail-section-card">
+                <h3 className="product-detail-section-heading">
+                    Đánh giá sản phẩm
+                </h3>
+                <div className="product-detail-review-summary-row">
+                    <div className="product-detail-score-box">
+                        <span className="big-score">
+                            {averageRating > 0 ? averageRating.toFixed(1) : "0"}
+                            <small>/5</small>
+                        </span>
+                        <div className="score-stars">
                             {[1, 2, 3, 4, 5].map((i) => (
                                 <Star
                                     key={i}
-                                    size={18}
-                                    fill="currentColor"
-                                    stroke="none"
+                                    size={15}
+                                    fill={
+                                        averageRating >= i ? "#ecc94b" : "none"
+                                    }
+                                    stroke={
+                                        averageRating >= i ? "none" : "#cbd5e1"
+                                    }
                                 />
                             ))}
                         </div>
-                        <div className="product-detail-total-reviews-count">
-                            ({reviews.length > 0 ? reviews.length : 2} đánh giá
-                            thực tế)
-                        </div>
+                        <span className="score-count">
+                            ({reviews.length} đánh giá)
+                        </span>
                     </div>
 
-                    <div className="product-detail-filter-stars-buttons">
-                        {[
-                            "Tất cả",
-                            "5 Sao",
-                            "4 Sao",
-                            "3 Sao",
-                            "2 Sao",
-                            "1 Sao",
-                        ].map((label, idx) => (
-                            <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setRatingFilter(label)}
-                                className={`product-detail-filter-star-btn ${
-                                    ratingFilter === label ? "active" : ""
-                                }`}
-                            >
-                                {label}
-                            </button>
-                        ))}
+                    <div className="product-detail-reviews-empty">
+                        {reviews.length === 0
+                            ? "Chưa có đánh giá nào cho sản phẩm này."
+                            : `${reviews.length} đánh giá từ khách hàng`}
                     </div>
-                </div>
-
-                {/* Reviews List */}
-                <div className="product-detail-reviews-list">
-                    {(reviews.length > 0
-                        ? reviews
-                        : [
-                              {
-                                  id: "mock-1",
-                                  user: { fullName: "Nguyễn Anh Huy" },
-                                  rating: 5,
-                                  comment:
-                                      "Sách in rất đẹp, chất lượng giấy dày dặn và bìa cứng cầm rất chắc tay. Nội dung cực kỳ thực tế và bổ ích, rất đáng tiền!",
-                                  reviewedAt: "2026-07-02T08:15:00Z",
-                              },
-                              {
-                                  id: "mock-2",
-                                  user: { fullName: "Lê Hoài Nam" },
-                                  rating: 5,
-                                  comment:
-                                      "Đã nhận được sách, giao hàng nhanh trong 2 ngày. Gói hàng bọc chống sốc kỹ càng. Nội dung sách truyền cảm hứng rất nhiều.",
-                                  reviewedAt: "2026-07-04T14:22:00Z",
-                              },
-                          ]
-                    )
-                        .filter((rev) => {
-                            if (ratingFilter === "Tất cả") return true;
-                            const starVal = parseInt(
-                                ratingFilter.split(" ")[0],
-                                10,
-                            );
-                            return rev.rating === starVal;
-                        })
-                        .map((rev, idx) => (
-                            <div
-                                key={rev.id || idx}
-                                className="product-detail-review-item"
-                            >
-                                <div className="product-detail-review-top">
-                                    <div className="product-detail-avatar-circle">
-                                        {rev.user?.fullName
-                                            ? rev.user.fullName
-                                                  .split(" ")
-                                                  .pop()[0]
-                                                  .toUpperCase()
-                                            : "U"}
-                                    </div>
-                                    <div>
-                                        <div className="product-detail-reviewer-name">
-                                            {rev.user?.fullName ||
-                                                "Người dùng ẩn danh"}
-                                            <span className="product-detail-verified-badge">
-                                                Đã mua hàng
-                                            </span>
-                                        </div>
-                                        <div className="product-detail-review-stars-list">
-                                            {[1, 2, 3, 4, 5].map((i) => (
-                                                <Star
-                                                    key={i}
-                                                    size={12}
-                                                    fill={
-                                                        i <= rev.rating
-                                                            ? "currentColor"
-                                                            : "none"
-                                                    }
-                                                    stroke={
-                                                        i <= rev.rating
-                                                            ? "none"
-                                                            : "#ecc94b"
-                                                    }
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="product-detail-review-date">
-                                        {new Date(
-                                            rev.reviewedAt,
-                                        ).toLocaleDateString("vi-VN")}
-                                    </div>
-                                </div>
-                                <p className="product-detail-review-comment">
-                                    {rev.comment}
-                                </p>
-                                {rev.reply && (
-                                    <div className="product-detail-review-reply-box">
-                                        <div className="product-detail-reply-title">
-                                            Cửa hàng phản hồi:
-                                        </div>
-                                        {rev.reply}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    {reviews.length > 0 || ratingFilter === "Tất cả" ? null : (
-                        <div className="product-detail-empty-filter-review">
-                            Không có đánh giá nào {ratingFilter.toLowerCase()}{" "}
-                            cho sản phẩm này.
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* Similar Products */}
+            {/* Sản phẩm liên quan */}
             {similarProducts.length > 0 && (
-                <div className="product-detail-similar-section">
-                    <div className="product-detail-similar-header">
-                        <h2 className="product-detail-similar-title">
-                            Sách cùng thể loại "
-                            {product.category?.name || "Tổng hợp"}"
-                        </h2>
-                        <Link
-                            to="/catalog"
-                            className="product-detail-see-all-link"
-                        >
-                            Xem tất cả &gt;
-                        </Link>
-                    </div>
-
+                <div className="product-detail-section-card">
+                    <h3 className="product-detail-section-heading">
+                        Sản phẩm liên quan
+                    </h3>
                     <div className="product-detail-similar-grid">
-                        {similarProducts.map((p) => {
-                            const pImgs = getProductImagesList(p);
-                            const pCover = pImgs[0] || null;
-
+                        {similarProducts.map((simProd) => {
+                            const simImgs = getProductImagesList(simProd);
                             return (
                                 <div
-                                    key={p.id}
-                                    onClick={() => navigate(`/product/${p.id}`)}
-                                    className="product-detail-similar-card"
+                                    key={simProd.id}
+                                    className="product-detail-similar-item"
+                                    onClick={() =>
+                                        navigate(`/product/${simProd.id}`)
+                                    }
                                 >
-                                    <div className="product-detail-similar-cover-box">
-                                        {pCover ? (
-                                            <img
-                                                src={pCover}
-                                                alt={p.name}
-                                                className="product-detail-similar-img"
-                                            />
-                                        ) : (
-                                            <span className="product-detail-similar-no-img">
-                                                No Image
-                                            </span>
-                                        )}
+                                    <div className="similar-thumb-box">
+                                        <img
+                                            src={simImgs[0] || simProd.imageUrl}
+                                            alt={simProd.name}
+                                            className="similar-img"
+                                        />
                                     </div>
-                                    <h3 className="product-detail-similar-name">
-                                        {p.name}
-                                    </h3>
-                                    <div className="product-detail-similar-author">
-                                        {p.author}
+                                    <h5 className="similar-name">
+                                        {simProd.name}
+                                    </h5>
+                                    <div className="similar-price">
+                                        {formatPrice(simProd.price)}
                                     </div>
-                                    <div className="product-detail-similar-price-row">
-                                        <span className="product-detail-similar-price">
-                                            {formatPrice(p.price)}
-                                        </span>
-                                        <div className="product-detail-similar-rating">
-                                            <Star
-                                                size={12}
-                                                fill="currentColor"
-                                                stroke="none"
-                                            />{" "}
-                                            4.9
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            addToCart(p.id, 1);
-                                        }}
-                                        className="product-detail-btn-similar-add"
-                                    >
-                                        Thêm vào giỏ
-                                    </button>
                                 </div>
                             );
                         })}
                     </div>
                 </div>
             )}
+
+            <RecommendationSection title="GỢI Ý CHO BẠN" limit={10} />
         </div>
     );
 };
