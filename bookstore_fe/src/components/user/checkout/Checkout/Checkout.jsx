@@ -4,12 +4,12 @@ import {
     CreditCard,
     ShoppingBag,
     Truck,
-    ChevronRight,
     Banknote,
     Wallet,
     Ticket,
     Coins,
 } from "lucide-react";
+import { Breadcrumb } from "@/components/common";
 import { useCheckout } from "./useCheckout";
 import "./Checkout.css";
 
@@ -95,6 +95,7 @@ const Checkout = () => {
         );
     }
 
+    // Giữ nguyên các phương thức thanh toán
     const paymentOptions = [
         {
             value: "COD",
@@ -118,17 +119,14 @@ const Checkout = () => {
 
     return (
         <div className="page-container animate-fade-in checkout-page-container">
-            {/* Breadcrumb */}
-            <div className="checkout-breadcrumb">
-                <Link to="/" className="checkout-breadcrumb-link">
-                    Trang chủ
-                </Link>
-                <ChevronRight size={14} />
-                <Link to="/cart" className="checkout-breadcrumb-link">
-                    Giỏ hàng
-                </Link>
-                <ChevronRight size={14} />
-                <span className="checkout-breadcrumb-current">Thanh toán</span>
+            {/* Breadcrumb chung đồng bộ */}
+            <div className="checkout-breadcrumb-wrapper">
+                <Breadcrumb
+                    items={[
+                        { label: "Giỏ hàng", path: "/cart" },
+                        { label: "Thanh toán" },
+                    ]}
+                />
             </div>
 
             {/* Stepper */}
@@ -153,7 +151,7 @@ const Checkout = () => {
             <form onSubmit={handlePlaceOrder} className="checkout-form-grid">
                 {/* LEFT: Form */}
                 <div className="checkout-form-left-col">
-                    {/* Section 1: Customer info */}
+                    {/* Section 1: Thông tin giao hàng */}
                     <div className="checkout-section-card">
                         <div className="checkout-section-header">
                             <Truck
@@ -239,7 +237,7 @@ const Checkout = () => {
                                         <div className="checkout-address-badge-name">
                                             {idx === 0
                                                 ? "Địa chỉ mặc định"
-                                                : `Địa chỉ ${idx}`}
+                                                : `Địa chỉ ${idx + 1}`}
                                         </div>
                                         <div className="checkout-address-detail-text">
                                             {addr}
@@ -281,7 +279,7 @@ const Checkout = () => {
                         </div>
                     </div>
 
-                    {/* Section 2: Payment method */}
+                    {/* Section 2: Phương thức thanh toán (Giữ nguyên) */}
                     <div className="checkout-section-card">
                         <div className="checkout-section-header">
                             <CreditCard

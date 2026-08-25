@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
@@ -15,14 +15,14 @@ export const useCheckout = () => {
     const [buyNowProduct, setBuyNowProduct] = useState(null);
     const [fetchingProduct, setFetchingProduct] = useState(!!productId);
 
-    // User's saved addresses
-    const savedAddresses =
-        user && user.address ? user.address.split(" || ").filter(Boolean) : [];
-    if (savedAddresses.length === 0) {
-        savedAddresses.push(
-            "Linh Trung, Thủ Đức, Thành phố Hồ Chí Minh, Việt Nam",
-        );
-    }
+    // Lấy danh sách địa chỉ thực tế từ User profile (Không dùng mock)
+    const savedAddresses = useMemo(() => {
+        if (!user || !user.address) return [];
+        return user.address
+            .split(" || ")
+            .map((s) => s.trim())
+            .filter(Boolean);
+    }, [user]);
 
     const [selectedAddressIdx, setSelectedAddressIdx] = useState(0);
     const [customAddress, setCustomAddress] = useState("");
@@ -86,9 +86,15 @@ export const useCheckout = () => {
     useEffect(() => {
         if (user) {
             setRecipientPhone(user.phone || "");
+            // Nếu tài khoản chưa có địa chỉ nào được lưu, bật form nhập địa chỉ
+            if (!user.address || savedAddresses.length === 0) {
+                setUseCustomAddress(true);
+            } else {
+                setUseCustomAddress(false);
+                setSelectedAddressIdx(0);
+            }
         }
-        if (savedAddresses.length === 0) setUseCustomAddress(true);
-    }, [user]);
+    }, [user, savedAddresses]);
 
     useEffect(() => {
         if (productId) {
