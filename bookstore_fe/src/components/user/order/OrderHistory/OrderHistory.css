@@ -1,8 +1,25 @@
 .order-history-page-container {
+    padding-top: 12px !important; /* Đồng bộ padding-top như Catalog và Checkout */
     padding-bottom: 80px;
     max-width: 1000px;
     margin: 0 auto;
     text-align: left;
+    box-sizing: border-box;
+}
+
+.order-history-breadcrumb-wrapper {
+    margin-bottom: 8px;
+}
+
+.order-history-breadcrumb-wrapper .common-breadcrumb-nav {
+    padding: 0;
+    margin: 0;
+}
+
+/* Header */
+.order-history-header {
+    margin-bottom: 20px;
+    margin-top: 4px;
 }
 
 .order-history-unauth-container {
@@ -805,4 +822,302 @@
     font-weight: 800;
     color: #0a422d;
     font-size: 1.35rem;
+}
+
+
+/* ================= MODAL FULL SCREEN OVERLAY ================= */
+.order-modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+}
+
+.order-modal-card-small {
+    background-color: #ffffff;
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+.order-modal-card-medium {
+    background-color: #ffffff;
+    border-radius: 14px;
+    padding: 28px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+/* ================= MODAL CHI TIẾT ĐƠN HÀNG ================= */
+.order-modal-card-large {
+    background-color: #ffffff;
+    border-radius: 16px;
+    width: 600px;
+    max-width: 95vw;
+    height: 640px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #e2e8f0;
+}
+
+/* 1. Header cố định ở mép trên */
+.order-details-modal-fixed-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid #e8e5df;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background-color: #ffffff;
+    flex-shrink: 0;
+    z-index: 2;
+}
+
+.order-details-meta-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0a422d;
+    margin: 0 0 6px 0;
+    font-family: "Playfair Display", "Georgia", serif;
+}
+
+.order-details-meta-tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-details-date-text {
+    font-size: 0.8rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.order-details-divider {
+    color: #d1d5db;
+}
+
+.order-details-status-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.order-details-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.15s ease;
+}
+
+.order-details-close-btn:hover {
+    color: #1f2937;
+    background-color: #f1f5f9;
+}
+
+/* 2. Body cuộn bên trong */
+.order-details-scrollable-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+}
+
+.order-details-scrollable-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.order-details-scrollable-body::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+/* Info stack & Stepper & Financials */
+.order-details-info-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 0.9rem;
+    color: #374151;
+}
+
+.order-details-recipient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-details-edit-address-btn {
+    background: none;
+    border: none;
+    color: #0a422d;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.order-details-edit-form-stack {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.order-details-edit-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    outline: none;
+    box-sizing: border-box;
+    margin-top: 2px;
+}
+
+.order-stepper-box {
+    background-color: #faf8f5;
+    border-radius: 12px;
+    padding: 20px 16px;
+    border: 1px solid #f1ede6;
+}
+
+.order-stepper-header-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #111827;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-stepper-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    width: 100%;
+}
+
+.order-stepper-line-bg {
+    position: absolute;
+    top: 20px;
+    height: 3px;
+    background-color: #e2e8f0;
+    z-index: 1;
+}
+
+.order-stepper-line-active {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.order-stepper-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+.order-stepper-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.order-stepper-node-label {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 85px;
+    word-wrap: break-word;
+}
+
+.order-stepper-node-time {
+    font-size: 0.65rem;
+    color: #6b7280;
+    margin-top: 4px;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 85px;
+}
+
+.order-details-financial-stack {
+    border-top: 1px solid #f3f4f6;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.order-details-financial-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #4b5563;
+}
+
+.order-details-financial-row.discount {
+    color: #10b981;
+}
+
+.order-details-financial-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 12px;
+    margin-top: 6px;
+}
+
+.order-details-financial-total-label {
+    font-weight: 700;
+    color: #111827;
+    font-size: 0.95rem;
+}
+
+.order-details-financial-total-val {
+    font-weight: 800;
+    color: #0a422d;
+    font-size: 1.3rem;
 }
