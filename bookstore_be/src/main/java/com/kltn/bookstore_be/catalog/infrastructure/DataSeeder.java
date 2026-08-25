@@ -53,7 +53,7 @@ public class DataSeeder implements CommandLineRunner {
         System.out.println("===> Running DataSeeder checks...");
 
         seedUsers();
-        seedCatalog();
+        //seedCatalog();
         seedCoupons();
 
         System.out.println("===> DataSeeder checks completed successfully!");
@@ -749,8 +749,33 @@ public class DataSeeder implements CommandLineRunner {
                     p21, p22, p23, p24, p25
                     // p26, p27, p28, p29, p30,
                     //p31, p32, p33, p34
-            ));
+            ).stream().map(this::applyDefaultBookMetadata).toList());
         }
+    }
+
+    private Product applyDefaultBookMetadata(Product product) {
+        if (product.getSupplierName() == null || product.getSupplierName().isBlank()) {
+            product.setSupplierName("Nhà sách tổng hợp");
+        }
+        if (product.getPublicationYear() == null) {
+            product.setPublicationYear(2024);
+        }
+        if (product.getWeight() == null) {
+            product.setWeight(320);
+        }
+        if (product.getDimensions() == null || product.getDimensions().isBlank()) {
+            product.setDimensions("13 x 20.5 cm");
+        }
+        if (product.getFormat() == null || product.getFormat().isBlank()) {
+            product.setFormat("Bìa mềm");
+        }
+        if (product.getPage() == null) {
+            product.setPage(280);
+        }
+        if (product.getLanguage() == null || product.getLanguage().isBlank()) {
+            product.setLanguage("Tiếng Việt");
+        }
+        return product;
     }
 
     private void seedCoupons() {
