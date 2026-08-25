@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import {
     BrowserRouter as Router,
     Routes,
@@ -8,20 +8,16 @@ import {
     useNavigate,
 } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
-import Navbar from "./components/common/Navbar";
-import Home from "./components/Home";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import Cart from "./components/user/Cart";
-import Checkout from "./components/user/Checkout";
-import OrderHistory from "./components/user/OrderHistory";
-import PaymentCallback from "./components/user/PaymentCallback";
-import Footer from "./components/common/Footer";
-import Profile from "./components/user/Profile";
-import Catalog from "./components/user/Catalog";
-import ProductDetail from "./components/user/ProductDetail";
+import { Navbar, Footer } from './components/common';
+import { Home } from "./components/user/home";
+import { Login, Register } from "./components/auth";
+import { Profile } from "./components/user/profile/index";
+import { Cart } from "./components/user/cart/index";
+import { Checkout, PaymentCallback } from "./components/user/checkout/index";
+import { OrderHistory } from "./components/user/order";
+import { Catalog, ProductDetail } from "./components/user/products/index";
 import ManagerDashboard from "./components/manager/ManagerDashboard";
-import AdminDashboard from "./components/admin/AdminDashboard";
+import { AdminDashboard } from "./components/admin/dashboard";
 
 function AppContent() {
     const location = useLocation();
