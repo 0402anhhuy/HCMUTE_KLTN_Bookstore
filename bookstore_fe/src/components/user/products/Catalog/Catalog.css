@@ -1,7 +1,41 @@
 .catalog-page-container {
+    padding-top: 12px !important; /* Giảm khoảng cách đỉnh */
     padding-bottom: 80px;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+/* Page Header */
+.catalog-header {
+    margin-bottom: 14px; /* Giảm từ 28px xuống 14px */
+    margin-top: 6px; /* Giảm từ 10px xuống 6px */
+    text-align: left;
+}
+
+.catalog-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #0a422d;
+    margin: 0 0 4px 0;
+    font-family: "Playfair Display", "Georgia", serif;
+}
+
+.catalog-subtitle {
+    color: #718096;
+    font-size: 0.88rem;
+    margin: 0;
+}
+
+/* Search Bar */
+.catalog-search-form {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px; /* Giảm từ 28px xuống 18px */
+}
+
+/* Breadcrumb nav sát lại gần header */
+.catalog-page-container .common-breadcrumb-nav {
+    margin-bottom: 8px;
 }
 
 /* Page Header */
@@ -405,4 +439,238 @@
 .catalog-page-nav-btn:disabled {
     background-color: #f3f4f6;
     cursor: not-allowed;
+}
+
+/* Sidebar Filter Container with Independent Scroll */
+.catalog-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border: 1px solid #e8e5df;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(10, 66, 45, 0.03);
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow: hidden;
+}
+
+.catalog-sidebar-scroll-wrapper {
+    height: 100%;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+.catalog-sidebar-scroll-wrapper::-webkit-scrollbar {
+    width: 4px;
+}
+
+.catalog-sidebar-scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+/* Filter Blocks */
+.catalog-filter-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 14px;
+}
+
+.catalog-block-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #1f2937;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2px;
+}
+
+/* Category Tree Styles */
+.catalog-tree-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: all 0.3s ease;
+}
+
+.catalog-tree-container.collapsed {
+    max-height: 260px;
+    overflow: hidden;
+}
+
+.catalog-tree-item-row {
+    font-size: 0.85rem;
+    color: #4b5563;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.3;
+}
+
+.catalog-tree-item-row.root-item {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.catalog-tree-item-row:hover {
+    color: #0a422d;
+    background-color: #f0fdf4;
+}
+
+.catalog-tree-item-row.selected {
+    color: #0a422d;
+    font-weight: 800;
+    background-color: #ecfdf5;
+}
+
+.catalog-tree-item-row.depth-0 {
+    font-weight: 700;
+    color: #111827;
+}
+
+.catalog-tree-item-row.depth-1 {
+    font-weight: 600;
+}
+
+.catalog-tree-item-row.depth-2 {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.catalog-btn-expand-more {
+    background: none;
+    border: none;
+    color: #0a422d;
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px 0 0 0;
+}
+
+.catalog-btn-expand-more:hover {
+    text-decoration: underline;
+}
+
+/* Checkbox & Radio Filter Items */
+.catalog-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.catalog-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.83rem;
+    color: #374151;
+    cursor: pointer;
+    user-select: none;
+}
+
+.catalog-checkbox-label:hover {
+    color: #0a422d;
+}
+
+.catalog-filter-input-checkbox {
+    accent-color: #0a422d;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+/* ================= ACTIVE FILTER CHIPS BAR ================= */
+.catalog-active-filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    padding: 2px 0;
+}
+
+.catalog-filters-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #4b5563;
+    white-space: nowrap;
+}
+
+.catalog-chips-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.catalog-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.chip-remove-btn {
+    background: none;
+    border: none;
+    color: #047857;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 50%;
+    transition: all 0.15s ease;
+}
+
+.chip-remove-btn:hover {
+    background-color: #d1fae5;
+    color: #ef4444;
+}
+
+.catalog-clear-all-chips-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 8px;
+    text-decoration: underline;
+    transition: opacity 0.2s ease;
+}
+
+.catalog-clear-all-chips-btn:hover {
+    opacity: 0.8;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
