@@ -27,6 +27,10 @@ export const useHome = () => {
     const [page, setPage] = useState(0);
     const [loading, setLoading] = useState(true);
 
+    const [activeTrendTab, setActiveTrendTab] = useState("all");
+    const [activeBestsellerTab, setActiveBestsellerTab] = useState("all");
+    const [timeLeft, setTimeLeft] = useState({ hours: "02", minutes: "45", seconds: "18" });
+
     const fetchCategories = useCallback(async () => {
         try {
             const response = await api.get("/categories");
@@ -68,6 +72,57 @@ export const useHome = () => {
         }, 0);
         return () => window.clearTimeout(timer);
     }, [fetchProducts]);
+
+    // Đếm ngược cho Flash Sale
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const now = new Date();
+            const midnight = new Date();
+            midnight.setHours(24, 0, 0, 0);
+            const diff = midnight - now;
+
+            if (diff > 0) {
+                const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, "0");
+                const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, "0");
+                const s = String(Math.floor((diff / 1000) % 60)).padStart(2, "0");
+                setTimeLeft({ hours: h, minutes: m, seconds: s });
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // Thêm state vào trong hook useHome:
+    const [selectedBestsellerId, setSelectedBestsellerId] = useState(null);
+
+    // Lấy danh sách Top 10 Bestseller
+    const bestsellerList = useMemo(() => {
+        if (!products || products.length === 0) return [];
+        return products.slice(0, 10);
+    }, [products]);
+
+    // Tự động gán sản phẩm đầu tiên khi có dữ liệu
+    useEffect(() => {
+        if (bestsellerList.length > 0 && !selectedBestsellerId) {
+            setSelectedBestsellerId(bestsellerList[0].id);
+        }
+    }, [bestsellerList, selectedBestsellerId]);
+
+    // Chi tiết sản phẩm đang được chọn bên phải
+    const activeBestseller = useMemo(() => {
+        return bestsellerList.find((p) => String(p.id) === String(selectedBestsellerId)) || bestsellerList[0] || null;
+    }, [bestsellerList, selectedBestsellerId]);
+
+    // Hàm tính % giảm giá ảo hoặc từ dữ liệu gốc
+    const getDiscountPercent = (product) => {
+        if (product.discountPercent) return product.discountPercent;
+        // Tự sinh % cố định theo ID để hiển thị badge nếu DB chưa có cột discount
+        return ((product.id * 7) % 35) + 10;
+    };
+
+    const getOriginalPrice = (product) => {
+        const discount = getDiscountPercent(product);
+        return Math.round(product.price / (1 - discount / 100));
+    };
 
     const handleClearFilters = () => {
         setSearchParams({});
@@ -117,6 +172,23 @@ export const useHome = () => {
         [categories],
     );
 
+    // Thêm danh sách nhà xuất bản / đối tác:
+    const publishers = [
+        { id: 'dinh-ti', name: 'Đinh Tị Books', shortName: 'ĐINH TỊ' },
+        { id: 'vinh-thinh', name: 'Vĩnh Thịnh', shortName: 'VĨNH THỊNH' },
+        { id: 'deli', name: 'Deli', shortName: 'deli', highlight: true },
+        { id: 'tan-viet', name: 'Tân Việt Books', shortName: 'TÂN VIỆT' },
+        { id: 'fbmn', name: 'Futurebook', shortName: 'FBMN' },
+        { id: 'dong-a', name: 'Đông A', shortName: 'ĐÔNG A' },
+        { id: 'sworld', name: 'SWorld', shortName: 'SWORLD' },
+        { id: 'huy-hoang', name: 'Huy Hoàng Bookstore', shortName: 'HUY HOÀNG' },
+        { id: 'thien-long', name: 'Thiên Long', shortName: 'THIÊN LONG' },
+    ];
+
+    const handlePublisherClick = (publisherName) => {
+        navigate(`/?keyword=${encodeURIComponent(publisherName)}`);
+    };
+
     return {
         addToCart,
         keyword,
@@ -137,5 +209,19 @@ export const useHome = () => {
         formatPrice,
         getProductImage,
         fetchProducts,
+        activeTrendTab,
+        setActiveTrendTab,
+        activeBestsellerTab,
+        setActiveBestsellerTab,
+        timeLeft,
+        getDiscountPercent,
+        getOriginalPrice,
+        categories,
+        bestsellerList,
+        activeBestseller,
+        selectedBestsellerId,
+        setSelectedBestsellerId,
+        publishers,
+        handlePublisherClick
     };
 };
