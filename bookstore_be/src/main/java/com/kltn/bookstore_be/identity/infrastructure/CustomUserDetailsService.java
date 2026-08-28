@@ -37,10 +37,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng với email: " + email));
 
         if (user.getStatus() == User.UserStatus.LOCKED) {
-            throw new RuntimeException("Account is locked. Reason: " + user.getLockedReason());
+            throw new RuntimeException("Tài khoản đã bị khóa. Lý do: " + user.getLockedReason());
         }
 
         return new org.springframework.security.core.userdetails.User(
