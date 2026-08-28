@@ -471,7 +471,7 @@ const Catalog = () => {
                 </div>
             </div>
 
-            <RecommendationSection title="GỢI Ý CHO BẠN HÔM NAY" limit={10} />
+            <RecommendationSection title="GỢI Ý CHO BẠN" limit={10} />
         </div>
     );
 };
