@@ -79,7 +79,8 @@ public class AuthController {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            String jwt = tokenProvider.generateToken(authentication);
+            boolean rememberMe = request.getRememberMe() != null && request.getRememberMe();
+            String jwt = tokenProvider.generateToken(authentication, rememberMe);
 
             User user = userService.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
