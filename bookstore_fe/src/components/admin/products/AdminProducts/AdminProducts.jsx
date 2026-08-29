@@ -1,6 +1,7 @@
 import { Search, Check, X, ClipboardList } from "lucide-react";
 import { useAdminProducts } from "./useAdminProducts";
 import AdminDetailProduct from "../AdminDetailProduct/AdminDetailProduct";
+import CategorySelector from "@/components/common/CategorySelector/CategorySelector";
 import { formatCategoryLabel, getCategoryPath } from "@/utils/categoryTree";
 import "./AdminProducts.css";
 
@@ -117,25 +118,15 @@ const AdminProducts = ({ products, categories, loadData }) => {
                     />
                 </div>
 
-                <select
+                <CategorySelector
+                    categories={categories}
                     value={categoryFilter}
-                    onChange={(e) => {
-                        setCategoryFilter(e.target.value);
+                    onChange={(val) => {
+                        setCategoryFilter(val);
                         setProductPage(1);
                     }}
-                    className="admin-products-category-select"
-                >
-                    <option value="">Tất cả danh mục</option>
-                    {categoryOptions.map((c) => (
-                        <option
-                            key={c.id}
-                            value={c.id}
-                            disabled={c.hasChildren}
-                        >
-                            {formatCategoryLabel(c, c.depth)}
-                        </option>
-                    ))}
-                </select>
+                    placeholder="Tất cả danh mục"
+                />
 
                 <select
                     value={productStatusFilter}
@@ -231,26 +222,24 @@ const AdminProducts = ({ products, categories, loadData }) => {
                                     <td className="admin-products-td-nowrap">
                                         <div className="admin-products-stock-box">
                                             <span
-                                                className={`admin-products-stock-quantity ${
-                                                    isOutOfStock
+                                                className={`admin-products-stock-quantity ${isOutOfStock
                                                         ? "out-of-stock"
                                                         : ""
-                                                }`}
+                                                    }`}
                                             >
                                                 {p.stockQuantity} cuốn
                                             </span>
                                             <span
-                                                className={`admin-products-stock-badge ${
-                                                    isProductActive
+                                                className={`admin-products-stock-badge ${isProductActive
                                                         ? "in-stock"
                                                         : "out-of-stock"
-                                                }`}
+                                                    }`}
                                             >
                                                 {isProductActive
                                                     ? "Đang bán"
                                                     : isOutOfStock
-                                                      ? "Hết hàng"
-                                                      : "Tạm ẩn"}
+                                                        ? "Hết hàng"
+                                                        : "Tạm ẩn"}
                                             </span>
                                         </div>
                                     </td>
@@ -300,9 +289,8 @@ const AdminProducts = ({ products, categories, loadData }) => {
                                 type="button"
                                 key={i}
                                 onClick={() => setProductPage(i + 1)}
-                                className={`admin-products-page-btn ${
-                                    productPage === i + 1 ? "active" : ""
-                                }`}
+                                className={`admin-products-page-btn ${productPage === i + 1 ? "active" : ""
+                                    }`}
                             >
                                 {i + 1}
                             </button>
