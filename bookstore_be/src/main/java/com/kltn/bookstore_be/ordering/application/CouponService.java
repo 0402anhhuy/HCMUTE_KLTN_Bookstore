@@ -6,6 +6,8 @@ import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.ordering.domain.Coupon;
 import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ public class CouponService {
     private final CouponRepository couponRepository;
     private final AuditLogService auditLogService;
     private final UserService userService;
+
     public List<Coupon> getCouponsForUser(Long userId) {
         return couponRepository.findByUserIdOrUserIsNull(userId);
     }
