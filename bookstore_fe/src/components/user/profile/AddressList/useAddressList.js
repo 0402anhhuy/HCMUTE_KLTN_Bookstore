@@ -2,15 +2,38 @@ import { useState, useMemo } from "react";
 import api from "@/services/api";
 import { useApp } from "@/context/AppContext";
 
+export const parseAddress = (addrStr, defaultName = "", defaultPhone = "") => {
+    if (!addrStr) return { name: defaultName, phone: defaultPhone, address: "" };
+    const parts = addrStr.split("|").map((s) => s.trim());
+    if (parts.length >= 3) {
+        return {
+            name: parts[0],
+            phone: parts[1],
+            address: parts.slice(2).join(" | "),
+        };
+    }
+    return {
+        name: defaultName,
+        phone: defaultPhone,
+        address: addrStr,
+    };
+};
+
 export const useAddressList = ({ user, phone, fullName }) => {
     const { updateUser, showToast } = useApp();
     const [loading, setLoading] = useState(false);
 
     // Address List States
     const [editingIdx, setEditingIdx] = useState(-1);
-    const [editAddressInput, setEditAddressInput] = useState("");
+    const [editName, setEditName] = useState("");
+    const [editPhone, setEditPhone] = useState("");
+    const [editAddress, setEditAddress] = useState("");
+
     const [isAddingAddress, setIsAddingAddress] = useState(false);
-    const [newAddressInput, setNewAddressInput] = useState("");
+    const [newName, setNewName] = useState("");
+    const [newPhone, setNewPhone] = useState("");
+    const [newAddress, setNewAddress] = useState("");
+
     const [deleteConfirmIdx, setDeleteConfirmIdx] = useState(-1);
 
     const addressList = useMemo(() => {
@@ -25,19 +48,29 @@ export const useAddressList = ({ user, phone, fullName }) => {
     }, [user]);
 
     const handleEditAddressSave = async (idx) => {
-        if (!editAddressInput.trim()) {
+        if (!editName.trim()) {
+            showToast?.("Họ tên người nhận không được để trống.", "error");
+            return;
+        }
+        if (!editPhone.trim()) {
+            showToast?.("Số điện thoại không được để trống.", "error");
+            return;
+        }
+        if (!editAddress.trim()) {
             showToast?.("Địa chỉ không được để trống.", "error");
             return;
         }
+
         setLoading(true);
         try {
+            const formatted = `${editName.trim()} | ${editPhone.trim()} | ${editAddress.trim()}`;
             const savedAddresses = [...addressList];
-            savedAddresses[idx] = editAddressInput.trim();
+            savedAddresses[idx] = formatted;
             const updatedAddressString = savedAddresses.join(" || ");
 
             await api.put("/users/profile", {
-                fullName: fullName.trim(),
-                phone,
+                fullName: fullName?.trim() || user?.fullName || "",
+                phone: phone || user?.phone || "",
                 address: updatedAddressString,
                 avatarUrl: user?.avatarUrl,
             });
@@ -58,24 +91,36 @@ export const useAddressList = ({ user, phone, fullName }) => {
     };
 
     const handleAddNewAddress = async () => {
-        if (!newAddressInput.trim()) {
+        if (!newName.trim()) {
+            showToast?.("Họ tên người nhận không được để trống.", "error");
+            return;
+        }
+        if (!newPhone.trim()) {
+            showToast?.("Số điện thoại không được để trống.", "error");
+            return;
+        }
+        if (!newAddress.trim()) {
             showToast?.("Địa chỉ không được để trống.", "error");
             return;
         }
+
         setLoading(true);
         try {
+            const formatted = `${newName.trim()} | ${newPhone.trim()} | ${newAddress.trim()}`;
             const savedAddresses = [...addressList];
-            savedAddresses.push(newAddressInput.trim());
+            savedAddresses.push(formatted);
             const updatedAddressString = savedAddresses.join(" || ");
 
             await api.put("/users/profile", {
-                fullName: fullName.trim(),
-                phone,
+                fullName: fullName?.trim() || user?.fullName || "",
+                phone: phone || user?.phone || "",
                 address: updatedAddressString,
                 avatarUrl: user?.avatarUrl,
             });
             updateUser?.({ address: updatedAddressString });
-            setNewAddressInput("");
+            setNewName("");
+            setNewPhone("");
+            setNewAddress("");
             setIsAddingAddress(false);
             showToast?.("Thêm địa chỉ mới thành công!", "success");
         } catch (err) {
@@ -99,8 +144,8 @@ export const useAddressList = ({ user, phone, fullName }) => {
             const updatedAddressString = savedAddresses.join(" || ");
 
             await api.put("/users/profile", {
-                fullName: fullName.trim(),
-                phone,
+                fullName: fullName?.trim() || user?.fullName || "",
+                phone: phone || user?.phone || "",
                 address: updatedAddressString,
                 avatarUrl: user?.avatarUrl,
             });
@@ -128,8 +173,8 @@ export const useAddressList = ({ user, phone, fullName }) => {
             const updatedAddressString = savedAddresses.join(" || ");
 
             await api.put("/users/profile", {
-                fullName: fullName.trim(),
-                phone,
+                fullName: fullName?.trim() || user?.fullName || "",
+                phone: phone || user?.phone || "",
                 address: updatedAddressString,
                 avatarUrl: user?.avatarUrl,
             });
@@ -153,12 +198,20 @@ export const useAddressList = ({ user, phone, fullName }) => {
         addressList,
         editingIdx,
         setEditingIdx,
-        editAddressInput,
-        setEditAddressInput,
+        editName,
+        setEditName,
+        editPhone,
+        setEditPhone,
+        editAddress,
+        setEditAddress,
         isAddingAddress,
         setIsAddingAddress,
-        newAddressInput,
-        setNewAddressInput,
+        newName,
+        setNewName,
+        newPhone,
+        setNewPhone,
+        newAddress,
+        setNewAddress,
         deleteConfirmIdx,
         setDeleteConfirmIdx,
         handleEditAddressSave,

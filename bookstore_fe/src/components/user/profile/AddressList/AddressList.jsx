@@ -1,5 +1,5 @@
 import { MapPin, Edit, Trash2 } from "lucide-react";
-import { useAddressList } from "./useAddressList";
+import { useAddressList, parseAddress } from "./useAddressList";
 import "./AddressList.css";
 
 const AddressList = ({ user, phone, fullName }) => {
@@ -7,12 +7,20 @@ const AddressList = ({ user, phone, fullName }) => {
         addressList,
         editingIdx,
         setEditingIdx,
-        editAddressInput,
-        setEditAddressInput,
+        editName,
+        setEditName,
+        editPhone,
+        setEditPhone,
+        editAddress,
+        setEditAddress,
         isAddingAddress,
         setIsAddingAddress,
-        newAddressInput,
-        setNewAddressInput,
+        newName,
+        setNewName,
+        newPhone,
+        setNewPhone,
+        newAddress,
+        setNewAddress,
         deleteConfirmIdx,
         setDeleteConfirmIdx,
         handleEditAddressSave,
@@ -32,6 +40,7 @@ const AddressList = ({ user, phone, fullName }) => {
                 {addressList.map((addr, idx) => {
                     const isDefault = idx === 0;
                     const isEditingThis = editingIdx === idx;
+                    const parsed = parseAddress(addr, fullName || user?.fullName, phone);
 
                     return (
                         <div
@@ -97,9 +106,9 @@ const AddressList = ({ user, phone, fullName }) => {
                                                     type="button"
                                                     onClick={() => {
                                                         setEditingIdx(idx);
-                                                        setEditAddressInput(
-                                                            addr,
-                                                        );
+                                                        setEditName(parsed.name);
+                                                        setEditPhone(parsed.phone);
+                                                        setEditAddress(parsed.address);
                                                     }}
                                                     className="address-btn-icon-edit"
                                                     title="Chỉnh sửa"
@@ -126,22 +135,54 @@ const AddressList = ({ user, phone, fullName }) => {
                                 )}
                             </div>
 
-                            <div className="address-recipient-info">
-                                {user?.fullName} | {phone}
-                            </div>
-
                             {!isEditingThis ? (
-                                <div className="address-text-display">
-                                    {addr}
-                                </div>
+                                <>
+                                    <div className="address-recipient-info">
+                                        {parsed.name} | {parsed.phone}
+                                    </div>
+                                    <div className="address-text-display">
+                                        {parsed.address}
+                                    </div>
+                                </>
                             ) : (
                                 <div className="address-edit-box">
+                                    <div style={{ display: "flex", gap: "10px", marginBottom: "8px" }}>
+                                        <input
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                            placeholder="Họ tên người nhận"
+                                            style={{
+                                                flex: 1,
+                                                padding: "8px 12px",
+                                                borderRadius: "6px",
+                                                border: "1px solid #e2e8f0",
+                                                fontSize: "0.9rem",
+                                                outline: "none"
+                                            }}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={editPhone}
+                                            onChange={(e) => setEditPhone(e.target.value)}
+                                            placeholder="Số điện thoại nhận"
+                                            style={{
+                                                flex: 1,
+                                                padding: "8px 12px",
+                                                borderRadius: "6px",
+                                                border: "1px solid #e2e8f0",
+                                                fontSize: "0.9rem",
+                                                outline: "none"
+                                            }}
+                                        />
+                                    </div>
                                     <textarea
-                                        value={editAddressInput}
+                                        value={editAddress}
                                         onChange={(e) =>
-                                            setEditAddressInput(e.target.value)
+                                            setEditAddress(e.target.value)
                                         }
                                         className="address-textarea"
+                                        placeholder="Địa chỉ nhận hàng cụ thể"
                                     />
                                     <div className="address-edit-actions">
                                         <button
@@ -173,9 +214,39 @@ const AddressList = ({ user, phone, fullName }) => {
                         <div className="address-add-title">
                             Nhập địa chỉ mới
                         </div>
+                        <div style={{ display: "flex", gap: "10px", marginBottom: "8px" }}>
+                            <input
+                                type="text"
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                placeholder="Họ tên người nhận"
+                                style={{
+                                    flex: 1,
+                                    padding: "8px 12px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #e2e8f0",
+                                    fontSize: "0.9rem",
+                                    outline: "none"
+                                }}
+                            />
+                            <input
+                                type="text"
+                                value={newPhone}
+                                onChange={(e) => setNewPhone(e.target.value)}
+                                placeholder="Số điện thoại nhận"
+                                style={{
+                                    flex: 1,
+                                    padding: "8px 12px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #e2e8f0",
+                                    fontSize: "0.9rem",
+                                    outline: "none"
+                                }}
+                            />
+                        </div>
                         <textarea
-                            value={newAddressInput}
-                            onChange={(e) => setNewAddressInput(e.target.value)}
+                            value={newAddress}
+                            onChange={(e) => setNewAddress(e.target.value)}
                             placeholder="Ví dụ: 123 Đường Linh Trung, Phường Linh Trung, Thành phố Thủ Đức, TP. HCM"
                             className="address-textarea"
                         />
@@ -184,7 +255,9 @@ const AddressList = ({ user, phone, fullName }) => {
                                 type="button"
                                 onClick={() => {
                                     setIsAddingAddress(false);
-                                    setNewAddressInput("");
+                                    setNewName("");
+                                    setNewPhone("");
+                                    setNewAddress("");
                                 }}
                                 className="address-btn-action-cancel"
                             >
@@ -205,7 +278,12 @@ const AddressList = ({ user, phone, fullName }) => {
             {!isAddingAddress && editingIdx === -1 && (
                 <button
                     type="button"
-                    onClick={() => setIsAddingAddress(true)}
+                    onClick={() => {
+                        setIsAddingAddress(true);
+                        setNewName(fullName || user?.fullName || "");
+                        setNewPhone(phone || user?.phone || "");
+                        setNewAddress("");
+                    }}
                     className="address-btn-open-add"
                 >
                     + Thêm địa chỉ mới

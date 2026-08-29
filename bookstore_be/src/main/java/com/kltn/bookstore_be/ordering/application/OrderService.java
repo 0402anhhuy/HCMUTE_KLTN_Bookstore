@@ -144,15 +144,19 @@ public class OrderService {
         List<Promotion> promotions = promotionRepository.findActivePromotions(LocalDateTime.now());
         for (Promotion p : promotions) {
             if (totalAmount.compareTo(p.getMinOrderValue()) >= 0) {
-                activePromo = p;
+                BigDecimal currentDisc = BigDecimal.ZERO;
                 if (p.getDiscountType() == Promotion.DiscountType.PERCENT) {
-                    BigDecimal disc = totalAmount.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100));
-                    if (p.getMaxDiscountAmount() != null && disc.compareTo(p.getMaxDiscountAmount()) > 0) {
-                        disc = p.getMaxDiscountAmount();
+                    currentDisc = totalAmount.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100));
+                    if (p.getMaxDiscountAmount() != null && currentDisc.compareTo(p.getMaxDiscountAmount()) > 0) {
+                        currentDisc = p.getMaxDiscountAmount();
                     }
-                    promotionDiscount = promotionDiscount.max(disc);
                 } else {
-                    promotionDiscount = promotionDiscount.max(p.getDiscountValue());
+                    currentDisc = p.getDiscountValue();
+                }
+
+                if (currentDisc.compareTo(promotionDiscount) > 0) {
+                    promotionDiscount = currentDisc;
+                    activePromo = p;
                 }
             }
         }

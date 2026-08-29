@@ -68,12 +68,12 @@ const ManagerDashboard = () => {
     }
   }, [user, navigate]);
 
-  // Load all data on mount or when activeTab changes
+  // Load all data on mount
   useEffect(() => {
     if (user && (user.role === 'MANAGER' || user.role === 'ADMIN')) {
       loadData();
     }
-  }, [activeTab]);
+  }, [user]);
 
   const loadData = async () => {
     const isInitial = products.length === 0 && orders.length === 0;
@@ -82,22 +82,38 @@ const ManagerDashboard = () => {
     }
     try {
       // 1. Fetch categories
-      const catRes = await api.get('/categories');
-      setCategories(catRes.data || []);
+      try {
+        const catRes = await api.get('/categories');
+        setCategories(catRes.data || []);
+      } catch (err) {
+        console.error('Error fetching categories', err);
+      }
 
       // 2. Fetch products
-      const prodRes = await api.get('/products');
-      const fetchedProducts = prodRes.data.content || prodRes.data || [];
-      setProducts(fetchedProducts);
+      try {
+        const prodRes = await api.get('/products');
+        const fetchedProducts = prodRes.data.content || prodRes.data || [];
+        setProducts(fetchedProducts);
+      } catch (err) {
+        console.error('Error fetching products', err);
+      }
 
       // 3. Fetch orders
-      const orderRes = await api.get('/orders/all');
-      const sortedOrders = (orderRes.data || []).sort((a, b) => b.id - a.id);
-      setOrders(sortedOrders);
+      try {
+        const orderRes = await api.get('/orders/all');
+        const sortedOrders = (orderRes.data || []).sort((a, b) => b.id - a.id);
+        setOrders(sortedOrders);
+      } catch (err) {
+        console.error('Error fetching orders', err);
+      }
 
       // 4. Fetch reviews
-      const reviewRes = await api.get('/reviews');
-      setReviews(reviewRes.data || []);
+      try {
+        const reviewRes = await api.get('/reviews');
+        setReviews(reviewRes.data || []);
+      } catch (err) {
+        console.error('Error fetching reviews', err);
+      }
 
       // 5. Fetch real stock movements
       try {
@@ -125,7 +141,6 @@ const ManagerDashboard = () => {
 
     } catch (error) {
       console.error('Error loading manager dashboard data', error);
-      showToast('Lỗi tải dữ liệu kênh quản lý!', 'error');
     } finally {
       setLoading(false);
     }

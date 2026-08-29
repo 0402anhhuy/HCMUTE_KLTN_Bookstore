@@ -311,6 +311,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 430px;
     cursor: pointer;
     text-align: left;
     background-color: #ffffff;
@@ -393,8 +394,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    min-height: 2.8rem;
+    height: 2.8rem;
     line-height: 1.4;
     color: #1c2e24;
 }
@@ -403,6 +405,10 @@
     color: #718096;
     font-size: 0.8rem;
     margin-bottom: 8px;
+    min-height: 1.2rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .book-card-rating-row {
@@ -431,6 +437,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: auto;
 }
 
 .book-card-price-val {
@@ -574,6 +581,20 @@
     font-weight: 600;
 }
 
+.flash-sale-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flash-sale-page-indicator {
+    min-width: 32px;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+}
+
 .timer-digit {
     background-color: #111827;
     color: #ffffff;
@@ -583,16 +604,40 @@
     font-size: 0.85rem;
 }
 
+.home-fahasa-carousel-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.flash-sale-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: #ffffff;
+}
+
+.flash-sale-nav-prev {
+    left: -16px;
+}
+
+.flash-sale-nav-next {
+    right: -16px;
+}
+
 .home-fahasa-products-carousel {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 16px;
+    align-items: stretch;
 }
 
 .home-fahasa-products-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 16px;
+    align-items: stretch;
 }
 
 /* Quick Categories */
@@ -682,6 +727,8 @@
     align-items: baseline;
     gap: 8px;
     margin-bottom: 6px;
+    min-height: 1.6rem;
+    flex-wrap: wrap;
 }
 
 .book-card-original-price {

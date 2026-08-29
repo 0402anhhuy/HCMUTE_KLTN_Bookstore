@@ -10,6 +10,8 @@ import com.kltn.bookstore_be.ordering.domain.OrderRepository;
 import com.kltn.bookstore_be.ordering.domain.Promotion;
 import com.kltn.bookstore_be.ordering.domain.PromotionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,10 +30,30 @@ public class PromotionService {
     private final UserService userService;
 
     public List<Promotion> getAllPromotions() {
-        return promotionRepository.findAll();
+        List<Promotion> promotions = promotionRepository.findAll();
+        for (Promotion p : promotions) {
+            List<Order> orders = orderRepository.findByPromotionId(p.getId());
+            BigDecimal rev = BigDecimal.ZERO;
+            if (orders != null) {
+                for (Order o : orders) {
+                    if (o.getStatus() != Order.OrderStatus.cancelled &&
+                        o.getStatus() != Order.OrderStatus.cancel_requested &&
+                        o.getStatus() != Order.OrderStatus.refunded) {
+                        rev = rev.add(o.getFinalAmount() != null ? o.getFinalAmount() : BigDecimal.ZERO);
+                    }
+                }
+            }
+            p.setTotalRevenue(rev);
+        }
+        return promotions;
+    }
+
+    public List<Promotion> getActivePromotions() {
+        return promotionRepository.findActivePromotions(LocalDateTime.now());
     }
 
     @Transactional
+    @CacheEvict(value = "promotions", allEntries = true)
     public Promotion createPromotion(AdminCreatePromotionRequest request) {
         if (!request.getEndDate().isAfter(request.getStartDate())) {
             throw new RuntimeException("Thời gian kết thúc phải lớn hơn thời gian bắt đầu");
@@ -44,6 +66,21 @@ public class PromotionService {
         List<Product> products = productRepository.findAllById(request.getProductIds());
         if (products.isEmpty()) {
             throw new RuntimeException("Không tìm thấy sản phẩm nào hợp lệ. IDs được gửi: " + request.getProductIds());
+        }
+
+        // Kiểm tra xem có sản phẩm nào đã thuộc chương trình khuyến mãi khác đang hoặc sắp diễn ra không
+        List<Promotion> existingPromos = promotionRepository.findAll();
+        for (Promotion existing : existingPromos) {
+            if (existing.getStatus() == Promotion.PromotionStatus.EXPIRED || existing.getStatus() == Promotion.PromotionStatus.INACTIVE) {
+                continue;
+            }
+            if (existing.getApplicableProducts() != null) {
+                for (Product p : existing.getApplicableProducts()) {
+                    if (request.getProductIds().contains(p.getId())) {
+                        throw new RuntimeException("Sách '" + p.getName() + "' đã thuộc chương trình '" + existing.getTitle() + "'. Một sản phẩm không thể chọn cho 2 chương trình Flash Sale cùng lúc.");
+                    }
+                }
+            }
         }
 
         Promotion.PromotionStatus status = Promotion.PromotionStatus.PENDING;
@@ -81,6 +118,7 @@ public class PromotionService {
     }   
 
     @Transactional
+    @CacheEvict(value = "promotions", allEntries = true)
     public Promotion updatePromotion(Long id, AdminCreatePromotionRequest request) {
         if (!request.getEndDate().isAfter(request.getStartDate())) {
             throw new RuntimeException("Thời gian kết thúc phải sau thời gian bắt đầu");
@@ -96,6 +134,21 @@ public class PromotionService {
         List<Product> products = productRepository.findAllById(request.getProductIds());
         if (products.isEmpty()) {
             throw new RuntimeException("Không tìm thấy sản phẩm nào hợp lệ trong hệ thống. IDs được gửi: " + request.getProductIds());
+        }
+
+        // Kiểm tra xem có sản phẩm nào đã thuộc chương trình khuyến mãi khác (ngoại trừ chương trình đang sửa) không
+        List<Promotion> existingPromos = promotionRepository.findAll();
+        for (Promotion existing : existingPromos) {
+            if (existing.getId().equals(id) || existing.getStatus() == Promotion.PromotionStatus.EXPIRED || existing.getStatus() == Promotion.PromotionStatus.INACTIVE) {
+                continue;
+            }
+            if (existing.getApplicableProducts() != null) {
+                for (Product p : existing.getApplicableProducts()) {
+                    if (request.getProductIds().contains(p.getId())) {
+                        throw new RuntimeException("Sách '" + p.getName() + "' đã thuộc chương trình '" + existing.getTitle() + "'. Một sản phẩm không thể chọn cho 2 chương trình Flash Sale cùng lúc.");
+                    }
+                }
+            }
         }
 
         Promotion.PromotionStatus status = Promotion.PromotionStatus.PENDING;
@@ -127,18 +180,9 @@ public class PromotionService {
     }
 
     @Transactional
+    @CacheEvict(value = "promotions", allEntries = true)
     public void deletePromotion(Long id) {
-        Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy chương trình khuyến mãi"));
-
-        promotionRepository.delete(promotion);
-
-        try {
-            User admin = userService.getAuthenticatedUser();
-            auditLogService.log(admin, "DELETE_PROMOTION", "Xóa chương trình ưu đãi: " + promotion.getTitle());
-        } catch (Exception e) {
-            // Ignore
-        }
+        throw new RuntimeException("Chương trình khuyến mãi không được phép xóa nhằm lưu giữ lịch sử đơn hàng và doanh thu. Bạn có thể điều chỉnh thời gian để kết thúc chương trình.");
     }
 
     public PromotionReportResponse getPromotionReport(Long id) {

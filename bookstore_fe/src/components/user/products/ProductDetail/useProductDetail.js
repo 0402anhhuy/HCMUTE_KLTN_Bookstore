@@ -16,6 +16,9 @@ export const useProductDetail = () => {
     const [ratingFilter, setRatingFilter] = useState("Tất cả");
     const [activeImageIdx, setActiveImageIdx] = useState(0);
     const [isDescExpanded, setIsDescExpanded] = useState(false);
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const [lightboxIdx, setLightboxIdx] = useState(0);
+    const [zoomLevel, setZoomLevel] = useState(1);
     const [timeLeft, setTimeLeft] = useState({
         hours: "01",
         minutes: "36",
@@ -155,7 +158,114 @@ export const useProductDetail = () => {
             ? parsedUrls.map((url) => ({ url }))
             : [{ url: "https://via.placeholder.com/350x450?text=No+Cover" }];
 
-    const mainImageUrl = productImages[0]?.url;
+    const mainImageUrl =
+        productImages[activeImageIdx]?.url ||
+        productImages[0]?.url ||
+        "https://via.placeholder.com/350x450?text=No+Cover";
+
+    const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [hasDragged, setHasDragged] = useState(false);
+
+    const resetPan = () => {
+        setPanPosition({ x: 0, y: 0 });
+        setIsDragging(false);
+        setHasDragged(false);
+    };
+
+    const openLightbox = (idx = 0) => {
+        setLightboxIdx(idx);
+        setZoomLevel(1);
+        resetPan();
+        setIsLightboxOpen(true);
+    };
+
+    const closeLightbox = () => {
+        setIsLightboxOpen(false);
+        setZoomLevel(1);
+        resetPan();
+    };
+
+    const nextLightboxImage = () => {
+        setZoomLevel(1);
+        resetPan();
+        setLightboxIdx((prev) => (prev + 1) % productImages.length);
+    };
+
+    const prevLightboxImage = () => {
+        setZoomLevel(1);
+        resetPan();
+        setLightboxIdx((prev) => (prev - 1 + productImages.length) % productImages.length);
+    };
+
+    const toggleZoom = () => {
+        setZoomLevel((prev) => {
+            resetPan();
+            return prev > 1 ? 1 : 2.2;
+        });
+    };
+
+    const handleMouseDown = (e) => {
+        if (zoomLevel <= 1) return;
+        setIsDragging(true);
+        setHasDragged(false);
+        setDragStart({
+            x: e.clientX - panPosition.x,
+            y: e.clientY - panPosition.y,
+        });
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDragging || zoomLevel <= 1) return;
+        const newX = e.clientX - dragStart.x;
+        const newY = e.clientY - dragStart.y;
+        if (Math.abs(newX - panPosition.x) > 3 || Math.abs(newY - panPosition.y) > 3) {
+            setHasDragged(true);
+        }
+        setPanPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+        if (isDragging) {
+            setIsDragging(false);
+        }
+    };
+
+    const handleTouchStart = (e) => {
+        if (zoomLevel <= 1 || !e.touches[0]) return;
+        setIsDragging(true);
+        setHasDragged(false);
+        setDragStart({
+            x: e.touches[0].clientX - panPosition.x,
+            y: e.touches[0].clientY - panPosition.y,
+        });
+    };
+
+    const handleTouchMove = (e) => {
+        if (!isDragging || zoomLevel <= 1 || !e.touches[0]) return;
+        const newX = e.touches[0].clientX - dragStart.x;
+        const newY = e.touches[0].clientY - dragStart.y;
+        if (Math.abs(newX - panPosition.x) > 3 || Math.abs(newY - panPosition.y) > 3) {
+            setHasDragged(true);
+        }
+        setPanPosition({ x: newX, y: newY });
+    };
+
+    const handleTouchEnd = () => {
+        if (isDragging) {
+            setIsDragging(false);
+        }
+    };
+
+    const handleImageClick = (e) => {
+        if (hasDragged) {
+            e.stopPropagation();
+            setHasDragged(false);
+            return;
+        }
+        toggleZoom();
+    };
 
     return {
         product,
@@ -178,6 +288,24 @@ export const useProductDetail = () => {
         timeLeft,
         isDescExpanded,
         setIsDescExpanded,
+        isLightboxOpen,
+        lightboxIdx,
+        setLightboxIdx,
+        zoomLevel,
+        panPosition,
+        isDragging,
+        handleMouseDown,
+        handleMouseMove,
+        handleMouseUp,
+        handleTouchStart,
+        handleTouchMove,
+        handleTouchEnd,
+        handleImageClick,
+        openLightbox,
+        closeLightbox,
+        nextLightboxImage,
+        prevLightboxImage,
+        toggleZoom,
         handleAddToCart,
         handleToggleFavorite,
         handleBuyNow,

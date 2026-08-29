@@ -33,8 +33,8 @@ export const AppProvider = ({ children }) => {
 
     // Initialize Auth session on start
     useEffect(() => {
-        const savedUser = localStorage.getItem("user");
-        const token = localStorage.getItem("token");
+        const savedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (savedUser && token) {
             setUser(JSON.parse(savedUser));
         }
@@ -160,20 +160,24 @@ export const AppProvider = ({ children }) => {
         };
     }, [user]);
 
-    const loginUser = (token, userData) => {
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(userData));
+    const loginUser = (token, userData, rememberMe = false) => {
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("token", token);
+        storage.setItem("user", JSON.stringify(userData));
+        storage.setItem("rememberMe", rememberMe ? "true" : "false");
         setUser(userData);
     };
 
     const updateUser = (newUserData) => {
         const updated = { ...user, ...newUserData };
-        localStorage.setItem("user", JSON.stringify(updated));
+        const isRemembered = localStorage.getItem("rememberMe") === "true";
+        const storage = isRemembered ? localStorage : sessionStorage;
+        storage.setItem("user", JSON.stringify(updated));
         setUser(updated);
     };
 
     const reloadUserProfile = async () => {
-        if (!localStorage.getItem("token")) return;
+        if (!localStorage.getItem("token") && !sessionStorage.getItem("token")) return;
         try {
             const response = await api.get("/users/profile");
             updateUser(response.data);
@@ -185,6 +189,10 @@ export const AppProvider = ({ children }) => {
     const logoutUser = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("rememberMe");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("rememberMe");
         setUser(null);
         setCart({ items: [] });
         setNotifications([]);

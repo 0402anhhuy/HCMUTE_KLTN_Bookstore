@@ -55,6 +55,9 @@ public class Promotion {
     @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private PromotionStatus status;
 
+    @Transient
+    private BigDecimal totalRevenue;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "promotion_products",

@@ -10,6 +10,34 @@ import longTinCover from "@/assets/long_tin.png";
 import ngheThuatCover from "@/assets/nghe_thuat_ve.png";
 import quanLyCover from "@/assets/quan_ly_cam_xuc.png";
 
+const FLASH_SALE_SLOT_HOURS = 6;
+const FLASH_SALE_LIMIT = 10;
+
+function getNextFlashSaleEndTime(date = new Date()) {
+    const endsAt = new Date(date);
+    const nextSlot =
+        Math.floor(date.getHours() / FLASH_SALE_SLOT_HOURS) *
+            FLASH_SALE_SLOT_HOURS +
+        FLASH_SALE_SLOT_HOURS;
+
+    endsAt.setHours(nextSlot, 0, 0, 0);
+    return endsAt;
+}
+
+function getTimeLeft(endTime) {
+    const diff = Math.max(0, endTime.getTime() - Date.now());
+    const h = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, "0");
+    const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, "0");
+    const s = String(Math.floor((diff / 1000) % 60)).padStart(2, "0");
+
+    return { hours: h, minutes: m, seconds: s };
+}
+
+function getSeededScore(product, seed) {
+    const id = Number(product.id) || 0;
+    return (id * 9301 + seed * 49297) % 233280;
+}
+
 export const useHome = () => {
     const { addToCart } = useApp();
     const navigate = useNavigate();
@@ -28,8 +56,13 @@ export const useHome = () => {
     const [loading, setLoading] = useState(true);
 
     const [activeTrendTab, setActiveTrendTab] = useState("all");
+    const [activePromotions, setActivePromotions] = useState([]);
     const [activeBestsellerTab, setActiveBestsellerTab] = useState("all");
-    const [timeLeft, setTimeLeft] = useState({ hours: "02", minutes: "45", seconds: "18" });
+    const [flashSaleEndsAt, setFlashSaleEndsAt] = useState(() =>
+        getNextFlashSaleEndTime(),
+    );
+    const [timeLeft, setTimeLeft] = useState(getTimeLeft(flashSaleEndsAt));
+    const [flashSalePage, setFlashSalePage] = useState(1);
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -40,10 +73,38 @@ export const useHome = () => {
         }
     }, []);
 
+    const fetchActivePromotions = useCallback(async () => {
+        try {
+            const response = await api.get("/promotions/active");
+            const promos = response.data || [];
+            setActivePromotions(promos);
+            
+            // Tìm mốc thời gian kết thúc sớm nhất trong số các chương trình đang diễn ra
+            if (promos.length > 0) {
+                const now = Date.now();
+                const validEndTimes = promos
+                    .filter((p) => p.endDate && new Date(p.endDate).getTime() > now)
+                    .map((p) => new Date(p.endDate).getTime());
+                
+                if (validEndTimes.length > 0) {
+                    const earliestEnd = Math.min(...validEndTimes);
+                    setFlashSaleEndsAt(new Date(earliestEnd));
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load active promotions:", e);
+        }
+    }, []);
+
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
-            let url = `/products?page=${page}&size=12`;
+            const hasActiveFilters =
+                !!keyword.trim() ||
+                !!selectedCategory ||
+                !!minPrice ||
+                !!maxPrice;
+            let url = `/products?page=${page}&size=${hasActiveFilters ? 12 : 30}`;
             if (keyword.trim())
                 url += `&keyword=${encodeURIComponent(keyword)}`;
             if (selectedCategory) url += `&categoryId=${selectedCategory}`;
@@ -62,9 +123,10 @@ export const useHome = () => {
     useEffect(() => {
         const timer = window.setTimeout(() => {
             fetchCategories();
+            fetchActivePromotions();
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [fetchCategories]);
+    }, [fetchCategories, fetchActivePromotions]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -76,20 +138,86 @@ export const useHome = () => {
     // Đếm ngược cho Flash Sale
     useEffect(() => {
         const timer = setInterval(() => {
-            const now = new Date();
-            const midnight = new Date();
-            midnight.setHours(24, 0, 0, 0);
-            const diff = midnight - now;
-
-            if (diff > 0) {
-                const h = String(Math.floor((diff / (1000 * 60 * 60)) % 24)).padStart(2, "0");
-                const m = String(Math.floor((diff / (1000 * 60)) % 60)).padStart(2, "0");
-                const s = String(Math.floor((diff / 1000) % 60)).padStart(2, "0");
-                setTimeLeft({ hours: h, minutes: m, seconds: s });
+            if (Date.now() >= flashSaleEndsAt.getTime()) {
+                // Tải lại các chương trình khuyến mãi để cập nhật mốc thời gian tiếp theo
+                fetchActivePromotions();
+                return;
             }
+
+            setTimeLeft(getTimeLeft(flashSaleEndsAt));
         }, 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [flashSaleEndsAt, fetchActivePromotions]);
+
+    const flashSaleProducts = useMemo(() => {
+        // Priority 1: Products assigned by Admin in active Promotion programs
+        if (activePromotions && activePromotions.length > 0) {
+            const promoProductMap = new Map();
+            activePromotions.forEach((promo) => {
+                if (promo.applicableProducts && promo.applicableProducts.length > 0) {
+                    promo.applicableProducts.forEach((p) => {
+                        let discount = 0;
+                        if (promo.discountType === "PERCENT") {
+                            discount = Number(promo.discountValue) || 0;
+                        } else if (promo.discountType === "FIXED") {
+                            discount = p.price ? Math.round(((Number(promo.discountValue) || 0) / p.price) * 100) : 0;
+                        }
+                        
+                        const pId = String(p.id);
+                        // Nếu sản phẩm đã tồn tại trong Map (nằm ở 2 sự kiện cùng lúc), giữ lại mức giảm giá ƯU ĐÃI NHẤT
+                        if (promoProductMap.has(pId)) {
+                            const existing = promoProductMap.get(pId);
+                            if (discount > existing.promotionDiscountPercent) {
+                                promoProductMap.set(pId, {
+                                    ...p,
+                                    promotionDiscountPercent: discount,
+                                    promotionTitle: promo.title,
+                                    promotionEndDate: promo.endDate,
+                                });
+                            }
+                        } else {
+                            promoProductMap.set(pId, {
+                                ...p,
+                                promotionDiscountPercent: discount,
+                                promotionTitle: promo.title,
+                                promotionEndDate: promo.endDate,
+                            });
+                        }
+                    });
+                }
+            });
+
+            const uniquePromoProducts = Array.from(promoProductMap.values());
+            if (uniquePromoProducts.length > 0) {
+                return uniquePromoProducts;
+            }
+        }
+
+        // If no active promotion programs created by Admin, return empty list
+        return [];
+    }, [activePromotions]);
+
+    const flashSaleTotalPages = Math.max(
+        1,
+        Math.ceil(flashSaleProducts.length / 5),
+    );
+    const activeFlashSalePage = Math.min(flashSalePage, flashSaleTotalPages);
+    const visibleFlashSaleProducts = useMemo(() => {
+        const startIndex = (activeFlashSalePage - 1) * 5;
+        return flashSaleProducts.slice(startIndex, startIndex + 5);
+    }, [flashSaleProducts, activeFlashSalePage]);
+
+    const handlePrevFlashSalePage = useCallback(() => {
+        setFlashSalePage((prev) =>
+            prev <= 1 ? flashSaleTotalPages : prev - 1,
+        );
+    }, [flashSaleTotalPages]);
+
+    const handleNextFlashSalePage = useCallback(() => {
+        setFlashSalePage((prev) =>
+            prev >= flashSaleTotalPages ? 1 : prev + 1,
+        );
+    }, [flashSaleTotalPages]);
 
     // Thêm state vào trong hook useHome:
     const [selectedBestsellerId, setSelectedBestsellerId] = useState(null);
@@ -101,19 +229,16 @@ export const useHome = () => {
     }, [products]);
 
     // Tự động gán sản phẩm đầu tiên khi có dữ liệu
-    useEffect(() => {
-        if (bestsellerList.length > 0 && !selectedBestsellerId) {
-            setSelectedBestsellerId(bestsellerList[0].id);
-        }
-    }, [bestsellerList, selectedBestsellerId]);
+    const activeBestsellerId = selectedBestsellerId || bestsellerList[0]?.id || null;
 
     // Chi tiết sản phẩm đang được chọn bên phải
     const activeBestseller = useMemo(() => {
-        return bestsellerList.find((p) => String(p.id) === String(selectedBestsellerId)) || bestsellerList[0] || null;
-    }, [bestsellerList, selectedBestsellerId]);
+        return bestsellerList.find((p) => String(p.id) === String(activeBestsellerId)) || null;
+    }, [bestsellerList, activeBestsellerId]);
 
     // Hàm tính % giảm giá ảo hoặc từ dữ liệu gốc
     const getDiscountPercent = (product) => {
+        if (product.promotionDiscountPercent !== undefined && product.promotionDiscountPercent !== null) return product.promotionDiscountPercent;
         if (product.discountPercent) return product.discountPercent;
         // Tự sinh % cố định theo ID để hiển thị badge nếu DB chưa có cột discount
         return ((product.id * 7) % 35) + 10;
@@ -214,11 +339,18 @@ export const useHome = () => {
         activeBestsellerTab,
         setActiveBestsellerTab,
         timeLeft,
+        flashSaleProducts,
+        visibleFlashSaleProducts,
+        activeFlashSalePage,
+        flashSaleTotalPages,
+        handlePrevFlashSalePage,
+        handleNextFlashSalePage,
         getDiscountPercent,
         getOriginalPrice,
         categories,
         bestsellerList,
         activeBestseller,
+        activeBestsellerId,
         selectedBestsellerId,
         setSelectedBestsellerId,
         publishers,
