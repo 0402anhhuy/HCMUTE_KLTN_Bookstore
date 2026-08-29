@@ -173,6 +173,7 @@ export const useHome = () => {
                                     promotionDiscountPercent: discount,
                                     promotionTitle: promo.title,
                                     promotionEndDate: promo.endDate,
+                                    promoUsedCount: promo.usedCount || 0,
                                 });
                             }
                         } else {
@@ -181,6 +182,7 @@ export const useHome = () => {
                                 promotionDiscountPercent: discount,
                                 promotionTitle: promo.title,
                                 promotionEndDate: promo.endDate,
+                                promoUsedCount: promo.usedCount || 0,
                             });
                         }
                     });

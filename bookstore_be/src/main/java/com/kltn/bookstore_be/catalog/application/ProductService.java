@@ -266,7 +266,6 @@ public class ProductService {
         return stockMovementRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    @Cacheable(value = "products", key = "'status_' + #status")
     public List<Product> getProductsByStatus(Product.ProductStatus status) {
         return productRepository.findByStatusOrderByIdDesc(status);
     }

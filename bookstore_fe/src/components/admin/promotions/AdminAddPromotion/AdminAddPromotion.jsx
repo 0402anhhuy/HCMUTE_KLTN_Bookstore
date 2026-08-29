@@ -356,7 +356,7 @@ const AdminAddPromotion = ({ onClose, onSave, showToast }) => {
                                                                 gap: "4px"
                                                             }}
                                                         >
-                                                            Đã áp dụng ở SK {occupiedTitle}
+                                                            Đã áp dụng ở sự kiện: {occupiedTitle}
                                                         </span>
                                                     )}
                                                 </div>

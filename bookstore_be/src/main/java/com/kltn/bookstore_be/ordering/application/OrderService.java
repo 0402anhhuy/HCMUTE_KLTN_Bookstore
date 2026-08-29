@@ -266,21 +266,29 @@ public class OrderService {
         // Save order items
         if (singleProduct != null) {
             int requestedQty = request.getQuantity() != null ? request.getQuantity() : 1;
+            BigDecimal origPrice = singleProduct.getPrice();
+            BigDecimal sellingPrice = singleProduct.getPrice();
             OrderItem orderItem = OrderItem.builder()
                     .order(savedOrder)
                     .product(singleProduct)
                     .quantity(requestedQty)
-                    .unitPrice(singleProduct.getPrice())
+                    .originalPrice(origPrice)
+                    .unitPrice(sellingPrice)
                     .subtotal(totalAmount)
                     .build();
             orderItemRepository.save(orderItem);
         } else {
             for (CartItem item : cartItems) {
+                BigDecimal origPrice = item.getProduct().getPrice();
+                BigDecimal sellingPrice = (item.getQuantity() != null && item.getQuantity() > 0 && item.getSubtotal() != null)
+                        ? item.getSubtotal().divide(BigDecimal.valueOf(item.getQuantity()), 2, java.math.RoundingMode.HALF_UP)
+                        : origPrice;
                 OrderItem orderItem = OrderItem.builder()
                         .order(savedOrder)
                         .product(item.getProduct())
                         .quantity(item.getQuantity())
-                        .unitPrice(item.getProduct().getPrice())
+                        .originalPrice(origPrice)
+                        .unitPrice(sellingPrice)
                         .subtotal(item.getSubtotal())
                         .build();
                 orderItemRepository.save(orderItem);
