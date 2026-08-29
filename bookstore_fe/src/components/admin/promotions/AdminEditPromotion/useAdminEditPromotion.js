@@ -77,9 +77,22 @@ export const useAdminEditPromotion = ({ promotion, onSave, showToast }) => {
         const fetchData = async () => {
             setLoadingProducts(true);
             try {
-                const resProducts = await productService.getApprovedProducts();
-                const productsData =
-                    resProducts.data.content || resProducts.data || [];
+                let productsData = [];
+                try {
+                    const resProducts = await productService.getApprovedProducts();
+                    productsData = resProducts.data?.content || resProducts.data || [];
+                } catch (err) {
+                    console.warn("Failed to get approved products, falling back to all products", err);
+                }
+
+                if (!productsData || productsData.length === 0) {
+                    try {
+                        const resAll = await api.get("/products?size=200");
+                        productsData = resAll.data?.content || resAll.data || [];
+                    } catch (err) {
+                        console.error("Fallback fetch all products failed", err);
+                    }
+                }
                 setAvailableProducts(productsData);
 
                 const resCategories = await categoryService.getCategories();
