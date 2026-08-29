@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { productService } from "@/services/productService";
 import { categoryService } from "@/services/categoryService";
+import { promotionService } from "@/services/promotionService";
 import { isCategoryOrChildOf } from "@/utils/categoryTree";
 import api from "@/services/api";
 
@@ -79,11 +80,17 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
                     resCategories.data.content || resCategories.data || [];
                 setRawCategories(catsData);
 
-                const resPromos = await api.get("/promotions");
-                const promos = resPromos.data || [];
+                let promos = [];
+                try {
+                    const resPromos = await promotionService.getPromotions();
+                    promos = resPromos.data?.content || resPromos.data || [];
+                } catch (err) {
+                    console.warn("Failed to fetch promotions for occupied map", err);
+                }
+
                 const occupiedMap = {};
                 promos.forEach((promo) => {
-                    if (promo.status === "EXPIRED" || promo.status === "CANCELLED") return;
+                    if (promo.status === "EXPIRED" || promo.status === "CANCELLED" || promo.status === "INACTIVE") return;
                     if (promo.applicableProducts) {
                         promo.applicableProducts.forEach((p) => {
                             occupiedMap[p.id] = promo.title;
