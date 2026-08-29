@@ -166,16 +166,7 @@ const Navbar = () => {
                                                                 </ul>
                                                             )}
 
-                                                        <span
-                                                            className="mega-menu-see-all"
-                                                            onClick={() =>
-                                                                handleCategoryClick(
-                                                                    level2.id,
-                                                                )
-                                                            }
-                                                        >
-                                                            Xem tất cả
-                                                        </span>
+                                                        {/* Đã bỏ nút Xem tất cả */}
                                                     </div>
                                                 ),
                                             )

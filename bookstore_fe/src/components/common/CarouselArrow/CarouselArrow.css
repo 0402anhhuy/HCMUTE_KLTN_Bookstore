@@ -1,0 +1,31 @@
+.carousel-arrow-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid #d8e0da;
+    background-color: #ffffff;
+    color: #0a422d;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.carousel-arrow-btn:hover:not(:disabled) {
+    background-color: #0a422d;
+    border-color: #0a422d;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.carousel-arrow-btn:disabled {
+    color: #a7b3ad;
+    background-color: #f8fafc;
+    cursor: not-allowed;
+    opacity: 0.65;
+}

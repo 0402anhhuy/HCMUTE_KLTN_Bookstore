@@ -3,6 +3,23 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 
+const parseAddress = (addrStr, defaultName = "", defaultPhone = "") => {
+    if (!addrStr) return { name: defaultName, phone: defaultPhone, address: "" };
+    const parts = addrStr.split("|").map((s) => s.trim());
+    if (parts.length >= 3) {
+        return {
+            name: parts[0],
+            phone: parts[1],
+            address: parts.slice(2).join(" | "),
+        };
+    }
+    return {
+        name: defaultName,
+        phone: defaultPhone,
+        address: addrStr,
+    };
+};
+
 export const useCheckout = () => {
     const { user, cart, fetchCart, showToast, reloadUserProfile } = useApp();
     const [searchParams] = useSearchParams();
@@ -37,6 +54,7 @@ export const useCheckout = () => {
         searchParams.get("usePoints") === "true",
     );
     const [bestCoupon, setBestCoupon] = useState(null);
+    const [recipientName, setRecipientName] = useState("");
     const [recipientPhone, setRecipientPhone] = useState("");
     const couponVersionRef = useRef("");
 
@@ -85,16 +103,28 @@ export const useCheckout = () => {
 
     useEffect(() => {
         if (user) {
-            setRecipientPhone(user.phone || "");
             // Nếu tài khoản chưa có địa chỉ nào được lưu, bật form nhập địa chỉ
             if (!user.address || savedAddresses.length === 0) {
                 setUseCustomAddress(true);
+                setRecipientName(user.fullName || "");
+                setRecipientPhone(user.phone || "");
             } else {
                 setUseCustomAddress(false);
                 setSelectedAddressIdx(0);
             }
         }
     }, [user, savedAddresses]);
+
+    useEffect(() => {
+        if (!useCustomAddress && savedAddresses[selectedAddressIdx]) {
+            const parsed = parseAddress(savedAddresses[selectedAddressIdx], user?.fullName, user?.phone);
+            setRecipientName(parsed.name || user?.fullName || "");
+            setRecipientPhone(parsed.phone || user?.phone || "");
+        } else if (useCustomAddress && user) {
+            if (!recipientName) setRecipientName(user.fullName || "");
+            if (!recipientPhone) setRecipientPhone(user.phone || "");
+        }
+    }, [selectedAddressIdx, useCustomAddress, savedAddresses, user]);
 
     useEffect(() => {
         if (productId) {
@@ -121,9 +151,13 @@ export const useCheckout = () => {
         }
     }, [productId]);
 
-    const shippingAddress = useCustomAddress
+    const addressOnly = useCustomAddress
         ? customAddress
-        : savedAddresses[selectedAddressIdx] || "";
+        : parseAddress(savedAddresses[selectedAddressIdx], user?.fullName, user?.phone).address;
+
+    const shippingAddress = addressOnly.trim()
+        ? `${recipientName.trim()} | ${recipientPhone.trim()} | ${addressOnly.trim()}`
+        : "";
 
     const formatPrice = (price) =>
         new Intl.NumberFormat("vi-VN", {
@@ -271,7 +305,7 @@ export const useCheckout = () => {
         return 35000;
     };
 
-    const shippingFee = getShippingFee(shippingAddress, subtotal);
+    const shippingFee = getShippingFee(addressOnly, subtotal);
 
     const calculateDiscount = (coupon, currentSubtotal) => {
         if (!coupon) return 0;
@@ -415,6 +449,8 @@ export const useCheckout = () => {
         usePoints,
         setUsePoints,
         bestCoupon,
+        recipientName,
+        setRecipientName,
         recipientPhone,
         setRecipientPhone,
         shippingAddress,

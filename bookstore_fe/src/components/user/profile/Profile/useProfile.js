@@ -13,9 +13,17 @@ export const useProfile = () => {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState("info");
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
+        const urlTab = params.get("tab");
+        if (urlTab) {
+            const allowedTabs = ["info", "addresses", "favorites", "coupons", "security"];
+            if (allowedTabs.includes(urlTab)) {
+                setActiveTab(urlTab);
+            }
+        }
         if (params.get("tab") === "favorites") {
             setHighlightFavorites(true);
             const scrollTimer = setTimeout(() => {
@@ -90,5 +98,7 @@ export const useProfile = () => {
         highlightFavorites,
         handleProfileSubmit,
         getInitials,
+        activeTab,
+        setActiveTab,
     };
 };

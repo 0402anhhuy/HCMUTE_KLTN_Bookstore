@@ -8,9 +8,12 @@ import {
     Wallet,
     Ticket,
     Coins,
+    AlertTriangle,
+    Check,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/common";
 import { useCheckout } from "./useCheckout";
+import { parseAddress } from "@/components/user/profile/AddressList/useAddressList";
 import "./Checkout.css";
 
 const Checkout = () => {
@@ -38,6 +41,8 @@ const Checkout = () => {
         usePoints,
         setUsePoints,
         bestCoupon,
+        recipientName,
+        setRecipientName,
         recipientPhone,
         setRecipientPhone,
         formatPrice,
@@ -169,9 +174,11 @@ const Checkout = () => {
                             </label>
                             <input
                                 type="text"
-                                value={user.fullName || ""}
-                                readOnly
-                                className="checkout-input-readonly"
+                                value={recipientName}
+                                onChange={(e) => setRecipientName(e.target.value)}
+                                placeholder="Nhập họ tên người nhận..."
+                                required
+                                className="checkout-input-text"
                             />
                         </div>
 
@@ -205,47 +212,51 @@ const Checkout = () => {
                                 />
                                 Địa chỉ nhận hàng
                             </label>
-
-                            {savedAddresses.map((addr, idx) => (
-                                <div
-                                    key={idx}
-                                    onClick={() => {
-                                        setSelectedAddressIdx(idx);
-                                        setUseCustomAddress(false);
-                                    }}
-                                    className={`checkout-address-item-card ${
-                                        !useCustomAddress &&
-                                        selectedAddressIdx === idx
-                                            ? "selected"
-                                            : ""
-                                    }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="addressSelection"
-                                        checked={
-                                            !useCustomAddress &&
-                                            selectedAddressIdx === idx
-                                        }
-                                        onChange={() => {
+                            {savedAddresses.map((addr, idx) => {
+                                const parsed = parseAddress(addr, user?.fullName, user?.phone);
+                                return (
+                                    <div
+                                        key={idx}
+                                        onClick={() => {
                                             setSelectedAddressIdx(idx);
                                             setUseCustomAddress(false);
                                         }}
-                                        className="checkout-address-radio"
-                                    />
-                                    <div>
-                                        <div className="checkout-address-badge-name">
-                                            {idx === 0
-                                                ? "Địa chỉ mặc định"
-                                                : `Địa chỉ ${idx + 1}`}
-                                        </div>
-                                        <div className="checkout-address-detail-text">
-                                            {addr}
+                                        className={`checkout-address-item-card ${
+                                            !useCustomAddress &&
+                                            selectedAddressIdx === idx
+                                                ? "selected"
+                                                : ""
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="addressSelection"
+                                            checked={
+                                                !useCustomAddress &&
+                                                selectedAddressIdx === idx
+                                            }
+                                            onChange={() => {
+                                                setSelectedAddressIdx(idx);
+                                                setUseCustomAddress(false);
+                                            }}
+                                            className="checkout-address-radio"
+                                        />
+                                        <div>
+                                            <div className="checkout-address-badge-name">
+                                                {idx === 0
+                                                    ? "Địa chỉ mặc định"
+                                                    : `Địa chỉ ${idx + 1}`}
+                                            </div>
+                                            <div className="checkout-address-recipient" style={{ fontWeight: 600, fontSize: "0.95rem", color: "#334155", margin: "4px 0" }}>
+                                                {parsed.name} | {parsed.phone}
+                                            </div>
+                                            <div className="checkout-address-detail-text">
+                                                {parsed.address}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-
+                                );
+                            })}
                             <div
                                 onClick={() => setUseCustomAddress(true)}
                                 className={`checkout-address-item-card ${
@@ -318,7 +329,15 @@ const Checkout = () => {
                         {paymentMethod === "WALLET" &&
                             (user?.walletBalance || 0) < total && (
                                 <div className="checkout-wallet-alert">
-                                    ⚠️ Số dư ví hiện tại (
+                                    <AlertTriangle
+                                        size={16}
+                                        style={{
+                                            display: "inline",
+                                            marginRight: "6px",
+                                            verticalAlign: "middle",
+                                        }}
+                                    />{" "}
+                                    Số dư ví hiện tại (
                                     {formatPrice(user?.walletBalance || 0)})
                                     không đủ để thanh toán đơn hàng này (
                                     {formatPrice(total)}). Vui lòng nạp thêm
@@ -566,7 +585,15 @@ const Checkout = () => {
                                                     <div>
                                                         {isSelected ? (
                                                             <span className="checkout-voucher-status-selected">
-                                                                ✓ Chọn
+                                                                <Check
+                                                                    size={14}
+                                                                    style={{
+                                                                        display: "inline",
+                                                                        marginRight: "2px",
+                                                                        verticalAlign: "middle",
+                                                                    }}
+                                                                />{" "}
+                                                                Chọn
                                                             </span>
                                                         ) : isEligible ? (
                                                             <span className="checkout-voucher-status-use">

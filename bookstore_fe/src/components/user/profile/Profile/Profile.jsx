@@ -1,4 +1,4 @@
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, User, MapPin, Heart, Gift, Lock } from "lucide-react";
 import { useProfile } from "./useProfile";
 import "./Profile.css";
 
@@ -25,6 +25,8 @@ const Profile = () => {
         highlightFavorites,
         handleProfileSubmit,
         getInitials,
+        activeTab,
+        setActiveTab,
     } = useProfile();
 
     if (!user) {
@@ -41,85 +43,138 @@ const Profile = () => {
     return (
         <div className="page-container animate-fade-in profile-page-container">
             <div className="profile-header-meta">
+                <h2 className="profile-title">Tài khoản của tôi</h2>
                 <p className="profile-subtitle">
                     Quản lý thông tin cá nhân và bảo mật tài khoản.
                 </p>
             </div>
 
-            <div className="profile-grid-layout">
-                {/* LEFT COLUMN */}
-                <div className="profile-col-stack">
-                    {/* Box 1: Avatar Card */}
-                    <div className="profile-avatar-card">
+            <div className="profile-layout-container">
+                {/* SIDEBAR NAVIGATION */}
+                <div className="profile-sidebar">
+                    <div className="profile-sidebar-user-info">
                         <div className="profile-avatar-circle">
                             {getInitials(user.fullName)}
                         </div>
-                        <div>
-                            <div className="profile-user-fullname">
-                                {user.fullName}
-                            </div>
-                            <div className="profile-user-email">
-                                {user.email}
-                            </div>
-                            <div className="profile-avatar-btn-group">
-                                <button
-                                    type="button"
-                                    className="profile-avatar-btn-primary"
-                                >
-                                    Tải ảnh mới
-                                </button>
-                                <button
-                                    type="button"
-                                    className="profile-avatar-btn-outline"
-                                >
-                                    Xóa ảnh
-                                </button>
-                            </div>
+                        <div className="profile-sidebar-user-meta">
+                            <span className="profile-sidebar-welcome">Xin chào,</span>
+                            <h4 className="profile-sidebar-name">{user.fullName}</h4>
                         </div>
                     </div>
 
-                    {/* Box 2: Personal Info Form */}
-                    <ProfileInfo
-                        fullName={fullName}
-                        setFullName={setFullName}
-                        email={email}
-                        phone={phone}
-                        setPhone={setPhone}
-                    />
-
-                    {/* Box 3: Address List */}
-                    <AddressList
-                        user={user}
-                        phone={phone}
-                        fullName={fullName}
-                    />
-
-                    {/* Form Actions */}
-                    <div className="profile-form-actions">
-                        <button type="button" className="profile-btn-cancel">
-                            Hủy
+                    <div className="profile-nav-menu">
+                        <button
+                            type="button"
+                            className={`profile-nav-item ${activeTab === "info" ? "active" : ""}`}
+                            onClick={() => setActiveTab("info")}
+                        >
+                            <User size={18} />
+                            <span>Thông tin cá nhân</span>
                         </button>
                         <button
                             type="button"
-                            onClick={handleProfileSubmit}
-                            disabled={loading}
-                            className="profile-btn-submit"
+                            className={`profile-nav-item ${activeTab === "addresses" ? "active" : ""}`}
+                            onClick={() => setActiveTab("addresses")}
                         >
-                            {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                            <MapPin size={18} />
+                            <span>Danh sách địa chỉ</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-nav-item ${activeTab === "favorites" ? "active" : ""}`}
+                            onClick={() => setActiveTab("favorites")}
+                        >
+                            <Heart size={18} />
+                            <span>Sản phẩm yêu thích</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-nav-item ${activeTab === "coupons" ? "active" : ""}`}
+                            onClick={() => setActiveTab("coupons")}
+                        >
+                            <Gift size={18} />
+                            <span>Kho Xu & Ví Voucher</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`profile-nav-item ${activeTab === "security" ? "active" : ""}`}
+                            onClick={() => setActiveTab("security")}
+                        >
+                            <Lock size={18} />
+                            <span>Đổi mật khẩu</span>
                         </button>
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN */}
-                <div className="profile-col-stack">
-                    {/* Box 1: Rewards & Coupons */}
-                    <CouponsRewards />
+                {/* CONTENT AREA */}
+                <div className="profile-content-area">
+                    {activeTab === "info" && (
+                        <div className="profile-tab-pane animate-fade-in">
+                            <div className="profile-avatar-card">
+                                <div className="profile-avatar-circle-large">
+                                    {getInitials(user.fullName)}
+                                </div>
+                                <div className="profile-avatar-details">
+                                    <div className="profile-user-fullname">{user.fullName}</div>
+                                    <div className="profile-user-email">{user.email}</div>
+                                    <div className="profile-avatar-btn-group">
+                                        <button type="button" className="profile-avatar-btn-primary">
+                                            Tải ảnh mới
+                                        </button>
+                                        <button type="button" className="profile-avatar-btn-outline">
+                                            Xóa ảnh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {/* Box 2: Favorite Products */}
-                    <FavoriteProducts highlight={highlightFavorites} />
+                            <ProfileInfo
+                                fullName={fullName}
+                                setFullName={setFullName}
+                                email={email}
+                                phone={phone}
+                                setPhone={setPhone}
+                            />
 
-                    {/* Box 3: Security */}
-                    <SecuritySettings />
+                            <div className="profile-form-actions">
+                                <button type="button" className="profile-btn-cancel">
+                                    Hủy
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleProfileSubmit}
+                                    disabled={loading}
+                                    className="profile-btn-submit"
+                                >
+                                    {loading ? "Đang lưu..." : "Lưu thay đổi"}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === "addresses" && (
+                        <div className="profile-tab-pane animate-fade-in">
+                            <AddressList user={user} phone={phone} fullName={fullName} />
+                        </div>
+                    )}
+
+                    {activeTab === "favorites" && (
+                        <div className="profile-tab-pane animate-fade-in">
+                            <FavoriteProducts highlight={highlightFavorites} />
+                        </div>
+                    )}
+
+                    {activeTab === "coupons" && (
+                        <div className="profile-tab-pane animate-fade-in">
+                            <CouponsRewards />
+                        </div>
+                    )}
+
+                    {activeTab === "security" && (
+                        <div className="profile-tab-pane animate-fade-in">
+                            <SecuritySettings />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

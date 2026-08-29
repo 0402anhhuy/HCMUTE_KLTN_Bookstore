@@ -61,14 +61,26 @@ export const useAdminDashboard = () => {
                 console.error("Error loading total users", err);
             }
 
-            const catRes = await categoryService.getCategories();
-            setCategories(catRes.data || []);
+            try {
+                const catRes = await categoryService.getCategories();
+                setCategories(catRes.data || []);
+            } catch (err) {
+                console.error("Error loading categories", err);
+            }
 
-            const prodRes = await productService.getPendingProducts();
-            setProducts(prodRes.data?.content || prodRes.data || []);
+            try {
+                const prodRes = await productService.getPendingProducts();
+                setProducts(prodRes.data?.content || prodRes.data || []);
+            } catch (err) {
+                console.error("Error loading products", err);
+            }
 
-            const orderRes = await orderService.getOrders();
-            setOrders(orderRes.data || []);
+            try {
+                const orderRes = await orderService.getOrders();
+                setOrders(orderRes.data || []);
+            } catch (err) {
+                console.error("Error loading orders", err);
+            }
 
             try {
                 const couponRes = await couponService.getCoupons();
@@ -92,11 +104,10 @@ export const useAdminDashboard = () => {
             }
         } catch (error) {
             console.error("Error loading admin dashboard data", error);
-            showToast?.("Lỗi tải dữ liệu kênh Quản trị viên!", "error");
         } finally {
             setLoading(false);
         }
-    }, [showToast]);
+    }, []);
 
     useEffect(() => {
         if (user?.role === "ADMIN") {
@@ -105,7 +116,7 @@ export const useAdminDashboard = () => {
             }, 0);
             return () => window.clearTimeout(timer);
         }
-    }, [user, activeTab, loadData]);
+    }, [user, loadData]);
 
     const handleLogout = () => {
         logoutUser();

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Globe, Share2, MessageCircle } from "lucide-react";
 import { useFooter } from "./useFooter";
 import "./Footer.css";
 
@@ -22,21 +23,21 @@ const Footer = () => {
                             className="footer-social-link"
                             aria-label="Website"
                         >
-                            🌐
+                            <Globe size={18} />
                         </a>
                         <a
                             href="#"
                             className="footer-social-link"
-                            aria-label="Facebook"
+                            aria-label="Community"
                         >
-                            📘
+                            <Share2 size={18} />
                         </a>
                         <a
                             href="#"
                             className="footer-social-link"
-                            aria-label="Instagram"
+                            aria-label="Contact"
                         >
-                            📸
+                            <MessageCircle size={18} />
                         </a>
                     </div>
                 </div>
