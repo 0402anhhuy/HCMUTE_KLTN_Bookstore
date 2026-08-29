@@ -782,19 +782,26 @@ const BookCard = ({
             </div>
 
             {/* Thanh tiến độ Flash Sale */}
-            {isFlashSale && (
-                <div className="book-card-progress-box">
-                    <div
-                        className="book-card-progress-bar"
-                        style={{
-                            width: `${Math.min(100, ((product.id * 17) % 100) + 20)}%`,
-                        }}
-                    />
-                    <span className="book-card-progress-text">
-                        ĐÃ BÁN {((product.id * 13) % 40) + 5}
-                    </span>
-                </div>
-            )}
+            {isFlashSale && (() => {
+                const sold = product.promoUsedCount ?? product.soldCount ?? 0;
+                const stock = product.stockQuantity ?? 0;
+                const total = sold + stock;
+                const progressPercent = total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0;
+
+                return (
+                    <div className="book-card-progress-box">
+                        <div
+                            className="book-card-progress-bar"
+                            style={{
+                                width: `${progressPercent}%`,
+                            }}
+                        />
+                        <span className="book-card-progress-text">
+                            {sold > 0 ? `ĐÃ BÁN ${sold}` : "VỪA MỞ BÁN"}
+                        </span>
+                    </div>
+                );
+            })()}
 
             <div className="book-card-footer-row">
                 <div className="book-card-stars-wrapper">

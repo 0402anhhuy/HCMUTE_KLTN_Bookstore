@@ -321,7 +321,7 @@ export const AppProvider = ({ children }) => {
     const fetchFavorites = async () => {
         if (!user) return;
         try {
-            const response = await api.get("/favorites");
+            const response = await api.get("/products/favorites");
             setFavorites(response.data || []);
         } catch (error) {
             console.error("Failed to fetch favorites:", error);

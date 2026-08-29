@@ -275,29 +275,43 @@ const AdminAddPromotion = ({ onClose, onSave, showToast }) => {
                                                         )
                                                     }
                                                     className={`admin-add-promotion-product-item ${
-                                                        isSelected
+                                                        isSelected || isOccupied
                                                             ? "selected"
                                                             : ""
                                                     } ${isOccupied ? "disabled-occupied" : ""}`}
-                                                    style={isOccupied ? { opacity: 0.65, cursor: "not-allowed", backgroundColor: "#f8fafc" } : {}}
-                                                    title={isOccupied ? `Đã thuộc chương trình "${occupiedTitle}"` : ""}
+                                                    style={
+                                                        isOccupied
+                                                            ? {
+                                                                  opacity: 0.75,
+                                                                  cursor: "not-allowed",
+                                                                  backgroundColor: "#f1f5f9",
+                                                                  borderColor: "#cbd5e1",
+                                                              }
+                                                            : {}
+                                                    }
+                                                    title={isOccupied ? `Sản phẩm này đã được áp dụng ở sự kiện "${occupiedTitle}"` : ""}
                                                 >
                                                     <div
                                                         className={`admin-add-promotion-checkbox-icon ${
-                                                            isSelected
+                                                            isSelected || isOccupied
                                                                 ? "selected"
                                                                 : ""
                                                         }`}
+                                                        style={isOccupied ? { color: "#94a3b8" } : {}}
                                                     >
-                                                        {isSelected ? (
+                                                        {isSelected || isOccupied ? (
                                                             <CheckSquare
                                                                 size={20}
+                                                                color={isOccupied ? "#94a3b8" : undefined}
                                                             />
                                                         ) : (
-                                                            <Square size={20} color={isOccupied ? "#cbd5e1" : "#94a3b8"} />
+                                                            <Square size={20} color="#cbd5e1" />
                                                         )}
                                                     </div>
-                                                    <div className="admin-add-promotion-product-thumb">
+                                                    <div
+                                                        className="admin-add-promotion-product-thumb"
+                                                        style={isOccupied ? { filter: "grayscale(70%)" } : {}}
+                                                    >
                                                         {p.imageUrl ? (
                                                             <img
                                                                 src={p.imageUrl}
@@ -312,16 +326,37 @@ const AdminAddPromotion = ({ onClose, onSave, showToast }) => {
                                                         )}
                                                     </div>
                                                     <div className="admin-add-promotion-product-info">
-                                                        <span className="admin-add-promotion-product-name">
+                                                        <span
+                                                            className="admin-add-promotion-product-name"
+                                                            style={isOccupied ? { color: "#475569" } : {}}
+                                                        >
                                                             {p.name}
                                                         </span>
-                                                        <span className="admin-add-promotion-product-price">
+                                                        <span
+                                                            className="admin-add-promotion-product-price"
+                                                            style={isOccupied ? { color: "#94a3b8" } : {}}
+                                                        >
                                                             {p.price?.toLocaleString("vi-VN")}đ
                                                         </span>
                                                     </div>
                                                     {isOccupied && (
-                                                        <span style={{ fontSize: "11px", color: "#ef4444", fontWeight: 600, backgroundColor: "#fef2f2", padding: "2px 8px", borderRadius: "12px", border: "1px solid #fecaca", marginLeft: "auto", flexShrink: 0 }}>
-                                                            Đã thuộc CTKM: {occupiedTitle}
+                                                        <span
+                                                            style={{
+                                                                fontSize: "11px",
+                                                                color: "#475569",
+                                                                fontWeight: 600,
+                                                                backgroundColor: "#e2e8f0",
+                                                                padding: "4px 10px",
+                                                                borderRadius: "12px",
+                                                                border: "1px solid #cbd5e1",
+                                                                marginLeft: "auto",
+                                                                flexShrink: 0,
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                gap: "4px"
+                                                            }}
+                                                        >
+                                                            Đã áp dụng ở sự kiện: {occupiedTitle}
                                                         </span>
                                                     )}
                                                 </div>
