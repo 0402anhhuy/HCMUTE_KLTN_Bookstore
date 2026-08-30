@@ -145,6 +145,53 @@ const CategorySelector = ({
         return Boolean(activeL3 && activeL3.children && activeL3.children.length > 0);
     }, [activeL3]);
 
+    const handleItemClick = (c, level, e) => {
+        if (e) e.stopPropagation();
+        const hasChildren = c.children && c.children.length > 0;
+
+        if (level === 1) {
+            if (hasChildren) {
+                const isAlreadyActive = activeL1 && String(activeL1.id) === String(c.id);
+                if (isAlreadyActive) {
+                    handleSelect(c.id);
+                } else {
+                    setActiveL1(c);
+                    const l2 = c.children?.[0] || null;
+                    const l3 = l2?.children?.[0] || null;
+                    setActiveL2(l2);
+                    setActiveL3(l3);
+                }
+            } else {
+                handleSelect(c.id);
+            }
+        } else if (level === 2) {
+            if (hasChildren) {
+                const isAlreadyActive = activeL2 && String(activeL2.id) === String(c.id);
+                if (isAlreadyActive) {
+                    handleSelect(c.id);
+                } else {
+                    setActiveL2(c);
+                    setActiveL3(c.children?.[0] || null);
+                }
+            } else {
+                handleSelect(c.id);
+            }
+        } else if (level === 3) {
+            if (hasChildren) {
+                const isAlreadyActive = activeL3 && String(activeL3.id) === String(c.id);
+                if (isAlreadyActive) {
+                    handleSelect(c.id);
+                } else {
+                    setActiveL3(c);
+                }
+            } else {
+                handleSelect(c.id);
+            }
+        } else {
+            handleSelect(c.id);
+        }
+    };
+
     return (
         <div
             className={`sleek-cat-selector ${className}`}
@@ -292,7 +339,7 @@ const CategorySelector = ({
                                                 key={c.id}
                                                 className={`sleek-cat-item ${isL1Active ? "active" : ""
                                                     } ${isSelected ? "selected" : ""}`}
-                                                onClick={() => handleSelect(c.id)}
+                                                onClick={(e) => handleItemClick(c, 1, e)}
                                                 onMouseEnter={() => {
                                                     setActiveL1(c);
                                                     const l2 = c.children?.[0] || null;
@@ -346,7 +393,7 @@ const CategorySelector = ({
                                                     className={`sleek-cat-item ${isL2Active ? "active" : ""
                                                         } ${isSelected ? "selected" : ""
                                                         }`}
-                                                    onClick={() => handleSelect(c.id)}
+                                                    onClick={(e) => handleItemClick(c, 2, e)}
                                                     onMouseEnter={() => {
                                                         setActiveL2(c);
                                                         setActiveL3(c.children?.[0] || null);
@@ -404,7 +451,7 @@ const CategorySelector = ({
                                                     className={`sleek-cat-item ${isL3Active ? "active" : ""
                                                         } ${isSelected ? "selected" : ""
                                                         }`}
-                                                    onClick={() => handleSelect(c.id)}
+                                                    onClick={(e) => handleItemClick(c, 3, e)}
                                                     onMouseEnter={() => setActiveL3(c)}
                                                     title={c.name}
                                                 >
@@ -452,9 +499,7 @@ const CategorySelector = ({
                                                     key={c.id}
                                                     className={`sleek-cat-item ${isSelected ? "selected" : ""
                                                         }`}
-                                                    onClick={() =>
-                                                        handleSelect(c.id)
-                                                    }
+                                                    onClick={(e) => handleItemClick(c, 4, e)}
                                                     title={c.name}
                                                 >
                                                     <span className="sleek-cat-item-name">

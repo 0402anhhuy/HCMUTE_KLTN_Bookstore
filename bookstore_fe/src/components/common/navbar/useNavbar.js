@@ -21,6 +21,7 @@ export const useNavbar = () => {
     const [showCategoryMenu, setShowCategoryMenu] = useState(false);
     const [activeLevel1Id, setActiveLevel1Id] = useState(null);
     const [showSearchModal, setShowSearchModal] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const searchBoxRef = useRef(null);
     const categoryMenuRef = useRef(null);
@@ -199,5 +200,7 @@ export const useNavbar = () => {
         handleNotificationClick,
         markAllNotificationsAsRead,
         getAvatarInitials,
+        mobileMenuOpen,
+        setMobileMenuOpen,
     };
 };

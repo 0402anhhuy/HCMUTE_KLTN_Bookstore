@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
     LayoutGrid,
     ChevronDown,
@@ -13,11 +14,14 @@ import {
     ShieldCheck,
     LayoutDashboard,
     BookOpen,
+    Menu,
+    X,
 } from "lucide-react";
 import { useNavbar } from "./useNavbar";
 import "./Navbar.css";
 
 const Navbar = () => {
+    const location = useLocation();
     const {
         user,
         navSearch,
@@ -43,13 +47,36 @@ const Navbar = () => {
         handleNotificationClick,
         markAllNotificationsAsRead,
         getAvatarInitials,
+        mobileMenuOpen,
+        setMobileMenuOpen,
     } = useNavbar();
+
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef(null);
+
+    useEffect(() => {
+        setUserMenuOpen(false);
+    }, [location]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+                setUserMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
+        };
+    }, []);
 
     return (
         <nav className="navbar-container">
             {/* Brand Logo */}
             <Link to="/" className="navbar-brand-link">
-                <span>UTEShop</span>
+                <span>Bookstore</span>
             </Link>
 
             {/* Fahasa Mega Menu Danh mục sản phẩm */}
@@ -342,8 +369,14 @@ const Navbar = () => {
                 </Link>
 
                 {/* 3. TÀI KHOẢN */}
-                <div className="navbar-action-item">
-                    <div className="navbar-action-icon-wrapper">
+                <div ref={userMenuRef} className="navbar-action-item">
+                    <div
+                        className="navbar-action-icon-wrapper"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setUserMenuOpen((prev) => !prev);
+                        }}
+                    >
                         {user ? (
                             <div className="navbar-mini-avatar">
                                 {getAvatarInitials(user.fullName)}
@@ -352,22 +385,33 @@ const Navbar = () => {
                             <User size={22} />
                         )}
                     </div>
-                    <span className="navbar-action-label">
+                    <span
+                        className="navbar-action-label"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setUserMenuOpen((prev) => !prev);
+                        }}
+                    >
                         {user ? user.fullName.split(" ").pop() : "Tài khoản"}
                     </span>
 
-                    <div className="navbar-hover-panel">
+                    <div
+                        className={`navbar-hover-panel ${userMenuOpen ? "show-user-menu" : "hide-user-menu"}`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="navbar-modal-card navbar-user-modal">
                             {!user ? (
                                 <div className="navbar-account-guest-box">
                                     <Link
                                         to="/login"
+                                        onClick={() => setUserMenuOpen(false)}
                                         className="navbar-btn-login-solid"
                                     >
                                         Đăng nhập
                                     </Link>
                                     <Link
                                         to="/register"
+                                        onClick={() => setUserMenuOpen(false)}
                                         className="navbar-btn-register-outline"
                                     >
                                         Đăng ký
@@ -392,6 +436,7 @@ const Navbar = () => {
                                     <div className="navbar-account-nav-list">
                                         <Link
                                             to="/profile"
+                                            onClick={() => setUserMenuOpen(false)}
                                             className="navbar-account-nav-item"
                                         >
                                             <User size={16} />
@@ -400,6 +445,7 @@ const Navbar = () => {
 
                                         <Link
                                             to="/orders"
+                                            onClick={() => setUserMenuOpen(false)}
                                             className="navbar-account-nav-item"
                                         >
                                             <FileText size={16} />
@@ -408,6 +454,7 @@ const Navbar = () => {
 
                                         <Link
                                             to="/profile?tab=favorites"
+                                            onClick={() => setUserMenuOpen(false)}
                                             className="navbar-account-nav-item"
                                         >
                                             <Heart size={16} />
@@ -417,6 +464,7 @@ const Navbar = () => {
                                         {user.role === "ADMIN" && (
                                             <Link
                                                 to="/admin"
+                                                onClick={() => setUserMenuOpen(false)}
                                                 className="navbar-account-nav-item"
                                             >
                                                 <ShieldCheck size={16} />
@@ -429,6 +477,7 @@ const Navbar = () => {
                                         {user.role === "MANAGER" && (
                                             <Link
                                                 to="/manager"
+                                                onClick={() => setUserMenuOpen(false)}
                                                 className="navbar-account-nav-item"
                                             >
                                                 <LayoutDashboard size={16} />
@@ -442,7 +491,10 @@ const Navbar = () => {
 
                                         <button
                                             type="button"
-                                            onClick={handleLogout}
+                                            onClick={() => {
+                                                handleLogout();
+                                                setUserMenuOpen(false);
+                                            }}
                                             className="navbar-account-nav-item logout"
                                         >
                                             <LogOut size={16} />
@@ -454,7 +506,106 @@ const Navbar = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Mobile Menu Toggle Button */}
+                <button
+                    type="button"
+                    className="navbar-hamburger-btn"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    aria-label="Toggle Mobile Menu"
+                >
+                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
             </div>
+
+            {/* Mobile Navigation Drawer */}
+            {mobileMenuOpen && (
+                <div className="navbar-mobile-drawer">
+                    <div className="navbar-mobile-drawer-header">
+                        <div className="navbar-mobile-user-info">
+                            {user ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div className="navbar-mini-avatar">
+                                        {getAvatarInitials(user.fullName)}
+                                    </div>
+                                    <div>
+                                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#111827' }}>
+                                            {user.fullName}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                            {user.email}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                                    <Link
+                                        to="/login"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="navbar-mobile-drawer-btn-primary"
+                                    >
+                                        Đăng nhập
+                                    </Link>
+                                    <Link
+                                        to="/register"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="navbar-mobile-drawer-btn-outline"
+                                    >
+                                        Đăng ký
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="navbar-mobile-drawer-body">
+                        {/* Mobile Category List */}
+                        <div className="navbar-mobile-section">
+                            <h5 className="navbar-mobile-section-title">
+                                <LayoutGrid size={16} />
+                                <span>Danh mục sản phẩm</span>
+                            </h5>
+                            <div className="navbar-mobile-category-list">
+                                {categoryTree.map((cat) => (
+                                    <button
+                                        type="button"
+                                        key={cat.id}
+                                        onClick={() => {
+                                            handleCategoryClick(cat.id);
+                                            setMobileMenuOpen(false);
+                                        }}
+                                        className="navbar-mobile-category-item"
+                                    >
+                                        <span>{cat.name}</span>
+                                        <ChevronDown size={14} style={{ transform: 'rotate(-90deg)' }} />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Mobile Quick Links */}
+                        <div className="navbar-mobile-section">
+                            <h5 className="navbar-mobile-section-title">Điều hướng</h5>
+                            <div className="navbar-mobile-nav-links">
+                                <Link
+                                    to="/"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="navbar-mobile-nav-link"
+                                >
+                                    Trang chủ
+                                </Link>
+                                <Link
+                                    to="/catalog"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="navbar-mobile-nav-link"
+                                >
+                                    Tất cả sản phẩm
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </nav>
     );
 };
