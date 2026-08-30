@@ -101,3 +101,58 @@ export const buildCategoryBreadcrumbs = (category, currentItemName) => {
 
     return breadcrumbs;
 };
+
+export const isCategoryOrChildOf = (
+    productCategory,
+    filterCategoryId,
+    categories = [],
+) => {
+    if (!filterCategoryId || String(filterCategoryId) === "") return true;
+    if (!productCategory) return false;
+
+    const targetId = String(filterCategoryId);
+
+    const categoriesMap = new Map();
+    if (Array.isArray(categories)) {
+        categories.forEach((cat) => {
+            if (cat && cat.id != null) {
+                categoriesMap.set(String(cat.id), cat);
+            }
+        });
+    }
+
+    let curr =
+        typeof productCategory === "object"
+            ? productCategory
+            : categoriesMap.get(String(productCategory));
+
+    const visited = new Set();
+
+    while (curr && curr.id != null) {
+        const currId = String(curr.id);
+
+        if (currId === targetId) return true;
+        if (visited.has(currId)) break;
+        visited.add(currId);
+
+        if (curr.parentCategory && typeof curr.parentCategory === "object") {
+            curr = curr.parentCategory;
+            continue;
+        }
+
+        const parentId =
+            curr.parentCategory?.id ??
+            curr.parentCategoryId ??
+            curr.parent_id ??
+            null;
+
+        if (parentId != null && categoriesMap.has(String(parentId))) {
+            curr = categoriesMap.get(String(parentId));
+        } else {
+            break;
+        }
+    }
+
+    return false;
+};
+

@@ -25,6 +25,8 @@ import com.kltn.bookstore_be.catalog.domain.ProductRepository;
 import com.kltn.bookstore_be.catalog.domain.StockMovementRepository;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

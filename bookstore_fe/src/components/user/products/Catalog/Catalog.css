@@ -497,28 +497,52 @@
 .catalog-tree-container {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    transition: all 0.3s ease;
+    gap: 3px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
-.catalog-tree-container.collapsed {
-    max-height: 260px;
-    overflow: hidden;
+.catalog-tree-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.catalog-tree-container::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.catalog-tree-node-wrapper {
+    display: flex;
+    flex-direction: column;
 }
 
 .catalog-tree-item-row {
-    font-size: 0.85rem;
+    font-size: 0.84rem;
     color: #4b5563;
-    padding: 4px 6px;
-    border-radius: 4px;
+    padding: 6px 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
     line-height: 1.3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.catalog-tree-item-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .catalog-tree-item-row.root-item {
     font-weight: 700;
     color: #1f2937;
+    background-color: #f8fafc;
+    border: 1px solid #f1f5f9;
 }
 
 .catalog-tree-item-row:hover {
@@ -530,15 +554,17 @@
     color: #0a422d;
     font-weight: 800;
     background-color: #ecfdf5;
+    border-left: 3px solid #0a422d;
 }
 
 .catalog-tree-item-row.depth-0 {
     font-weight: 700;
-    color: #111827;
+    color: #1f2937;
 }
 
 .catalog-tree-item-row.depth-1 {
-    font-weight: 600;
+    font-weight: 500;
+    color: #475569;
 }
 
 .catalog-tree-item-row.depth-2 {
@@ -546,22 +572,29 @@
     color: #64748b;
 }
 
-.catalog-btn-expand-more {
+.catalog-tree-chevron-btn {
     background: none;
     border: none;
-    color: #0a422d;
-    font-weight: 700;
-    font-size: 0.8rem;
+    color: #64748b;
+    padding: 2px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
     cursor: pointer;
-    padding: 6px 0 0 0;
+    transition: all 0.15s ease;
 }
 
-.catalog-btn-expand-more:hover {
-    text-decoration: underline;
+.catalog-tree-chevron-btn:hover {
+    background-color: #e2e8f0;
+    color: #0a422d;
+}
+
+.catalog-tree-children-box {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 2px;
 }
 
 /* Checkbox & Radio Filter Items */

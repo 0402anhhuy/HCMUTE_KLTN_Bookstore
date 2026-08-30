@@ -10,6 +10,8 @@ const Login = () => {
         setEmail,
         password,
         setPassword,
+        rememberMe,
+        setRememberMe,
         otpCode,
         setOtpCode,
         newPassword,
@@ -100,7 +102,16 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <div className="login-forgot-link-row">
+                        <div className="login-remember-forgot-row">
+                            <label className="login-remember-me-label">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    className="login-remember-me-checkbox"
+                                />
+                                <span>Ghi nhớ đăng nhập</span>
+                            </label>
                             <button
                                 type="button"
                                 onClick={() => switchView("forgot")}

@@ -8,6 +8,15 @@ import {
     ChevronDown,
     ChevronUp,
     Heart,
+    X,
+    ZoomIn,
+    ZoomOut,
+    ChevronLeft,
+    ChevronRight,
+    Maximize2,
+    Eye,
+    User,
+    Building2,
 } from "lucide-react";
 import { Breadcrumb, RecommendationSection } from "@/components/common";
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
@@ -35,6 +44,24 @@ const ProductDetail = () => {
         timeLeft,
         isDescExpanded,
         setIsDescExpanded,
+        isLightboxOpen,
+        lightboxIdx,
+        setLightboxIdx,
+        zoomLevel,
+        panPosition,
+        isDragging,
+        handleMouseDown,
+        handleMouseMove,
+        handleMouseUp,
+        handleTouchStart,
+        handleTouchMove,
+        handleTouchEnd,
+        handleImageClick,
+        openLightbox,
+        closeLightbox,
+        nextLightboxImage,
+        prevLightboxImage,
+        toggleZoom,
         handleAddToCart,
         handleToggleFavorite,
         handleBuyNow,
@@ -63,6 +90,15 @@ const ProductDetail = () => {
         ...buildCategoryBreadcrumbs(product.category, product.name),
     ];
 
+    // Xử lý hiển thị tối đa 4 hình thumb (nếu > 4 thì hình thứ 4 có mờ +N)
+    const maxVisibleThumbs = 4;
+    const totalImagesCount = productImages.length;
+    const hasMoreThumbs = totalImagesCount > maxVisibleThumbs;
+    const visibleThumbs = hasMoreThumbs
+        ? productImages.slice(0, 4)
+        : productImages;
+    const remainingCount = totalImagesCount - 3; // Ví dụ 5 hình thì +2, 6 hình thì +3
+
     return (
         <div className="page-container animate-fade-in product-detail-container">
             {/* Breadcrumb đồng bộ */}
@@ -72,9 +108,13 @@ const ProductDetail = () => {
 
             {/* Top Layout */}
             <div className="product-detail-main-layout">
-                {/* CỘT TRÁI */}
+                {/* CỘT TRÁI - KHUNG HÌNH VÀ THUMBNAILS */}
                 <div className="product-detail-left-card">
-                    <div className="product-detail-main-cover-box">
+                    <div
+                        className="product-detail-main-cover-box"
+                        onClick={() => openLightbox(activeImageIdx)}
+                        title="Nhấp để phóng to / Đọc thử nội dung sách"
+                    >
                         <img
                             src={
                                 productImages[activeImageIdx]?.url ||
@@ -83,45 +123,52 @@ const ProductDetail = () => {
                             alt={product.name}
                             className="product-detail-main-cover-img"
                         />
+                        <div className="product-detail-cover-hover-hint">
+                            <Maximize2 size={18} /> Phóng to đọc thử
+                        </div>
                     </div>
 
+                    {/* Thanh Thumbnails hiển thị 4 hình + badge +N */}
                     <div className="product-detail-thumbs-strip">
-                        {productImages.map((imgObj, idx) => (
-                            <div
-                                key={idx}
-                                onClick={() => setActiveImageIdx(idx)}
-                                className={`product-detail-thumb-box ${activeImageIdx === idx ? "active" : ""}`}
-                            >
-                                <img
-                                    src={imgObj.url}
-                                    alt="thumb"
-                                    className="product-detail-thumb-img"
-                                />
-                            </div>
-                        ))}
-                    </div>
+                        {visibleThumbs.map((imgObj, idx) => {
+                            const isFourthItemWithMore =
+                                hasMoreThumbs && idx === 3;
 
-                    <div className="product-detail-cta-group">
-                        <button
-                            type="button"
-                            onClick={handleAddToCart}
-                            disabled={product.stockQuantity === 0}
-                            className="product-detail-btn-outline-cart"
-                        >
-                            <ShoppingCart size={18} /> Thêm vào giỏ hàng
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleBuyNow}
-                            disabled={product.stockQuantity === 0}
-                            className="product-detail-btn-solid-buy"
-                        >
-                            Mua ngay
-                        </button>
+                            return (
+                                <div
+                                    key={idx}
+                                    onClick={() => {
+                                        if (isFourthItemWithMore) {
+                                            openLightbox(3);
+                                        } else {
+                                            setActiveImageIdx(idx);
+                                        }
+                                    }}
+                                    className={`product-detail-thumb-box ${
+                                        activeImageIdx === idx ? "active" : ""
+                                    } ${
+                                        isFourthItemWithMore
+                                            ? "thumb-has-more"
+                                            : ""
+                                    }`}
+                                >
+                                    <img
+                                        src={imgObj.url}
+                                        alt={`thumb-${idx}`}
+                                        className="product-detail-thumb-img"
+                                    />
+                                    {isFourthItemWithMore && (
+                                        <div className="product-detail-thumb-overlay-more">
+                                            <span>+{remainingCount}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* CỘT PHẢI */}
+                {/* CỘT PHẢI - THÔNG TIN VÀ NÚT MUA HÀNG */}
                 <div className="product-detail-right-col">
                     <div className="product-detail-card-box">
                         <div className="product-detail-header-block">
@@ -132,7 +179,9 @@ const ProductDetail = () => {
                                 <button
                                     type="button"
                                     onClick={handleToggleFavorite}
-                                    className={`product-detail-btn-fav-round ${isFavorite ? "active" : ""}`}
+                                    className={`product-detail-btn-fav-round ${
+                                        isFavorite ? "active" : ""
+                                    }`}
                                     title={
                                         isFavorite ? "Bỏ thích" : "Yêu thích"
                                     }
@@ -148,16 +197,16 @@ const ProductDetail = () => {
                             </div>
 
                             <div className="product-detail-meta-line">
-                                <span>
-                                    Nhà cung cấp:{" "}
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                    <Building2 size={15} color="#0a422d" /> Nhà cung cấp:{" "}
                                     <strong>
                                         {product.supplierName ||
                                             product.publisher ||
                                             "Chưa cập nhật"}
                                     </strong>
                                 </span>
-                                <span>
-                                    Tác giả:{" "}
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                    <User size={15} color="#0a422d" /> Tác giả:{" "}
                                     <strong>
                                         {product.author || "Chưa rõ tác giả"}
                                     </strong>
@@ -267,6 +316,26 @@ const ProductDetail = () => {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Nhóm nút "Thêm vào giỏ hàng" và "Mua ngay" đặt phía dưới Số lượng */}
+                        <div className="product-detail-cta-group">
+                            <button
+                                type="button"
+                                onClick={handleAddToCart}
+                                disabled={product.stockQuantity === 0}
+                                className="product-detail-btn-outline-cart"
+                            >
+                                <ShoppingCart size={18} /> Thêm vào giỏ hàng
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBuyNow}
+                                disabled={product.stockQuantity === 0}
+                                className="product-detail-btn-solid-buy"
+                            >
+                                Mua ngay
+                            </button>
+                        </div>
                     </div>
 
                     {/* Thông tin vận chuyển */}
@@ -357,30 +426,10 @@ const ProductDetail = () => {
                     <h4 className="product-detail-desc-book-name">
                         {product.name}
                     </h4>
-                    <div
-                        className={`product-detail-desc-text ${!isDescExpanded ? "clamped" : ""}`}
-                    >
+                    <div className="product-detail-desc-text">
                         {product.description ||
                             "Chưa có mô tả cho tác phẩm này."}
                     </div>
-
-                    {product.description &&
-                        product.description.length > 200 && (
-                            <button
-                                type="button"
-                                className="product-detail-desc-toggle-btn"
-                                onClick={() =>
-                                    setIsDescExpanded(!isDescExpanded)
-                                }
-                            >
-                                {isDescExpanded ? "Thu gọn" : "Xem thêm"}{" "}
-                                {isDescExpanded ? (
-                                    <ChevronUp size={16} />
-                                ) : (
-                                    <ChevronDown size={16} />
-                                )}
-                            </button>
-                        )}
                 </div>
             </div>
 
@@ -399,7 +448,7 @@ const ProductDetail = () => {
                             {[1, 2, 3, 4, 5].map((i) => (
                                 <Star
                                     key={i}
-                                    size={15}
+                                    size={16}
                                     fill={
                                         averageRating >= i ? "#ecc94b" : "none"
                                     }
@@ -410,23 +459,25 @@ const ProductDetail = () => {
                             ))}
                         </div>
                         <span className="score-count">
-                            ({reviews.length} đánh giá)
+                            {reviews.length} đánh giá
                         </span>
                     </div>
 
                     <div className="product-detail-reviews-empty">
-                        {reviews.length === 0
-                            ? "Chưa có đánh giá nào cho sản phẩm này."
-                            : `${reviews.length} đánh giá từ khách hàng`}
+                        {reviews.length === 0 ? (
+                            "Chưa có đánh giá nào cho sản phẩm này."
+                        ) : (
+                            <span>Đã có {reviews.length} nhận xét từ độc giả.</span>
+                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Sản phẩm liên quan */}
+            {/* Sản phẩm tương tự */}
             {similarProducts.length > 0 && (
                 <div className="product-detail-section-card">
                     <h3 className="product-detail-section-heading">
-                        Sản phẩm liên quan
+                        Sản phẩm tương tự
                     </h3>
                     <div className="product-detail-similar-grid">
                         {similarProducts.map((simProd) => {
@@ -460,6 +511,136 @@ const ProductDetail = () => {
             )}
 
             <RecommendationSection title="GỢI Ý CHO BẠN" limit={10} />
+
+            {/* LIGHTBOX PREVIEW FULLSCREEN MODAL */}
+            {isLightboxOpen && (
+                <div
+                    className="product-detail-lightbox-overlay"
+                    onClick={closeLightbox}
+                >
+                    <div
+                        className="product-detail-lightbox-card"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Lightbox Header */}
+                        <div className="product-detail-lightbox-header">
+                            <div className="lightbox-title-box">
+                                <span className="lightbox-book-title">
+                                    {product.name}
+                                </span>
+                                <span className="lightbox-page-badge">
+                                    Trang {lightboxIdx + 1} / {totalImagesCount}
+                                </span>
+                            </div>
+                            <div className="lightbox-actions-group">
+                                <button
+                                    type="button"
+                                    onClick={toggleZoom}
+                                    className="lightbox-action-btn"
+                                    title={
+                                        zoomLevel > 1
+                                            ? "Thu nhỏ"
+                                            : "Phóng to đọc nội dung"
+                                    }
+                                >
+                                    {zoomLevel > 1 ? (
+                                        <ZoomOut size={20} />
+                                    ) : (
+                                        <ZoomIn size={20} />
+                                    )}
+                                    <span>
+                                        {zoomLevel > 1 ? "Thu nhỏ" : "Phóng to"}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeLightbox}
+                                    className="lightbox-close-btn"
+                                    title="Đóng preview"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Lightbox Main Stage */}
+                        <div className="product-detail-lightbox-stage">
+                            {totalImagesCount > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={prevLightboxImage}
+                                    className="lightbox-arrow-btn prev"
+                                    title="Trang trước"
+                                >
+                                    <ChevronLeft size={36} />
+                                </button>
+                            )}
+
+                            <div
+                                className={`lightbox-image-wrapper ${
+                                    zoomLevel > 1 ? "can-drag" : ""
+                                } ${isDragging ? "dragging" : ""}`}
+                                onClick={handleImageClick}
+                                onMouseDown={handleMouseDown}
+                                onMouseMove={handleMouseMove}
+                                onMouseUp={handleMouseUp}
+                                onMouseLeave={handleMouseUp}
+                                onTouchStart={handleTouchStart}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={handleTouchEnd}
+                            >
+                                <img
+                                    src={productImages[lightboxIdx]?.url}
+                                    alt={`Trang ${lightboxIdx + 1}`}
+                                    className={`lightbox-main-img ${
+                                        zoomLevel > 1 ? "zoomed" : ""
+                                    }`}
+                                    style={{
+                                        transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomLevel})`,
+                                        transition: isDragging ? "none" : "transform 0.2s ease-out",
+                                        cursor: zoomLevel > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+                                    }}
+                                    draggable={false}
+                                />
+                            </div>
+
+                            {totalImagesCount > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={nextLightboxImage}
+                                    className="lightbox-arrow-btn next"
+                                    title="Trang tiếp theo"
+                                >
+                                    <ChevronRight size={36} />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Lightbox Bottom Thumbnails Carousel */}
+                        {totalImagesCount > 1 && (
+                            <div className="product-detail-lightbox-thumbs-bar">
+                                {productImages.map((imgObj, idx) => (
+                                    <div
+                                        key={idx}
+                                        onClick={() => {
+                                            setLightboxIdx(idx);
+                                            setZoomLevel(1);
+                                        }}
+                                        className={`lightbox-mini-thumb ${
+                                            lightboxIdx === idx ? "active" : ""
+                                        }`}
+                                    >
+                                        <img
+                                            src={imgObj.url}
+                                            alt={`thumb-${idx}`}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

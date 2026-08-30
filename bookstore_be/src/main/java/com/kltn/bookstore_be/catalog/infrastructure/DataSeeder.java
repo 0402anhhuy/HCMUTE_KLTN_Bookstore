@@ -53,7 +53,7 @@ public class DataSeeder implements CommandLineRunner {
         System.out.println("===> Running DataSeeder checks...");
 
         seedUsers();
-        //seedCatalog();
+        seedCatalog();
         seedCoupons();
 
         System.out.println("===> DataSeeder checks completed successfully!");

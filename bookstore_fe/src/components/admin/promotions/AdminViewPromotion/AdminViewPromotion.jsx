@@ -113,6 +113,38 @@ const AdminViewPromotion = ({ promotionId, onClose, showToast }) => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Applicable Products Section */}
+                            <div style={{ marginTop: "24px", textAlign: "left" }}>
+                                <h4 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0f172a", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                                    <Package size={18} color="#7c3aed" /> Danh sách sản phẩm áp dụng ({report.promotion.applicableProducts?.length || 0})
+                                </h4>
+                                {report.promotion.applicableProducts && report.promotion.applicableProducts.length > 0 ? (
+                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "10px", maxHeight: "200px", overflowY: "auto", padding: "4px" }}>
+                                        {report.promotion.applicableProducts.map((p) => (
+                                            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#f8fafc" }}>
+                                                {p.imageUrl ? (
+                                                    <img src={p.imageUrl} alt={p.name} style={{ width: "36px", height: "44px", objectFit: "cover", borderRadius: "4px" }} />
+                                                ) : (
+                                                    <Package size={20} color="#94a3b8" />
+                                                )}
+                                                <div style={{ overflow: "hidden" }}>
+                                                    <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={p.name}>
+                                                        {p.name}
+                                                    </div>
+                                                    <div style={{ fontSize: "0.8rem", color: "#ef4444", fontWeight: 700 }}>
+                                                        {p.price?.toLocaleString("vi-VN")}đ
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div style={{ fontSize: "0.85rem", color: "#94a3b8", fontStyle: "italic", textAlign: "center", padding: "12px" }}>
+                                        Chưa có sản phẩm nào được chọn trong chương trình này.
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : null}
                 </div>

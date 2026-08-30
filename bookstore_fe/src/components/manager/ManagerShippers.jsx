@@ -24,7 +24,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
   const [shipperForm, setShipperForm] = useState({
     fullName: '',
     phone: '',
-    vehicle: '',
+    vehicle: 'Xe máy',
     status: 'ACTIVE'
   });
 
@@ -32,7 +32,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
     setShipperForm({
       fullName: '',
       phone: '',
-      vehicle: '',
+      vehicle: 'Xe máy',
       status: 'ACTIVE'
     });
     setShowShipperModal(true);
@@ -56,7 +56,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
     setShipperForm({
       fullName: shipper.fullName,
       phone: shipper.phone,
-      vehicle: shipper.vehicle || '',
+      vehicle: shipper.vehicle || 'Xe máy',
       status: shipper.status || 'ACTIVE'
     });
     setShowEditShipperModal(true);
@@ -380,13 +380,17 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                   Phương tiện di chuyển
                 </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Honda Wave, Xe máy, Xe tải..."
+                <select
                   value={shipperForm.vehicle}
                   onChange={(e) => setShipperForm({ ...shipperForm, vehicle: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
-                />
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
+                >
+                  <option value="Xe máy">Xe máy</option>
+                  <option value="Xe tải">Xe tải</option>
+                  <option value="Xe đạp / Xe điện">Xe đạp / Xe điện</option>
+                  <option value="Ô tô">Ô tô</option>
+                  <option value="Khác">Khác</option>
+                </select>
               </div>
 
               <div>
@@ -498,13 +502,17 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                   Phương tiện di chuyển
                 </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Honda Wave, Xe máy, Xe tải..."
+                <select
                   value={shipperForm.vehicle}
                   onChange={(e) => setShipperForm({ ...shipperForm, vehicle: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
-                />
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
+                >
+                  <option value="Xe máy">Xe máy</option>
+                  <option value="Xe tải">Xe tải</option>
+                  <option value="Xe đạp / Xe điện">Xe đạp / Xe điện</option>
+                  <option value="Ô tô">Ô tô</option>
+                  <option value="Khác">Khác</option>
+                </select>
               </div>
 
               <div>

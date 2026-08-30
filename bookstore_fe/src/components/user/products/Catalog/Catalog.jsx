@@ -1,5 +1,5 @@
-import { Search, X, ChevronDown, ChevronUp } from "lucide-react";
-import { useMemo } from "react";
+import { Search, X, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
 import { useCatalog } from "./useCatalog";
 import BookCard from "./BookCard";
 import { RecommendationSection, Breadcrumb } from "@/components/common";
@@ -37,13 +37,50 @@ const Catalog = () => {
         selectedLanguages,
         toggleLanguage,
         handlePriceRangeSelect,
+        selectedCategoryName,
         removeCategoryFilter,
         removePriceFilter,
         removeKeywordFilter,
     } = useCatalog();
 
+    // State quản lý mở rộng Accordion từng nhánh danh mục
+    const [expandedNodeIds, setExpandedNodeIds] = useState({});
+
+    // Tự động mở rộng các danh mục cha khi chọn 1 danh mục con
+    useEffect(() => {
+        if (!selectedCategory || !categories.length) return;
+        const findAncestors = (nodes, targetId, path = []) => {
+            for (const n of nodes) {
+                if (String(n.id) === String(targetId)) return path;
+                if (n.children && n.children.length) {
+                    const res = findAncestors(n.children, targetId, [...path, String(n.id)]);
+                    if (res) return res;
+                }
+            }
+            return null;
+        };
+        const ancestorIds = findAncestors(categoryTree, selectedCategory);
+        if (ancestorIds && ancestorIds.length) {
+            setExpandedNodeIds((prev) => {
+                const updated = { ...prev };
+                ancestorIds.forEach((id) => {
+                    updated[id] = true;
+                });
+                return updated;
+            });
+        }
+    }, [selectedCategory, categoryTree, categories]);
+
+    const toggleNodeExpand = (nodeId, e) => {
+        e.stopPropagation();
+        setExpandedNodeIds((prev) => ({
+            ...prev,
+            [nodeId]: !prev[nodeId],
+        }));
+    };
+
     // Lấy tên category đang chọn để hiển thị chip
-    const selectedCategoryName = useMemo(() => {
+    const selectedCategoryNameDisplay = useMemo(() => {
         if (!selectedCategory) return null;
         return (
             categories.find((c) => String(c.id) === String(selectedCategory))
@@ -95,6 +132,7 @@ const Catalog = () => {
             const isSelected = String(selectedCategory) === String(node.id);
             const hasChildren =
                 Array.isArray(node.children) && node.children.length > 0;
+            const isExpanded = Boolean(expandedNodeIds[String(node.id)]);
 
             return (
                 <div key={node.id} className="catalog-tree-node-wrapper">
@@ -103,15 +141,30 @@ const Catalog = () => {
                             setSelectedCategory(String(node.id));
                             setPage(0);
                         }}
-                        style={{ paddingLeft: `${depth * 14 + 4}px` }}
+                        style={{ paddingLeft: `${depth * 10 + 6}px` }}
                         className={`catalog-tree-item-row ${isSelected ? "selected" : ""} depth-${depth}`}
                     >
                         <span className="catalog-tree-item-name">
                             {node.name}
                         </span>
+
+                        {hasChildren && (
+                            <button
+                                type="button"
+                                className="catalog-tree-chevron-btn"
+                                onClick={(e) => toggleNodeExpand(String(node.id), e)}
+                                title={isExpanded ? "Thu gọn" : "Mở rộng"}
+                            >
+                                {isExpanded ? (
+                                    <ChevronDown size={14} />
+                                ) : (
+                                    <ChevronRight size={14} />
+                                )}
+                            </button>
+                        )}
                     </div>
 
-                    {hasChildren && (
+                    {hasChildren && isExpanded && (
                         <div className="catalog-tree-children-box">
                             {renderCategoryTree(node.children, depth + 1)}
                         </div>
@@ -257,26 +310,9 @@ const Catalog = () => {
                                 Tất Cả Nhóm Sản Phẩm
                             </div>
 
-                            <div
-                                className={`catalog-tree-container ${!showMoreCategory ? "collapsed" : ""}`}
-                            >
+                            <div className="catalog-tree-container">
                                 {renderCategoryTree(categoryTree)}
                             </div>
-
-                            <button
-                                type="button"
-                                className="catalog-btn-expand-more"
-                                onClick={() =>
-                                    setShowMoreCategory(!showMoreCategory)
-                                }
-                            >
-                                {showMoreCategory ? "Thu Gọn" : "Xem Thêm"}{" "}
-                                {showMoreCategory ? (
-                                    <ChevronUp size={14} />
-                                ) : (
-                                    <ChevronDown size={14} />
-                                )}
-                            </button>
                         </div>
 
                         {/* 2. GIÁ */}

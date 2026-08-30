@@ -13,6 +13,7 @@ import {
     X,
     ChevronRight,
     ChevronDown,
+    ShoppingCart,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/common";
 import { useCart } from "./useCart";
@@ -50,22 +51,12 @@ const Cart = () => {
         return (
             <div className="page-container animate-fade-in cart-empty-container">
                 <div className="cart-empty-card">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="64"
-                        height="64"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#6b7280"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                    <ShoppingCart
+                        size={64}
+                        strokeWidth={1.5}
+                        color="#9ca3af"
                         className="cart-empty-icon"
-                    >
-                        <circle cx="8" cy="21" r="1" />
-                        <circle cx="19" cy="21" r="1" />
-                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-                    </svg>
+                    />
                     <h2 className="cart-empty-title">Giỏ hàng trống</h2>
                     <p className="cart-empty-desc">
                         Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá

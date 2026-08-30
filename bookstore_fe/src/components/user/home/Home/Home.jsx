@@ -7,6 +7,8 @@ import {
     TrendingUp,
     Flame,
     Award,
+    User,
+    Building2,
 } from "lucide-react";
 import { formatCategoryLabel } from "@/utils/categoryTree";
 import heroBooks from "@/assets/hero_books.png";
@@ -40,6 +42,7 @@ const Home = () => {
         activeTrendTab,
         setActiveTrendTab,
         timeLeft,
+        flashSaleProducts,
         categories,
         bestsellerList,
         activeBestseller,
@@ -72,9 +75,8 @@ const Home = () => {
                             }
                         }}
                         disabled={!isLeaf}
-                        className={`home-category-node-btn ${isSelected ? "selected" : ""} ${
-                            !isLeaf ? "disabled-node" : ""
-                        }`}
+                        className={`home-category-node-btn ${isSelected ? "selected" : ""} ${!isLeaf ? "disabled-node" : ""
+                            }`}
                     >
                         {formatCategoryLabel(node, depth)}
                     </button>
@@ -144,11 +146,10 @@ const Home = () => {
                                         setSelectedCategory("");
                                         setPage(0);
                                     }}
-                                    className={`home-category-node-btn ${
-                                        selectedCategory === ""
+                                    className={`home-category-node-btn ${selectedCategory === ""
                                             ? "selected"
                                             : ""
-                                    }`}
+                                        }`}
                                 >
                                     Tất cả danh mục
                                 </button>
@@ -305,53 +306,55 @@ const Home = () => {
                     </div>
 
                     {/* B. FLASH SALE COUNTDOWN SECTION */}
-                    <div className="home-fahasa-section flash-sale-box">
-                        <div className="home-fahasa-section-header">
-                            <div className="flash-sale-title-group">
-                                <span className="flash-sale-badge">
-                                    <Zap size={18} fill="#ffffff" /> FLASH SALE
-                                </span>
-                                <div className="flash-sale-timer">
-                                    <span className="timer-label">
-                                        Kết thúc trong
+                    {flashSaleProducts && flashSaleProducts.length > 0 && (
+                        <div className="home-fahasa-section flash-sale-box">
+                            <div className="home-fahasa-section-header">
+                                <div className="flash-sale-title-group">
+                                    <span className="flash-sale-badge">
+                                        <Zap size={18} fill="#ffffff" /> FLASH SALE
                                     </span>
-                                    <span className="timer-digit">
-                                        {timeLeft.hours}
-                                    </span>{" "}
-                                    :
-                                    <span className="timer-digit">
-                                        {timeLeft.minutes}
-                                    </span>{" "}
-                                    :
-                                    <span className="timer-digit">
-                                        {timeLeft.seconds}
-                                    </span>
+                                    <div className="flash-sale-timer">
+                                        <span className="timer-label">
+                                            Kết thúc trong
+                                        </span>
+                                        <span className="timer-digit">
+                                            {timeLeft.hours}
+                                        </span>{" "}
+                                        :
+                                        <span className="timer-digit">
+                                            {timeLeft.minutes}
+                                        </span>{" "}
+                                        :
+                                        <span className="timer-digit">
+                                            {timeLeft.seconds}
+                                        </span>
+                                    </div>
                                 </div>
+                                <span
+                                    className="home-fahasa-see-all"
+                                    onClick={() => fetchProducts()}
+                                >
+                                    Xem tất cả &gt;
+                                </span>
                             </div>
-                            <span
-                                className="home-fahasa-see-all"
-                                onClick={() => fetchProducts()}
-                            >
-                                Xem tất cả &gt;
-                            </span>
-                        </div>
 
-                        <div className="home-fahasa-products-carousel">
-                            {products.slice(0, 5).map((product) => (
-                                <BookCard
-                                    key={product.id}
-                                    product={product}
-                                    openProductDetail={openProductDetail}
-                                    addToCart={addToCart}
-                                    formatPrice={formatPrice}
-                                    getProductImage={getProductImage}
-                                    showBadge={`-${getDiscountPercent(product)}%`}
-                                    originalPrice={getOriginalPrice(product)}
-                                    isFlashSale={true}
-                                />
-                            ))}
+                            <div className="home-fahasa-products-carousel">
+                                {flashSaleProducts.map((product) => (
+                                    <BookCard
+                                        key={product.id}
+                                        product={product}
+                                        openProductDetail={openProductDetail}
+                                        addToCart={addToCart}
+                                        formatPrice={formatPrice}
+                                        getProductImage={getProductImage}
+                                        showBadge={`-${getDiscountPercent(product)}%`}
+                                        originalPrice={getOriginalPrice(product)}
+                                        isFlashSale={true}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* C. DANH MỤC NỔI BẬT (ICON/CARD TIÊU BIỂU) */}
                     <div className="home-fahasa-section">
@@ -577,15 +580,15 @@ const Home = () => {
                                                 </span>
 
                                                 <div className="bestseller-detail-attributes">
-                                                    <span>
-                                                        👤 Tác giả:{" "}
+                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                                        <User size={15} color="#0a422d" /> Tác giả:{" "}
                                                         <strong>
                                                             {activeBestseller.author ||
                                                                 "Đang cập nhật"}
                                                         </strong>
                                                     </span>
-                                                    <span>
-                                                        🏢 NXB:{" "}
+                                                    <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                                                        <Building2 size={15} color="#0a422d" /> NXB:{" "}
                                                         <strong>
                                                             {activeBestseller.publisher ||
                                                                 "Phụ Nữ Việt Nam"}
@@ -779,19 +782,26 @@ const BookCard = ({
             </div>
 
             {/* Thanh tiến độ Flash Sale */}
-            {isFlashSale && (
-                <div className="book-card-progress-box">
-                    <div
-                        className="book-card-progress-bar"
-                        style={{
-                            width: `${Math.min(100, ((product.id * 17) % 100) + 20)}%`,
-                        }}
-                    />
-                    <span className="book-card-progress-text">
-                        ĐÃ BÁN {((product.id * 13) % 40) + 5}
-                    </span>
-                </div>
-            )}
+            {isFlashSale && (() => {
+                const sold = product.promoUsedCount ?? product.soldCount ?? 0;
+                const stock = product.stockQuantity ?? 0;
+                const total = sold + stock;
+                const progressPercent = total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0;
+
+                return (
+                    <div className="book-card-progress-box">
+                        <div
+                            className="book-card-progress-bar"
+                            style={{
+                                width: `${progressPercent}%`,
+                            }}
+                        />
+                        <span className="book-card-progress-text">
+                            {sold > 0 ? `ĐÃ BÁN ${sold}` : "VỪA MỞ BÁN"}
+                        </span>
+                    </div>
+                );
+            })()}
 
             <div className="book-card-footer-row">
                 <div className="book-card-stars-wrapper">

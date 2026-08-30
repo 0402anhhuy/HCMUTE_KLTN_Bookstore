@@ -7,7 +7,9 @@ import {
   flattenCategoryTree,
   formatCategoryLabel,
   getCategoryPath,
+  isCategoryOrChildOf,
 } from '../../utils/categoryTree';
+import CategorySelector from '../common/CategorySelector/CategorySelector';
 
 const ManagerProducts = ({ products, categories, loadData }) => {
   const { showToast } = useApp();
@@ -218,10 +220,10 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
   // Filtered and Paginated Products
   const filteredProducts = products.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) || 
-                          (p.author && p.author.toLowerCase().includes(productSearch.toLowerCase()));
-    const matchesCategory = categoryFilter === '' || (p.category && String(p.category.id) === String(categoryFilter));
-    
+    const matchesSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      (p.author && p.author.toLowerCase().includes(productSearch.toLowerCase()));
+    const matchesCategory = categoryFilter === '' || isCategoryOrChildOf(p.category, categoryFilter, categories);
+
     let matchesStatus = true;
     if (productStatusFilter === 'ACTIVE') matchesStatus = p.status === 'ACTIVE' && p.stockQuantity > 0;
     else if (productStatusFilter === 'INACTIVE') matchesStatus = p.status === 'INACTIVE';
@@ -238,7 +240,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
+
       {/* Header and Add New button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -263,7 +265,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
           }}>
             Xuất Excel
           </button>
-          <button 
+          <button
             onClick={handleOpenAddModal}
             style={{
               display: 'flex',
@@ -312,24 +314,12 @@ const ManagerProducts = ({ products, categories, loadData }) => {
           />
         </div>
 
-        <select
+        <CategorySelector
+          categories={categories}
           value={categoryFilter}
-          onChange={(e) => { setCategoryFilter(e.target.value); setProductPage(1); }}
-          style={{
-            padding: '10px 16px',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0',
-            outline: 'none',
-            fontSize: '0.9rem',
-            backgroundColor: '#ffffff',
-            minWidth: '160px'
-          }}
-        >
-          <option value="">Tất cả danh mục</option>
-                  {categoryOptions.map(c => (
-                    <option key={c.id} value={c.id} disabled={c.hasChildren}>{formatCategoryLabel(c, c.depth)}</option>
-          ))}
-        </select>
+          onChange={(val) => { setCategoryFilter(val); setProductPage(1); }}
+          placeholder="Tất cả danh mục"
+        />
 
         <select
           value={productStatusFilter}
@@ -377,8 +367,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                 <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.2s' }}>
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img 
-                        src={getImagesList(p.imageUrls || p.imageUrl)[0] || 'https://via.placeholder.com/40x60?text=Book'} 
+                      <img
+                        src={getImagesList(p.imageUrls || p.imageUrl)[0] || 'https://via.placeholder.com/40x60?text=Book'}
                         alt={p.name}
                         style={{ width: '40px', height: '56px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #f1f5f9' }}
                       />
@@ -409,8 +399,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   </td>
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ 
-                        fontWeight: 700, 
+                      <span style={{
+                        fontWeight: 700,
                         color: isOutOfStock ? '#ef4444' : '#0f172a',
                         fontSize: '0.925rem'
                       }}>
@@ -433,7 +423,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   <td style={{ padding: '16px 24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
                       {/* Edit */}
-                      <button 
+                      <button
                         onClick={() => handleOpenEditModal(p)}
                         style={{
                           padding: '6px',
@@ -451,7 +441,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                       </button>
 
                       {/* Delete */}
-                      <button 
+                      <button
                         onClick={() => setShowDeleteConfirm(p.id)}
                         style={{
                           padding: '6px',
@@ -573,7 +563,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
             </h2>
 
             <form onSubmit={handleCreateProduct} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-              
+
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                   Tên sản phẩm *
@@ -814,7 +804,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   {getImagesList(productForm.imageUrl).map((url, index) => (
                     <div key={index} style={{ position: 'relative', width: '80px', height: '110px', borderRadius: '6px', border: '1px solid #e2e8f0', overflow: 'hidden', backgroundColor: '#fafafa' }}>
                       <img src={url} alt={`img-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button 
+                      <button
                         type="button"
                         onClick={() => handleRemoveImage(index)}
                         style={{
@@ -942,7 +932,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
             </h2>
 
             <form onSubmit={handleUpdateProduct} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-              
+
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
                   Tên sản phẩm *
@@ -1185,7 +1175,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                   {getImagesList(productForm.imageUrl).map((url, index) => (
                     <div key={index} style={{ position: 'relative', width: '80px', height: '110px', borderRadius: '6px', border: '1px solid #e2e8f0', overflow: 'hidden', backgroundColor: '#fafafa' }}>
                       <img src={url} alt={`img-${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button 
+                      <button
                         type="button"
                         onClick={() => handleRemoveImage(index)}
                         style={{
@@ -1318,15 +1308,15 @@ const ManagerProducts = ({ products, categories, loadData }) => {
             }}>
               <Trash2 size={28} style={{ color: '#ef4444' }} />
             </div>
-            
+
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>
               Xác nhận xóa sản phẩm
             </h3>
-            
+
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 24px 0', lineHeight: '1.5' }}>
               Bạn có chắc chắn muốn xóa sản phẩm này? Thao tác này không thể hoàn tác và sẽ gỡ bỏ sản phẩm vĩnh viễn khỏi cửa hàng.
             </p>
-            
+
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 onClick={() => setShowDeleteConfirm(null)}

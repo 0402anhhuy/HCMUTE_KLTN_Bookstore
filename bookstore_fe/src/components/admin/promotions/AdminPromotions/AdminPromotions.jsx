@@ -1,4 +1,5 @@
-import { PlusCircle, Package, FileText, Edit2, Trash2, Search } from "lucide-react";
+import React from "react";
+import { PlusCircle, Package, FileText, Edit2, Search, ChevronDown, ChevronUp, ShoppingCart } from "lucide-react";
 import { useAdminPromotions } from "./useAdminPromotions";
 import AdminAddPromotion from "../AdminAddPromotion/AdminAddPromotion";
 import AdminEditPromotion from "../AdminEditPromotion/AdminEditPromotion";
@@ -14,10 +15,10 @@ const AdminPromotions = () => {
         setIsAddModalOpen,
         editingPromotion,
         setEditingPromotion,
-        deletingPromotion,
-        setDeletingPromotion,
         viewingPromotionId,
         setViewingPromotionId,
+        expandedPromoId,
+        toggleExpandRow,
         searchTerm,
         setSearchTerm,
         statusFilter,
@@ -30,7 +31,6 @@ const AdminPromotions = () => {
         getStatusStyle,
         handleSavePromotion,
         handleUpdatePromotion,
-        handleDeletePromotion,
         handleResetFilter,
     } = useAdminPromotions();
 
@@ -70,25 +70,6 @@ const AdminPromotions = () => {
                     <div className="admin-promotions-filter-grid">
                         <div className="admin-promotions-filter-group">
                             <span className="admin-promotions-filter-label">
-                                Loại khuyến mãi:
-                            </span>
-                            <select
-                                value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value)}
-                                className="admin-promotions-filter-select"
-                            >
-                                <option value="ALL">Tất cả các loại</option>
-                                <option value="PERCENT">
-                                    Theo phần trăm (%)
-                                </option>
-                                <option value="FIXED_AMOUNT">
-                                    Theo số tiền (VNĐ)
-                                </option>
-                            </select>
-                        </div>
-
-                        <div className="admin-promotions-filter-group">
-                            <span className="admin-promotions-filter-label">
                                 Trạng thái:
                             </span>
                             <select
@@ -123,13 +104,15 @@ const AdminPromotions = () => {
                             <th className="admin-promotions-th">
                                 Chương trình
                             </th>
-                            <th className="admin-promotions-th">Loại</th>
                             <th className="admin-promotions-th">Thời gian</th>
                             <th className="admin-promotions-th">
                                 Trạng thái
                             </th>
                             <th className="admin-promotions-th">
-                                Sản phẩm áp dụng
+                                Tổng đơn hàng
+                            </th>
+                            <th className="admin-promotions-th">
+                                Doanh thu
                             </th>
                             <th className="admin-promotions-th">Thao tác</th>
                         </tr>
@@ -156,121 +139,169 @@ const AdminPromotions = () => {
                         ) : (
                             filteredPromotions.map((promo, index) => {
                                 const status = getStatusStyle(promo.status);
+                                const isExpanded = expandedPromoId === promo.id;
                                 return (
-                                    <tr
-                                        key={promo.id}
-                                        className={
-                                            index === promotions.length - 1
+                                    <React.Fragment key={promo.id}>
+                                        <tr
+                                            className={`${index === filteredPromotions.length - 1 && !isExpanded
                                                 ? "admin-promotions-row-last"
                                                 : "admin-promotions-row"
-                                        }
-                                    >
-                                        <td className="admin-promotions-td-title">
-                                            {promo.title}
-                                        </td>
-                                        <td className="admin-promotions-td-discount">
-                                            {promo.discountType === "PERCENT"
-                                                ? `Giảm ${promo.discountValue}%`
-                                                : `Giảm ${promo.discountValue.toLocaleString()}đ`}
-                                        </td>
-                                        <td className="admin-promotions-td-time">
-                                            <div className="admin-promotions-time-container">
-                                                <div className="admin-promotions-date-row">
-                                                    <span>
-                                                        {formatDateOnly(
-                                                            promo.startDate
-                                                        )}
-                                                    </span>
-                                                    <span className="admin-promotions-time-separator">
-                                                        -
-                                                    </span>
-                                                    <span>
-                                                        {formatDateOnly(
-                                                            promo.endDate
-                                                        )}
-                                                    </span>
+                                                } ${isExpanded ? "row-expanded-active" : ""}`}
+                                        >
+                                            <td className="admin-promotions-td-title">
+                                                {promo.title}
+                                            </td>
+                                            <td className="admin-promotions-td-time">
+                                                <div className="admin-promotions-time-container">
+                                                    <div className="admin-promotions-date-row">
+                                                        <span>
+                                                            {formatDateOnly(
+                                                                promo.startDate
+                                                            )}
+                                                        </span>
+                                                        <span className="admin-promotions-time-separator">
+                                                            -
+                                                        </span>
+                                                        <span>
+                                                            {formatDateOnly(
+                                                                promo.endDate
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <div className="admin-promotions-subtime-row">
+                                                        <span>
+                                                            (
+                                                            {formatTimeOnly(
+                                                                promo.startDate
+                                                            )}
+                                                            )
+                                                        </span>
+                                                        <span>
+                                                            (
+                                                            {formatTimeOnly(
+                                                                promo.endDate
+                                                            )}
+                                                            )
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="admin-promotions-subtime-row">
-                                                    <span>
-                                                        (
-                                                        {formatTimeOnly(
-                                                            promo.startDate
-                                                        )}
-                                                        )
-                                                    </span>
-                                                    <span>
-                                                        (
-                                                        {formatTimeOnly(
-                                                            promo.endDate
-                                                        )}
-                                                        )
-                                                    </span>
+                                            </td>
+                                            <td className="admin-promotions-td-status">
+                                                <span
+                                                    className={`admin-promotions-status-badge ${status.className}`}
+                                                >
+                                                    {status.text}
+                                                </span>
+                                            </td>
+                                            <td className="admin-promotions-td-orders">
+                                                <span className="admin-promotions-orders-count">
+                                                    {promo.totalUses || 0}
+                                                </span>
+                                            </td>
+                                            <td className="admin-promotions-td-revenue">
+                                                <span className="admin-promotions-revenue-badge">
+                                                    {(promo.totalRevenue || 0).toLocaleString("vi-VN")}đ
+                                                </span>
+                                            </td>
+                                            <td className="admin-promotions-td-actions">
+                                                <div className="admin-promotions-actions-group">
+                                                    <button
+                                                        type="button"
+                                                        className={`admin-promotions-action-btn ${isExpanded ? "active" : ""}`}
+                                                        title={isExpanded ? "Thu gọn chi tiết sản phẩm" : "Xem danh sách sản phẩm áp dụng"}
+                                                        onClick={() => toggleExpandRow(promo.id)}
+                                                    >
+                                                        <FileText
+                                                            size={18}
+                                                            color={isExpanded ? "#7c3aed" : "#64748b"}
+                                                        />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className="admin-promotions-action-btn"
+                                                        title="Chỉnh sửa"
+                                                        onClick={() =>
+                                                            setEditingPromotion(promo)
+                                                        }
+                                                    >
+                                                        <Edit2
+                                                            size={18}
+                                                            color="#3b82f6"
+                                                        />
+                                                    </button>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="admin-promotions-td-status">
-                                            <span
-                                                className={`admin-promotions-status-badge ${status.className}`}
-                                            >
-                                                {status.text}
-                                            </span>
-                                        </td>
-                                        <td className="admin-promotions-td-products">
-                                            <div className="admin-promotions-products-box">
-                                                <Package
-                                                    size={20}
-                                                    color="#64748b"
-                                                />
-                                                {promo.applicableProducts?.length || 0}{" "}
-                                                Sản phẩm
-                                            </div>
-                                        </td>
-                                        <td className="admin-promotions-td-actions">
-                                            <div className="admin-promotions-actions-group">
-                                                <button
-                                                    type="button"
-                                                    className="admin-promotions-action-btn"
-                                                    title="Chi tiết"
-                                                    onClick={() =>
-                                                        setViewingPromotionId(
-                                                            promo.id
-                                                        )
-                                                    }
-                                                >
-                                                    <FileText
-                                                        size={18}
-                                                        color="#64748b"
-                                                    />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="admin-promotions-action-btn"
-                                                    title="Sửa"
-                                                    onClick={() =>
-                                                        setEditingPromotion(promo)
-                                                    }
-                                                >
-                                                    <Edit2
-                                                        size={18}
-                                                        color="#3b82f6"
-                                                    />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="admin-promotions-action-btn"
-                                                    title="Xóa"
-                                                    onClick={() =>
-                                                        setDeletingPromotion(promo)
-                                                    }
-                                                >
-                                                    <Trash2
-                                                        size={18}
-                                                        color="#ef4444"
-                                                    />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
+
+                                        {/* Accordion Expandable Row */}
+                                        {isExpanded && (
+                                            <tr className="admin-promotions-expanded-row">
+                                                <td colSpan="6" className="admin-promotions-expanded-cell">
+                                                    <div className="admin-promotions-expanded-card">
+                                                        <div className="admin-promotions-expanded-header">
+                                                            <div className="admin-promotions-expanded-title-group">
+                                                                <Package size={20} color="#7c3aed" />
+                                                                <span className="admin-promotions-expanded-title">
+                                                                    Danh sách sản phẩm áp dụng ({promo.applicableProducts?.length || 0})
+                                                                </span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                className="admin-promotions-expanded-report-btn"
+                                                                onClick={() => setViewingPromotionId(promo.id)}
+                                                            >
+                                                                <FileText size={15} /> Xem báo cáo hiệu quả
+                                                            </button>
+                                                        </div>
+
+                                                        {promo.applicableProducts && promo.applicableProducts.length > 0 ? (
+                                                            <div className="admin-promotions-expanded-grid">
+                                                                {promo.applicableProducts.map((product) => {
+                                                                    const originalPrice = product.price || 0;
+                                                                    let discountPrice = originalPrice;
+                                                                    if (promo.discountType === "PERCENT") {
+                                                                        discountPrice = originalPrice * (1 - (promo.discountValue || 0) / 100);
+                                                                    } else if (promo.discountType === "FIXED") {
+                                                                        discountPrice = Math.max(0, originalPrice - (promo.discountValue || 0));
+                                                                    }
+                                                                    return (
+                                                                        <div key={product.id} className="admin-promotions-expanded-item">
+                                                                            <div className="admin-promotions-expanded-thumb">
+                                                                                {product.imageUrl ? (
+                                                                                    <img src={product.imageUrl} alt={product.name} />
+                                                                                ) : (
+                                                                                    <Package size={22} color="#94a3b8" />
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="admin-promotions-expanded-info">
+                                                                                <div className="admin-promotions-expanded-name" title={product.name}>
+                                                                                    {product.name}
+                                                                                </div>
+                                                                                <div className="admin-promotions-expanded-prices">
+                                                                                    <span className="admin-promotions-expanded-price-sale">
+                                                                                        {Math.round(discountPrice).toLocaleString("vi-VN")}đ
+                                                                                    </span>
+                                                                                    {promo.discountValue > 0 && (
+                                                                                        <span className="admin-promotions-expanded-price-old">
+                                                                                            {originalPrice.toLocaleString("vi-VN")}đ
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="admin-promotions-expanded-empty">
+                                                                Chưa có sản phẩm nào được áp dụng cho chương trình này.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 );
                             })
                         )}
@@ -295,42 +326,6 @@ const AdminPromotions = () => {
                     onSave={handleUpdatePromotion}
                     showToast={showToast}
                 />
-            )}
-
-            {/* Modal Delete Confirmation */}
-            {deletingPromotion && (
-                <div className="admin-promotions-delete-overlay">
-                    <div className="admin-promotions-delete-card">
-                        <div className="admin-promotions-delete-icon-box">
-                            <Trash2 size={30} color="#ef4444" />
-                        </div>
-                        <h3 className="admin-promotions-delete-title">
-                            Xác nhận xóa
-                        </h3>
-                        <p className="admin-promotions-delete-desc">
-                            Bạn có chắc chắn muốn xóa vĩnh viễn chương trình{" "}
-                            <strong>{deletingPromotion.title}</strong>? Các
-                            sản phẩm trong chương trình này sẽ tự động trở về
-                            giá gốc.
-                        </p>
-                        <div className="admin-promotions-delete-btn-group">
-                            <button
-                                type="button"
-                                onClick={() => setDeletingPromotion(null)}
-                                className="admin-promotions-delete-cancel-btn"
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleDeletePromotion}
-                                className="admin-promotions-delete-confirm-btn"
-                            >
-                                Xóa vĩnh viễn
-                            </button>
-                        </div>
-                    </div>
-                </div>
             )}
 
             {/* Modal View */}

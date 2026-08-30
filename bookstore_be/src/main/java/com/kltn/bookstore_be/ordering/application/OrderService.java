@@ -144,15 +144,19 @@ public class OrderService {
         List<Promotion> promotions = promotionRepository.findActivePromotions(LocalDateTime.now());
         for (Promotion p : promotions) {
             if (totalAmount.compareTo(p.getMinOrderValue()) >= 0) {
-                activePromo = p;
+                BigDecimal currentDisc = BigDecimal.ZERO;
                 if (p.getDiscountType() == Promotion.DiscountType.PERCENT) {
-                    BigDecimal disc = totalAmount.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100));
-                    if (p.getMaxDiscountAmount() != null && disc.compareTo(p.getMaxDiscountAmount()) > 0) {
-                        disc = p.getMaxDiscountAmount();
+                    currentDisc = totalAmount.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100));
+                    if (p.getMaxDiscountAmount() != null && currentDisc.compareTo(p.getMaxDiscountAmount()) > 0) {
+                        currentDisc = p.getMaxDiscountAmount();
                     }
-                    promotionDiscount = promotionDiscount.max(disc);
                 } else {
-                    promotionDiscount = promotionDiscount.max(p.getDiscountValue());
+                    currentDisc = p.getDiscountValue();
+                }
+
+                if (currentDisc.compareTo(promotionDiscount) > 0) {
+                    promotionDiscount = currentDisc;
+                    activePromo = p;
                 }
             }
         }
@@ -262,21 +266,29 @@ public class OrderService {
         // Save order items
         if (singleProduct != null) {
             int requestedQty = request.getQuantity() != null ? request.getQuantity() : 1;
+            BigDecimal origPrice = singleProduct.getPrice();
+            BigDecimal sellingPrice = singleProduct.getPrice();
             OrderItem orderItem = OrderItem.builder()
                     .order(savedOrder)
                     .product(singleProduct)
                     .quantity(requestedQty)
-                    .unitPrice(singleProduct.getPrice())
+                    .originalPrice(origPrice)
+                    .unitPrice(sellingPrice)
                     .subtotal(totalAmount)
                     .build();
             orderItemRepository.save(orderItem);
         } else {
             for (CartItem item : cartItems) {
+                BigDecimal origPrice = item.getProduct().getPrice();
+                BigDecimal sellingPrice = (item.getQuantity() != null && item.getQuantity() > 0 && item.getSubtotal() != null)
+                        ? item.getSubtotal().divide(BigDecimal.valueOf(item.getQuantity()), 2, java.math.RoundingMode.HALF_UP)
+                        : origPrice;
                 OrderItem orderItem = OrderItem.builder()
                         .order(savedOrder)
                         .product(item.getProduct())
                         .quantity(item.getQuantity())
-                        .unitPrice(item.getProduct().getPrice())
+                        .originalPrice(origPrice)
+                        .unitPrice(sellingPrice)
                         .subtotal(item.getSubtotal())
                         .build();
                 orderItemRepository.save(orderItem);

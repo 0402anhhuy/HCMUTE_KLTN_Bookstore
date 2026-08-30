@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -39,6 +40,7 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -72,6 +74,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/upload").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "MANAGER")
                 .anyRequest().authenticated()
             );
 
@@ -93,17 +96,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000", "http://127.0.0.1:3000",
-            "http://localhost:4173", "http://127.0.0.1:4173",
-            "http://localhost:5173", "http://127.0.0.1:5173",
-            "http://localhost:5174", "http://127.0.0.1:5174",
-            "http://localhost:5175", "http://127.0.0.1:5175",
-            "http://localhost:5176", "http://127.0.0.1:5176",
-                "http://localhost:5500", "http://127.0.0.1:5500"
-        ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

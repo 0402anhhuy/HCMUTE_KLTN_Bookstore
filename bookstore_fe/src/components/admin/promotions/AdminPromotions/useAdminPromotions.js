@@ -10,15 +10,38 @@ export const useAdminPromotions = () => {
     const [editingPromotion, setEditingPromotion] = useState(null);
     const [deletingPromotion, setDeletingPromotion] = useState(null);
     const [viewingPromotionId, setViewingPromotionId] = useState(null);
+    const [expandedPromoId, setExpandedPromoId] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [typeFilter, setTypeFilter] = useState("ALL");
+
+    const toggleExpandRow = (id) => {
+        setExpandedPromoId((prev) => (prev === id ? null : id));
+    };
 
     const loadPromotions = async () => {
         setLoading(true);
         try {
             const res = await promotionService.getPromotions();
-            setPromotions(res.data || []);
+            const rawPromotions = res.data || [];
+
+            // Sync totalRevenue from promotion report endpoint for guaranteed accuracy
+            const promotionsWithRevenue = await Promise.all(
+                rawPromotions.map(async (promo) => {
+                    try {
+                        const reportRes = await promotionService.getPromotionReport(promo.id);
+                        return {
+                            ...promo,
+                            totalRevenue: reportRes.data?.totalRevenue ?? promo.totalRevenue ?? 0,
+                            totalUses: reportRes.data?.totalUses ?? promo.totalUses ?? 0,
+                        };
+                    } catch {
+                        return promo;
+                    }
+                })
+            );
+
+            setPromotions(promotionsWithRevenue);
         } catch (error) {
             console.error("Lỗi tải promotion", error);
             showToast("Lỗi tải dữ liệu khuyến mãi", "error");
@@ -69,10 +92,10 @@ export const useAdminPromotions = () => {
 
     const handleSavePromotion = async (payload) => {
         try {
-            const res = await promotionService.createPromotion(payload);
+            await promotionService.createPromotion(payload);
             showToast("Tạo chương trình khuyến mãi thành công", "success");
-            setPromotions((prev) => [res.data.promotion, ...prev]);
             setIsAddModalOpen(false);
+            await loadPromotions();
         } catch (error) {
             console.error("Lỗi tạo promotion", error);
             showToast(
@@ -84,12 +107,10 @@ export const useAdminPromotions = () => {
 
     const handleUpdatePromotion = async (id, payload) => {
         try {
-            const res = await promotionService.updatePromotion(id, payload);
+            await promotionService.updatePromotion(id, payload);
             showToast("Cập nhật chương trình khuyến mãi thành công", "success");
-            setPromotions((prev) =>
-                prev.map((p) => (p.id === id ? res.data.promotion : p))
-            );
             setEditingPromotion(null);
+            await loadPromotions();
         } catch (error) {
             console.error("Lỗi cập nhật promotion", error);
             showToast(
@@ -146,6 +167,9 @@ export const useAdminPromotions = () => {
         setDeletingPromotion,
         viewingPromotionId,
         setViewingPromotionId,
+        expandedPromoId,
+        setExpandedPromoId,
+        toggleExpandRow,
         searchTerm,
         setSearchTerm,
         statusFilter,

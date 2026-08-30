@@ -11,6 +11,7 @@ export const useLogin = () => {
     // Form states
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
     const [otpCode, setOtpCode] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -29,7 +30,7 @@ export const useLogin = () => {
         setError("");
         setMessage("");
         try {
-            const response = await api.post("/auth/login", { email, password });
+            const response = await api.post("/auth/login", { email, password, rememberMe });
             const userData = {
                 email: response.data.email,
                 fullName: response.data.fullName,
@@ -38,7 +39,7 @@ export const useLogin = () => {
                 role: response.data.role,
                 status: response.data.status,
             };
-            loginUser(response.data.token, userData);
+            loginUser(response.data.token, userData, rememberMe);
             if (userData.role === "ADMIN") {
                 navigate("/admin");
             } else if (userData.role === "MANAGER") {
@@ -138,6 +139,8 @@ export const useLogin = () => {
         setEmail,
         password,
         setPassword,
+        rememberMe,
+        setRememberMe,
         otpCode,
         setOtpCode,
         newPassword,
