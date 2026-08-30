@@ -108,7 +108,7 @@ public class UserService {
         auditLogService.log(user, "REGISTER", "Đăng ký tài khoản thành công qua xác thực OTP");
         notificationService.createNotification(
                 user,
-                "Chào mừng bạn đến với UTEShop",
+                "Chào mừng bạn đến với Bookstore",
                 "Tài khoản của bạn đã được kích hoạt thành công. Bắt đầu mua sắm ngay!",
                 Notification.NotificationType.ACCOUNT,
                 "users",

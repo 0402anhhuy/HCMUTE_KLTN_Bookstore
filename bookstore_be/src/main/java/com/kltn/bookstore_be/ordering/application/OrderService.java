@@ -323,8 +323,10 @@ public class OrderService {
             paymentUrl = generateVNPayUrl(savedOrder, httpRequest);
         }
 
-        // Clear user cart if not buy now
-        if (singleProduct == null) {
+        // Clear user cart items (both for cart checkout and buy-now product if present in cart)
+        if (singleProduct != null) {
+            cartService.removeItemFromCart(dbUser.getId(), singleProduct.getId());
+        } else {
             if (request.getCartItemIds() != null && !request.getCartItemIds().isEmpty()) {
                 for (CartItem item : cartItems) {
                     cartService.removeItemFromCart(dbUser.getId(), item.getProduct().getId());
@@ -388,7 +390,7 @@ public class OrderService {
     private String generateVNPayUrl(Order order, HttpServletRequest httpRequest) {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
-        String vnp_OrderInfo = "Thanh toan don hang UTEShop #" + order.getId();
+        String vnp_OrderInfo = "Thanh toan don hang Bookstore #" + order.getId();
         String vnp_OrderType = "other";
         String vnp_TxnRef = String.valueOf(order.getId());
         String vnp_IpAddr = VNPayUtil.getIpAddress(httpRequest);

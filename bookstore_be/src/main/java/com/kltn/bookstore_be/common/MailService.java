@@ -33,14 +33,14 @@ public class MailService {
     private String fromEmail;
 
     public void sendOtpEmail(String toEmail, String otpCode, String type) {
-        String subject = "UTEShop - Xác thực mã OTP của bạn";
+        String subject = "Bookstore - Xác thực mã OTP của bạn";
         String body = "Xin chào,\n\n"
-                + "Bạn đã yêu cầu mã xác thực OTP cho việc " + type + " trên UTEShop.\n"
+                + "Bạn đã yêu cầu mã xác thực OTP cho việc " + type + " trên Bookstore.\n"
                 + "Mã OTP của bạn là: " + otpCode + "\n"
                 + "Mã này có hiệu lực trong vòng 5 phút.\n\n"
                 + "Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.\n\n"
                 + "Trân trọng,\n"
-                + "Đội ngũ UTEShop";
+                + "Đội ngũ Bookstore";
 
         System.out.println("\n==================================================");
         System.out.println("发送邮件 / SENDING EMAIL TO: " + toEmail);
