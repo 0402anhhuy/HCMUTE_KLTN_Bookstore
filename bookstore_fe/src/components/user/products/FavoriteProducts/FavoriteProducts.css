@@ -152,3 +152,43 @@
     align-items: center;
     justify-content: center;
 }
+
+/* Mobile high-density compact styles */
+@media (max-width: 768px) {
+    .favorite-section-container {
+        padding: 10px 8px !important;
+        border-radius: 10px !important;
+    }
+
+    .favorite-section-title {
+        font-size: 0.86rem !important;
+        margin-bottom: 10px !important;
+    }
+
+    .favorite-items-list {
+        max-height: none !important;
+        gap: 8px !important;
+    }
+
+    .favorite-item-card {
+        padding: 6px 8px !important;
+        gap: 8px !important;
+    }
+
+    .favorite-item-img {
+        width: 38px !important;
+        height: 50px !important;
+    }
+
+    .favorite-item-link {
+        font-size: 0.78rem !important;
+    }
+
+    .favorite-item-author {
+        font-size: 0.68rem !important;
+    }
+
+    .favorite-item-price {
+        font-size: 0.78rem !important;
+    }
+}

@@ -276,18 +276,24 @@ const AddressList = ({ user, phone, fullName }) => {
             </div>
 
             {!isAddingAddress && editingIdx === -1 && (
-                <button
-                    type="button"
-                    onClick={() => {
-                        setIsAddingAddress(true);
-                        setNewName(fullName || user?.fullName || "");
-                        setNewPhone(phone || user?.phone || "");
-                        setNewAddress("");
-                    }}
-                    className="address-btn-open-add"
-                >
-                    + Thêm địa chỉ mới
-                </button>
+                addressList.length >= 5 ? (
+                    <div style={{ textAlign: "center", color: "#64748b", fontSize: "0.85rem", marginTop: "12px", fontStyle: "italic" }}>
+                        * Bạn đã đạt giới hạn tối đa 5 địa chỉ nhận hàng.
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsAddingAddress(true);
+                            setNewName(fullName || user?.fullName || "");
+                            setNewPhone(phone || user?.phone || "");
+                            setNewAddress("");
+                        }}
+                        className="address-btn-open-add"
+                    >
+                        + Thêm địa chỉ mới
+                    </button>
+                )
             )}
         </div>
     );

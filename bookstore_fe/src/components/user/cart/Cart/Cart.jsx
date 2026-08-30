@@ -421,17 +421,6 @@ const Cart = () => {
                         </div>
                     </div>
 
-                    <div className="cart-card-box cart-gift-card">
-                        <div className="cart-sidebar-card-header">
-                            <span className="header-title">
-                                <Gift size={18} color="#0a422d" /> Nhận quà
-                            </span>
-                            <span className="header-action-link">
-                                Chọn quà <ChevronRight size={14} />
-                            </span>
-                        </div>
-                    </div>
-
                     <div className="cart-shipping-notice-box">
                         <Truck size={18} color="#0a422d" />
                         <span>

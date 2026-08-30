@@ -10,6 +10,7 @@ import {
   isCategoryOrChildOf,
 } from '../../utils/categoryTree';
 import CategorySelector from '../common/CategorySelector/CategorySelector';
+import { exportToCSV } from '../../utils/exportUtils';
 
 const ManagerProducts = ({ products, categories, loadData }) => {
   const { showToast } = useApp();
@@ -225,7 +226,9 @@ const ManagerProducts = ({ products, categories, loadData }) => {
     const matchesCategory = categoryFilter === '' || isCategoryOrChildOf(p.category, categoryFilter, categories);
 
     let matchesStatus = true;
-    if (productStatusFilter === 'ACTIVE') matchesStatus = p.status === 'ACTIVE' && p.stockQuantity > 0;
+    if (productStatusFilter === 'ACTIVE') matchesStatus = p.status === 'ACTIVE';
+    else if (productStatusFilter === 'PENDING') matchesStatus = p.status === 'PENDING';
+    else if (productStatusFilter === 'REJECTED') matchesStatus = p.status === 'REJECTED';
     else if (productStatusFilter === 'INACTIVE') matchesStatus = p.status === 'INACTIVE';
     else if (productStatusFilter === 'OUT_OF_STOCK') matchesStatus = p.stockQuantity === 0;
 
@@ -238,19 +241,36 @@ const ManagerProducts = ({ products, categories, loadData }) => {
     productPage * ITEMS_PER_PAGE
   );
 
+  const handleExportExcel = () => {
+    const headers = ["ID", "Tên sản phẩm", "ISBN", "Tác giả", "Giá (VNĐ)", "Kho", "Trạng thái", "Danh mục"];
+    const rows = filteredProducts.map(p => [
+      p.id,
+      p.name,
+      p.isbn || '',
+      p.author || '',
+      p.price,
+      p.stockQuantity,
+      p.status === 'ACTIVE' ? 'Đang bán' : 'Tạm ẩn',
+      getCategoryPath(p.category) || p.category?.name || ''
+    ]);
+    exportToCSV("danh_sach_san_pham.csv", headers, rows, showToast);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
       {/* Header and Add New button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
             Quản lý sản phẩm
           </h1>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button style={{
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button 
+            onClick={handleExportExcel}
+            style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -290,13 +310,14 @@ const ManagerProducts = ({ products, categories, loadData }) => {
       {/* Table search & filter controls */}
       <div style={{
         display: 'flex',
+        flexWrap: 'wrap',
         gap: '16px',
         padding: '16px',
         backgroundColor: '#ffffff',
         borderRadius: '12px',
         border: '1px solid #e2e8f0'
       }}>
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
           <Search size={18} style={{ position: 'absolute', left: '14px', top: '12px', color: '#94a3b8' }} />
           <input
             type="text"
@@ -322,34 +343,38 @@ const ManagerProducts = ({ products, categories, loadData }) => {
         />
 
         <select
+          className="manager-filter-select"
           value={productStatusFilter}
           onChange={(e) => { setProductStatusFilter(e.target.value); setProductPage(1); }}
           style={{
-            padding: '10px 16px',
+            height: '40px',
+            padding: '0 14px',
             borderRadius: '8px',
             border: '1px solid #e2e8f0',
             outline: 'none',
-            fontSize: '0.9rem',
+            fontSize: '0.875rem',
             backgroundColor: '#ffffff',
-            minWidth: '180px'
+            color: '#334155',
+            minWidth: '160px'
           }}
         >
           <option value="ALL">Tất cả trạng thái</option>
-          <option value="ACTIVE">Còn hàng / Đang bán</option>
+          <option value="ACTIVE">Đã duyệt (Đang bán)</option>
+          <option value="PENDING">Chờ duyệt</option>
+          <option value="REJECTED">Bị từ chối</option>
           <option value="INACTIVE">Tạm ẩn</option>
           <option value="OUT_OF_STOCK">Hết hàng</option>
         </select>
       </div>
 
       {/* Table grid wrapper */}
-      <div style={{
+      <div className="manager-table-responsive" style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
-        overflow: 'hidden',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>SẢN PHẨM</th>
@@ -475,8 +500,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
           </tbody>
         </table>
         {/* Pagination Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '12px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+          <span style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap' }}>
             Hiển thị {paginatedProducts.length} trên tổng số {filteredProducts.length} sản phẩm
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -562,7 +587,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
               Thêm sản phẩm sách mới
             </h2>
 
-            <form onSubmit={handleCreateProduct} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            <form onSubmit={handleCreateProduct} className="manager-modal-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
 
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
@@ -637,7 +662,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
                 <input
                   type="number"
                   min="0"
-                  placeholder="Ví dụ: 2024"
+                  placeholder="Ví dụ: 2026"
                   value={productForm.publicationYear}
                   onChange={(e) => setProductForm({ ...productForm, publicationYear: e.target.value })}
                   style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
@@ -931,7 +956,7 @@ const ManagerProducts = ({ products, categories, loadData }) => {
               Chỉnh sửa thông tin sản phẩm
             </h2>
 
-            <form onSubmit={handleUpdateProduct} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            <form onSubmit={handleUpdateProduct} className="manager-modal-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
 
               <div style={{ gridColumn: 'span 2' }}>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>

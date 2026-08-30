@@ -35,3 +35,25 @@
     color: #64748b;
     font-size: 0.9rem;
 }
+
+@media (max-width: 768px) {
+    .recommendation-common-container {
+        padding: 12px 10px 16px !important;
+        margin-top: 20px !important;
+        border-radius: 10px !important;
+    }
+
+    .recommendation-common-header-banner {
+        padding: 10px 12px !important;
+        font-size: 0.92rem !important;
+        margin-bottom: 12px !important;
+    }
+
+    .recommendation-common-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}

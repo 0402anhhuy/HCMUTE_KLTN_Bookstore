@@ -524,30 +524,52 @@
     color: #4b5563;
     line-height: 1.7;
     white-space: pre-line;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
-.product-detail-desc-text.clamped {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.product-detail-desc-text.collapsed {
+    max-height: 130px !important;
+    overflow: hidden !important;
 }
 
-.product-detail-desc-toggle-btn {
-    align-self: center;
-    background: none;
-    border: none;
-    color: #0a422d;
-    font-weight: 700;
-    font-size: 0.85rem;
+.product-detail-desc-text.collapsed::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #ffffff 100%);
+    pointer-events: none;
+}
+
+.product-detail-desc-toggle-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+}
+
+.product-detail-btn-toggle-desc {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    padding: 8px 22px;
+    background-color: #ecfdf5;
+    color: #0a422d;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
     cursor: pointer;
-    margin-top: 8px;
+    box-shadow: 0 2px 6px rgba(10, 66, 45, 0.06);
+    transition: all 0.2s ease;
 }
 
-.product-detail-desc-toggle-btn:hover {
-    text-decoration: underline;
+.product-detail-btn-toggle-desc:hover {
+    background-color: #d1fae5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(10, 66, 45, 0.12);
 }
 
 /* Review Summary */
@@ -870,3 +892,74 @@
     transform: scale(1.08);
     box-shadow: 0 2px 8px rgba(10, 66, 45, 0.25);
 }
+
+/* ================= MOBILE RESPONSIVE STYLES ================= */
+@media (max-width: 768px) {
+    .product-detail-container {
+        padding-top: 95px !important;
+        padding-bottom: 40px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .product-detail-main-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .product-detail-left-card {
+        position: relative;
+        top: 0;
+        padding: 14px;
+    }
+
+    .product-detail-main-cover-box {
+        height: 280px;
+    }
+
+    .product-detail-book-title {
+        font-size: 1.15rem;
+    }
+
+    .product-detail-pricing-box {
+        flex-wrap: wrap;
+        padding: 10px 14px;
+    }
+
+    .product-detail-sale-price {
+        font-size: 1.4rem;
+    }
+
+    .product-detail-review-summary-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .product-detail-score-box {
+        border-right: none;
+        border-bottom: 1px solid #f1f5f9;
+        padding-right: 0;
+        padding-bottom: 14px;
+        width: 100%;
+    }
+
+    .product-detail-similar-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .spec-name {
+        width: 110px;
+    }
+
+    .product-detail-lightbox-stage {
+        padding: 10px;
+        min-height: 300px;
+    }
+
+    .lightbox-book-title {
+        max-width: 180px;
+    }
+}
+

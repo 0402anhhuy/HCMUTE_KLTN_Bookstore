@@ -221,8 +221,8 @@ const AdminCoupons = ({
                 </div>
             </div>
 
-            {/* Coupons Table */}
-            <div className="admin-coupons-table-wrapper">
+            {/* Coupons Table (Desktop) */}
+            <div className="admin-desktop-table admin-coupons-table-wrapper">
                 <table className="admin-coupons-table">
                     <thead>
                         <tr className="admin-coupons-table-header-row">
@@ -304,6 +304,63 @@ const AdminCoupons = ({
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Cards List View */}
+            <div className="admin-mobile-card-list">
+                {filteredCoupons.map((c) => (
+                    <div key={c.id} className="admin-card-item">
+                        <div className="admin-card-header">
+                            <span className="admin-coupons-code-badge">
+                                <Tag size={14} /> {c.code}
+                            </span>
+                            <span className={`admin-coupons-status-badge ${c.status === "ACTIVE" ? "active" : "inactive"}`}>
+                                {c.status === "ACTIVE" ? "Hoạt động" : "Đã khóa"}
+                            </span>
+                        </div>
+
+                        <div className="admin-card-body">
+                            <div className="admin-card-row">
+                                <span className="admin-card-label">Ưu đãi giảm:</span>
+                                <span className="admin-card-value" style={{ color: '#ef4444' }}>
+                                    {c.discountType === "PERCENT"
+                                        ? `${c.discountValue}% (Tối đa ${formatPrice(c.maxDiscountAmount)})`
+                                        : formatPrice(c.discountValue)}
+                                </span>
+                            </div>
+                            <div className="admin-card-row">
+                                <span className="admin-card-label">Đơn tối thiểu:</span>
+                                <span className="admin-card-value">{formatPrice(c.minOrderValue)}</span>
+                            </div>
+                            <div className="admin-card-row">
+                                <span className="admin-card-label">Lượt dùng:</span>
+                                <span className="admin-card-value">{c.usedCount || 0} / {c.usageLimit || "∞"} lượt</span>
+                            </div>
+                        </div>
+
+                        <div className="admin-card-footer">
+                            <button
+                                type="button"
+                                onClick={() => setEditingCoupon(c)}
+                                style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #3b82f6', backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                                Sửa coupon
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setDeletingCoupon(c)}
+                                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fecaca', backgroundColor: '#fef2f2', color: '#dc2626', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                ))}
+                {filteredCoupons.length === 0 && (
+                    <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        Chưa có mã giảm giá nào. Hãy nhấn "Tạo Mã Giảm Giá" để thêm mới.
+                    </div>
+                )}
             </div>
 
             {/* Edit Coupon Modal */}

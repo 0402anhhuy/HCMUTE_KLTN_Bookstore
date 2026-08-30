@@ -194,34 +194,70 @@
 
 .admin-view-promotion-card-text {
     margin: 4px 0 0;
-    font-size: 0.95rem;
+    font-size: 0.825rem;
     color: #1e293b;
     font-weight: 700;
+    line-height: 1.35;
+    word-break: break-word;
 }
 
 .admin-view-promotion-card-text-lg {
     margin: 4px 0 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: #1e293b;
     font-weight: 800;
 }
 
 .admin-view-promotion-card-value {
     margin: 4px 0 0;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     color: #1e293b;
     font-weight: 800;
 }
 
 .admin-view-promotion-card-unit {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: #64748b;
     font-weight: 600;
 }
 
 .admin-view-promotion-revenue-value {
     margin: 4px 0 0;
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     color: #b45309;
     font-weight: 800;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .admin-view-promotion-modal {
+        width: 94vw !important;
+        max-height: 90vh !important;
+        border-radius: 12px;
+    }
+
+    .admin-view-promotion-body {
+        padding: 16px !important;
+    }
+
+    .admin-view-promotion-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+
+    .admin-view-promotion-card,
+    .admin-view-promotion-card-revenue {
+        padding: 10px !important;
+        gap: 10px !important;
+    }
+
+    .admin-view-promotion-icon-box {
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+    }
+
+    .admin-view-promotion-name {
+        font-size: 1.25rem !important;
+    }
 }

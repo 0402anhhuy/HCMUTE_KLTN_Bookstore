@@ -96,8 +96,8 @@ const AdminPromotions = () => {
                 </div>
             </div>
 
-            {/* Table section */}
-            <div className="admin-promotions-table-wrapper">
+            {/* Table section (Desktop) */}
+            <div className="admin-desktop-table admin-promotions-table-wrapper">
                 <table className="admin-promotions-table">
                     <thead>
                         <tr className="admin-promotions-table-header-row">
@@ -307,6 +307,64 @@ const AdminPromotions = () => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Cards List View */}
+            <div className="admin-mobile-card-list">
+                {filteredPromotions.map((promo) => {
+                    const status = getStatusStyle(promo.status);
+                    return (
+                        <div key={promo.id} className="admin-card-item">
+                            <div className="admin-card-header">
+                                <span className="admin-card-title">{promo.title}</span>
+                                <span className={`admin-promotions-status-badge ${status.className}`}>
+                                    {status.text}
+                                </span>
+                            </div>
+
+                            <div className="admin-card-body">
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Thời gian:</span>
+                                    <span className="admin-card-value" style={{ fontSize: '0.8rem' }}>
+                                        {formatDateOnly(promo.startDate)} - {formatDateOnly(promo.endDate)}
+                                    </span>
+                                </div>
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Tổng đơn dùng:</span>
+                                    <span className="admin-card-value">{promo.totalUses || 0} đơn</span>
+                                </div>
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Doanh thu mang lại:</span>
+                                    <span className="admin-card-value" style={{ color: '#16a34a' }}>
+                                        {(promo.totalRevenue || 0).toLocaleString("vi-VN")}đ
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="admin-card-footer">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewingPromotionId(promo.id)}
+                                    style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #7c3aed', backgroundColor: '#f5f3ff', color: '#6d28d9', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                    Xem báo cáo
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingPromotion(promo)}
+                                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #3b82f6', backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                    Sửa
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+                {filteredPromotions.length === 0 && (
+                    <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        Không tìm thấy chương trình khuyến mãi nào phù hợp
+                    </div>
+                )}
             </div>
 
             {/* Modal Add */}

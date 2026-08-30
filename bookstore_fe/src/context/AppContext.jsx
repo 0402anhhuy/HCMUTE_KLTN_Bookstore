@@ -199,7 +199,46 @@ export const AppProvider = ({ children }) => {
         setUnreadCount(0);
     };
 
+    const getGuestCart = () => {
+        try {
+            const local = localStorage.getItem("guestCart");
+            return local ? JSON.parse(local) : { items: [] };
+        } catch {
+            return { items: [] };
+        }
+    };
+
+    const saveGuestCart = (guestCartObj) => {
+        try {
+            localStorage.setItem("guestCart", JSON.stringify(guestCartObj));
+        } catch (e) {
+            console.error("Failed to save guest cart", e);
+        }
+    };
+
+    const syncGuestCartToBackend = async () => {
+        const guestCartObj = getGuestCart();
+        if (guestCartObj.items && guestCartObj.items.length > 0) {
+            for (const item of guestCartObj.items) {
+                if (item.product?.id) {
+                    try {
+                        await api.post(
+                            `/cart/add?productId=${item.product.id}&quantity=${item.quantity}`,
+                        );
+                    } catch (e) {
+                        console.error("Error syncing guest item to backend cart", e);
+                    }
+                }
+            }
+            localStorage.removeItem("guestCart");
+        }
+    };
+
     const fetchCart = async () => {
+        if (!user) {
+            setCart(getGuestCart());
+            return;
+        }
         try {
             const response = await api.get("/cart");
             setCart({
@@ -210,19 +249,43 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    const addToCart = async (productId, quantity = 1) => {
+    const addToCart = async (productId, quantity = 1, productSnapshot = null) => {
         if (!user) {
-            showToast(
-                "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.",
-                "error",
-            );
-            return false;
+            try {
+                let targetProd = productSnapshot;
+                if (!targetProd) {
+                    const prodRes = await api.get(`/products/${productId}`);
+                    targetProd = prodRes.data;
+                }
+                const currentGuest = getGuestCart();
+                const existingIdx = (currentGuest.items || []).findIndex(
+                    (i) => String(i.product?.id) === String(productId),
+                );
+                if (existingIdx >= 0) {
+                    currentGuest.items[existingIdx].quantity += quantity;
+                } else {
+                    currentGuest.items.push({
+                        id: `guest-${productId}`,
+                        product: targetProd,
+                        quantity: quantity,
+                    });
+                }
+                saveGuestCart(currentGuest);
+                setCart({ items: [...currentGuest.items] });
+                showToast("Đã thêm sản phẩm vào giỏ hàng!", "success");
+                return true;
+            } catch (err) {
+                console.error("Failed guest addToCart", err);
+                showToast("Không thể thêm sản phẩm vào giỏ hàng", "error");
+                return false;
+            }
         }
         try {
-            const response = await api.post(
+            await api.post(
                 `/cart/add?productId=${productId}&quantity=${quantity}`,
             );
             await fetchCart();
+            showToast("Đã thêm sản phẩm vào giỏ hàng!", "success");
             return true;
         } catch (error) {
             const msg =
@@ -234,6 +297,22 @@ export const AppProvider = ({ children }) => {
     };
 
     const updateCartQty = async (productId, quantity) => {
+        if (quantity <= 0) {
+            await removeFromCart(productId);
+            return;
+        }
+        if (!user) {
+            const currentGuest = getGuestCart();
+            const item = (currentGuest.items || []).find(
+                (i) => String(i.product?.id) === String(productId),
+            );
+            if (item) {
+                item.quantity = quantity;
+                saveGuestCart(currentGuest);
+                setCart({ items: [...currentGuest.items] });
+            }
+            return;
+        }
         try {
             await api.put(
                 `/cart/update?productId=${productId}&quantity=${quantity}`,
@@ -247,15 +326,32 @@ export const AppProvider = ({ children }) => {
     };
 
     const removeFromCart = async (productId) => {
+        if (!user) {
+            const currentGuest = getGuestCart();
+            currentGuest.items = (currentGuest.items || []).filter(
+                (i) => String(i.product?.id) !== String(productId),
+            );
+            saveGuestCart(currentGuest);
+            setCart({ items: [...currentGuest.items] });
+            showToast("Đã xóa sản phẩm khỏi giỏ hàng", "info");
+            return;
+        }
         try {
             await api.delete(`/cart/remove/${productId}`);
             await fetchCart();
+            showToast("Đã xóa sản phẩm khỏi giỏ hàng", "info");
         } catch (error) {
             console.error("Failed to remove item:", error);
         }
     };
 
     const clearCart = async () => {
+        if (!user) {
+            localStorage.removeItem("guestCart");
+            setCart({ items: [] });
+            showToast("Đã xóa toàn bộ sản phẩm khỏi giỏ hàng", "success");
+            return;
+        }
         try {
             await api.delete("/cart/clear");
             await fetchCart();

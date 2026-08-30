@@ -1152,3 +1152,219 @@
 .modal-see-more-toggle:hover {
     text-decoration: underline;
 }
+
+/* ================= MOBILE RESPONSIVE STYLES ================= */
+@media (max-width: 850px) {
+    .cart-main-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .cart-page-container {
+        padding-top: 100px !important;
+        padding-bottom: 30px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    .cart-main-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .cart-card-box {
+        padding: 12px 14px !important;
+        border-radius: 10px !important;
+    }
+
+    .cart-header-card {
+        display: flex !important;
+        padding: 8px 12px !important;
+        margin-bottom: 8px !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        font-size: 0.8rem !important;
+    }
+
+    .cart-header-title {
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+    }
+
+    .cart-header-col-qty,
+    .cart-header-col-total {
+        display: none !important;
+    }
+
+    .cart-product-row {
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        position: relative !important;
+        padding: 10px 24px 10px 0 !important;
+    }
+
+    .cart-product-thumb-box {
+        width: 55px !important;
+        height: 72px !important;
+        border-radius: 6px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .cart-product-title {
+        font-size: 0.82rem !important;
+        line-height: 1.25 !important;
+        height: 2.05rem !important;
+        margin-bottom: 4px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+    }
+
+    .cart-product-author {
+        font-size: 0.7rem !important;
+        margin-bottom: 4px !important;
+    }
+
+    .cart-product-unit-price {
+        font-size: 0.8rem !important;
+    }
+
+    .cart-product-subtotal-val {
+        font-size: 0.88rem !important;
+        font-weight: 800 !important;
+    }
+
+    .cart-qty-picker-btn {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.8rem !important;
+    }
+
+    .cart-qty-picker-val {
+        width: 32px !important;
+        height: 26px !important;
+        font-size: 0.8rem !important;
+    }
+
+    .cart-btn-remove-item {
+        position: absolute !important;
+        top: 8px !important;
+        right: 0 !important;
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .cart-summary-card {
+        padding: 14px !important;
+    }
+
+    .cart-summary-title {
+        font-size: 0.95rem !important;
+        margin-bottom: 12px !important;
+    }
+
+    .cart-summary-row {
+        font-size: 0.82rem !important;
+        margin-bottom: 8px !important;
+    }
+
+    .cart-summary-total-val {
+        font-size: 1.15rem !important;
+    }
+
+    .cart-btn-checkout-submit {
+        padding: 10px 14px !important;
+        font-size: 0.9rem !important;
+        border-radius: 8px !important;
+    }
+
+    .cart-bottom-actions-bar {
+        flex-direction: column-reverse !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+    }
+
+    /* Compact Mobile Voucher Modal */
+    .cart-coupon-modal-container {
+        width: 92vw !important;
+        max-height: 80vh !important;
+        padding: 0 !important;
+        border-radius: 12px !important;
+    }
+
+    .cart-modal-header {
+        padding: 12px 14px !important;
+    }
+
+    .cart-modal-title {
+        font-size: 0.9rem !important;
+    }
+
+    .cart-modal-input-group {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+    }
+
+    .cart-modal-input {
+        padding: 7px 10px !important;
+        font-size: 0.8rem !important;
+    }
+
+    .cart-modal-btn-apply {
+        padding: 0 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    .cart-modal-scrollable-list {
+        padding: 10px 12px !important;
+        gap: 10px !important;
+    }
+
+    .cart-modal-coupon-item {
+        min-height: 64px !important;
+        border-radius: 8px !important;
+    }
+
+    .fahasa-coupon-card {
+        flex-direction: row !important;
+    }
+
+    .fahasa-coupon-stub {
+        width: 75px !important;
+        padding: 8px 6px !important;
+        font-size: 0.72rem !important;
+    }
+
+    .fahasa-coupon-badge-title {
+        font-size: 0.75rem !important;
+    }
+
+    .fahasa-coupon-main {
+        padding: 8px 10px !important;
+    }
+
+    .fahasa-coupon-code-title {
+        font-size: 0.8rem !important;
+    }
+
+    .fahasa-coupon-desc {
+        font-size: 0.7rem !important;
+    }
+
+    .fahasa-coupon-date {
+        font-size: 0.65rem !important;
+    }
+
+    .cart-modal-footer {
+        padding: 10px 12px !important;
+    }
+
+    .cart-modal-btn-save {
+        padding: 9px 14px !important;
+        font-size: 0.85rem !important;
+    }
+}

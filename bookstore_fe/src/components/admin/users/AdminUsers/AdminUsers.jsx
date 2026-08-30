@@ -138,8 +138,8 @@ const AdminUsers = ({ users = [], showToast }) => {
                 </button>
             </div>
 
-            {/* Table Section */}
-            <div className="admin-users-table-card">
+            {/* Table Section (Desktop) */}
+            <div className="admin-desktop-table admin-users-table-card">
                 <table className="admin-users-table">
                     <thead>
                         <tr className="admin-users-thead-row">
@@ -368,6 +368,86 @@ const AdminUsers = ({ users = [], showToast }) => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card List View */}
+            <div className="admin-mobile-card-list">
+                {filteredUsers.map((user) => {
+                    const initials = (user.fullName || user.email || "U").trim().charAt(0).toUpperCase();
+                    const isLocked = user.status === "LOCKED";
+                    const isCurrentUser = currentUser?.id === user.id || currentUser?.email === user.email;
+
+                    return (
+                        <div key={user.id} className="admin-card-item">
+                            <div className="admin-card-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div className="admin-users-avatar-circle" style={{ width: '32px', height: '32px', fontSize: '0.85rem' }}>
+                                        {initials}
+                                    </div>
+                                    <div>
+                                        <span className="admin-card-title">{user.fullName || 'Chưa đặt tên'}</span>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user.email || 'Chưa cập nhật'}</div>
+                                    </div>
+                                </div>
+                                <span className={`admin-users-badge ${user.role === "ADMIN" ? "role-admin" : user.role === "MANAGER" ? "role-manager" : "role-user"}`}>
+                                    {user.role === "ADMIN" ? "Quản trị viên" : user.role === "MANAGER" ? "Người quản lý" : "Người dùng"}
+                                </span>
+                            </div>
+
+                            <div className="admin-card-body">
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Trạng thái:</span>
+                                    <span className={`admin-users-badge ${isLocked ? "status-locked" : "status-active"}`}>
+                                        {isLocked ? "Đã khóa" : "Hoạt động"}
+                                    </span>
+                                </div>
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Điểm thưởng:</span>
+                                    <span className="admin-card-value">{user.rewardPoints || 0} điểm</span>
+                                </div>
+                            </div>
+
+                            <div className="admin-card-footer">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingUser(user)}
+                                    style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #d7def0', backgroundColor: '#f8fafc', color: '#0f172a', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                    Sửa tài khoản
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleToggleStatus(user)}
+                                    disabled={updatingId === user.id}
+                                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fde68a', backgroundColor: '#fef3c7', color: '#92400e', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                    {isLocked ? "Mở khóa" : "Khóa"}
+                                </button>
+                                {isCurrentUser && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { setPasswordTargetUser(user); setIsPasswordModalOpen(true); }}
+                                        style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #bfdbfe', backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                        Đổi MK
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteUser(user)}
+                                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #fecaca', backgroundColor: '#fef2f2', color: '#dc2626', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                    Xóa
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+                {filteredUsers.length === 0 && (
+                    <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        Không tìm thấy người dùng phù hợp.
+                    </div>
+                )}
             </div>
 
             {/* Modal Edit */}

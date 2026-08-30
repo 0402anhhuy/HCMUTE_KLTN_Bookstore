@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
     Filter,
     BookOpen,
@@ -9,6 +10,8 @@ import {
     Award,
     User,
     Building2,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react";
 import { formatCategoryLabel } from "@/utils/categoryTree";
 import heroBooks from "@/assets/hero_books.png";
@@ -55,6 +58,7 @@ const Home = () => {
     } = useHome();
 
     const navigate = useNavigate();
+    const [isBestsellerDescExpanded, setIsBestsellerDescExpanded] = useState(false);
 
     const renderCategoryTree = (nodes, depth = 0) =>
         nodes.map((node) => {
@@ -98,7 +102,7 @@ const Home = () => {
                     <div className="home-hero-content">
                         <span className="home-hero-tag">BỘ SƯU TẬP MỚI</span>
                         <h1 className="home-hero-title">
-                            Nâng cao tri thức với bộ sưu tập sách mới 2024.
+                            Nâng cao tri thức với bộ sưu tập sách mới 2026.
                         </h1>
                         <p className="home-hero-description">
                             Khám phá những tựa sách mới được tuyển chọn kỹ
@@ -484,11 +488,12 @@ const Home = () => {
                                         <div
                                             key={product.id}
                                             className={`bestseller-rank-item ${isSelected ? "active" : ""}`}
-                                            onClick={() =>
+                                            onClick={() => {
                                                 setSelectedBestsellerId(
                                                     product.id,
-                                                )
-                                            }
+                                                );
+                                                setIsBestsellerDescExpanded(false);
+                                            }}
                                         >
                                             <span
                                                 className={`bestseller-rank-num ${isTop3 ? "top3" : ""}`}
@@ -643,10 +648,51 @@ const Home = () => {
                                             <h5 className="bestseller-desc-heading">
                                                 Mô tả sản phẩm
                                             </h5>
-                                            <p className="bestseller-desc-text">
+                                            <div
+                                                className={`bestseller-desc-text ${
+                                                    !isBestsellerDescExpanded
+                                                        ? "collapsed"
+                                                        : ""
+                                                }`}
+                                            >
                                                 {activeBestseller.description ||
                                                     "Tác phẩm được tái bản với chất lượng bìa cao cấp, đem lại trải nghiệm đọc sách tuyệt vời nhất cho độc giả yêu mến sách."}
-                                            </p>
+                                            </div>
+                                            {activeBestseller.description &&
+                                                activeBestseller.description
+                                                    .length > 100 && (
+                                                    <div className="bestseller-desc-toggle-wrapper">
+                                                        <button
+                                                            type="button"
+                                                            className="bestseller-btn-toggle-desc"
+                                                            onClick={() =>
+                                                                setIsBestsellerDescExpanded(
+                                                                    !isBestsellerDescExpanded,
+                                                                )
+                                                            }
+                                                        >
+                                                            {isBestsellerDescExpanded ? (
+                                                                <>
+                                                                    Thu gọn{" "}
+                                                                    <ChevronUp
+                                                                        size={
+                                                                            15
+                                                                        }
+                                                                    />
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    Xem thêm{" "}
+                                                                    <ChevronDown
+                                                                        size={
+                                                                            15
+                                                                        }
+                                                                    />
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                )}
                                         </div>
 
                                         {/* Review Snippet */}

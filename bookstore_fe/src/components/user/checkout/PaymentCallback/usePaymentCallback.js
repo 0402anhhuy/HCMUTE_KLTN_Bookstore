@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 
 export const usePaymentCallback = () => {
+    const { fetchCart } = useApp();
     const [searchParams] = useSearchParams();
     const [verifying, setVerifying] = useState(true);
     const [paymentStatus, setPaymentStatus] = useState(null); // 'success' | 'failed'
@@ -28,6 +30,7 @@ export const usePaymentCallback = () => {
                     response.data.message ||
                         "Thanh toán trực tuyến đơn hàng thành công!",
                 );
+                await fetchCart?.();
             } else {
                 setPaymentStatus("failed");
                 setOrderId(response.data?.orderId);

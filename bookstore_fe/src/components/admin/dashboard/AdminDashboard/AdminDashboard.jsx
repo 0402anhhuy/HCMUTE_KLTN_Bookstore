@@ -1,4 +1,5 @@
-import { LogOut, Bell, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { LogOut, Bell, ShieldCheck, Menu, X } from "lucide-react";
 import { useAdminDashboard } from "./useAdminDashboard";
 
 import { AdminHome } from "@/components/admin/home";
@@ -13,6 +14,7 @@ import { AdminPromotions } from "@/components/admin/promotions";
 import "./AdminDashboard.css";
 
 const AdminDashboard = () => {
+    const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const {
         user,
         activeTab,
@@ -35,8 +37,20 @@ const AdminDashboard = () => {
 
     return (
         <div className="admin-dashboard-layout">
+            {/* Mobile Sidebar Backdrop Overlay */}
+            <div
+                className={`admin-dashboard-sidebar-backdrop ${
+                    isMobileSidebarOpen ? "show" : ""
+                }`}
+                onClick={() => setIsMobileSidebarOpen(false)}
+            />
+
             {/* Sidebar */}
-            <aside className="admin-dashboard-sidebar">
+            <aside
+                className={`admin-dashboard-sidebar ${
+                    isMobileSidebarOpen ? "mobile-open" : ""
+                }`}
+            >
                 <div className="admin-dashboard-brand-box">
                     <div className="admin-dashboard-brand-inner">
                         <div className="admin-dashboard-brand-icon-wrapper">
@@ -44,13 +58,21 @@ const AdminDashboard = () => {
                         </div>
                         <div className="admin-dashboard-brand-text">
                             <span className="admin-dashboard-brand-title">
-                                Quản trị UTEShop
+                                Quản trị Bookstore
                             </span>
                             <span className="admin-dashboard-brand-subtitle">
                                 Quản trị hệ thống
                             </span>
                         </div>
                     </div>
+                    <button
+                        type="button"
+                        className="admin-dashboard-close-sidebar-btn"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                        aria-label="Close sidebar"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
                 <nav className="admin-dashboard-nav">
@@ -61,7 +83,10 @@ const AdminDashboard = () => {
                             <button
                                 key={tab.id}
                                 type="button"
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => {
+                                    setActiveTab(tab.id);
+                                    setIsMobileSidebarOpen(false);
+                                }}
                                 className={`admin-dashboard-nav-item ${
                                     isActive ? "active" : ""
                                 }`}
@@ -89,8 +114,16 @@ const AdminDashboard = () => {
             <div className="admin-dashboard-main-wrapper">
                 <header className="admin-dashboard-header">
                     <div className="admin-dashboard-header-brand">
+                        <button
+                            type="button"
+                            className="admin-dashboard-hamburger-btn"
+                            onClick={() => setIsMobileSidebarOpen(true)}
+                            aria-label="Toggle menu"
+                        >
+                            <Menu size={22} />
+                        </button>
                         <span className="admin-dashboard-header-logo-text">
-                            UTEShop
+                            Bookstore
                         </span>
                     </div>
 

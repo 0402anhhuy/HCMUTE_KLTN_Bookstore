@@ -11,7 +11,7 @@ const Footer = () => {
             <div className="footer-main-grid">
                 {/* Column 1: Brand */}
                 <div className="footer-col-brand">
-                    <h2 className="footer-brand-title">UTEShop</h2>
+                    <h2 className="footer-brand-title">Bookstore</h2>
                     <p className="footer-brand-desc">
                         Nơi kết nối tri thức và tình yêu sách. Chúng tôi mang
                         lại sự lựa chọn tốt nhất với các tác phẩm kinh điển và
@@ -105,12 +105,12 @@ const Footer = () => {
             {/* Bottom Info */}
             <div className="footer-bottom-bar">
                 <span>
-                    © 2024 UTEShop. Bảo lưu mọi quyền. Thiết kế và Phát triển
+                    © 2026 Bookstore. Bảo lưu mọi quyền. Thiết kế và Phát triển
                     bởi Bookstore.
                 </span>
                 <div className="footer-bottom-contact">
                     <span>Hotline: 1900 1234 (8:00 - 21:00)</span>
-                    <span>Email: support@uteshop.vn</span>
+                    <span>Email: support@bookstore.vn</span>
                 </div>
             </div>
         </footer>

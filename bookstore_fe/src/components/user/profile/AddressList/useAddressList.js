@@ -56,6 +56,11 @@ export const useAddressList = ({ user, phone, fullName }) => {
             showToast?.("Số điện thoại không được để trống.", "error");
             return;
         }
+        const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+        if (!phoneRegex.test(editPhone.trim())) {
+            showToast?.("Số điện thoại nhận hàng không hợp lệ (10 chữ số, định dạng VN).", "error");
+            return;
+        }
         if (!editAddress.trim()) {
             showToast?.("Địa chỉ không được để trống.", "error");
             return;
@@ -91,12 +96,21 @@ export const useAddressList = ({ user, phone, fullName }) => {
     };
 
     const handleAddNewAddress = async () => {
+        if (addressList.length >= 5) {
+            showToast?.("Bạn chỉ được lưu tối đa 5 địa chỉ nhận hàng.", "error");
+            return;
+        }
         if (!newName.trim()) {
             showToast?.("Họ tên người nhận không được để trống.", "error");
             return;
         }
         if (!newPhone.trim()) {
             showToast?.("Số điện thoại không được để trống.", "error");
+            return;
+        }
+        const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+        if (!phoneRegex.test(newPhone.trim())) {
+            showToast?.("Số điện thoại nhận hàng không hợp lệ (10 chữ số, định dạng VN).", "error");
             return;
         }
         if (!newAddress.trim()) {

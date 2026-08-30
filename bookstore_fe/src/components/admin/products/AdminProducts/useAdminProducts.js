@@ -68,8 +68,12 @@ export const useAdminProducts = ({ products = [], categories = [] }) => {
                     String(p.category.id) === String(categoryFilter));
 
             let matchesStatus = true;
-            if (productStatusFilter === "ACTIVE")
-                matchesStatus = p.status === "ACTIVE" && p.stockQuantity > 0;
+            if (productStatusFilter === "PENDING")
+                matchesStatus = p.status === "PENDING";
+            else if (productStatusFilter === "ACTIVE")
+                matchesStatus = p.status === "ACTIVE";
+            else if (productStatusFilter === "REJECTED")
+                matchesStatus = p.status === "REJECTED";
             else if (productStatusFilter === "INACTIVE")
                 matchesStatus = p.status === "INACTIVE";
             else if (productStatusFilter === "OUT_OF_STOCK")

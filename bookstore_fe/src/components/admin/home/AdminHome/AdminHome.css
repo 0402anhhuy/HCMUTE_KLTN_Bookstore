@@ -185,3 +185,49 @@
 .admin-home-icon-box.out-of-stock {
     background-color: #fef2f2;
 }
+
+.admin-home-chart-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    width: 14%;
+    gap: 8px;
+}
+
+.admin-home-chart-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .admin-home-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .admin-home-chart-title {
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+
+    .admin-home-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .admin-home-info-card {
+        padding: 10px 8px;
+    }
+
+    .admin-home-icon-box {
+        width: 32px;
+        height: 32px;
+    }
+}
