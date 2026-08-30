@@ -50,7 +50,7 @@ const Login = () => {
                             Chào mừng trở lại!
                         </h2>
                         <p className="login-header-subtitle">
-                            Đăng nhập vào UTEShop
+                            Đăng nhập vào Bookstore
                         </p>
 
                         {error && (

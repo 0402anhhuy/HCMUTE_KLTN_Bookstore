@@ -1,6 +1,6 @@
-# UTEShop - Hệ Thống Bookstore E-Commerce (HCMUTE KLTN)
+# Bookstore - Hệ Thống E-Commerce (HCMUTE KLTN)
 
-Hệ thống quản lý và kinh doanh sách trực tuyến UTEShop được xây dựng nhằm phục vụ nhu cầu mua sắm sách của khách hàng và quản lý kho hàng, đơn hàng chuyên nghiệp cho quản trị viên. Dự án bao gồm hai thành phần chính: **bookstore_be** (Backend API phát triển trên Spring Boot) và **bookstore_fe** (Frontend Web phát triển trên React + Vite).
+Hệ thống quản lý và kinh doanh sách trực tuyến Bookstore được xây dựng nhằm phục vụ nhu cầu mua sắm sách của khách hàng và quản lý kho hàng, đơn hàng chuyên nghiệp cho quản trị viên. Dự án bao gồm hai thành phần chính: **bookstore_be** (Backend API phát triển trên Spring Boot) và **bookstore_fe** (Frontend Web phát triển trên React + Vite).
 
 ---
 

@@ -364,3 +364,17 @@
     cursor: pointer;
     font-weight: 600;
 }
+
+/* ================= MOBILE RESPONSIVE STYLES ================= */
+@media (max-width: 480px) {
+    .login-card-wrapper {
+        padding: 24px 16px;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .login-header-title {
+        font-size: 1.4rem;
+    }
+}
+

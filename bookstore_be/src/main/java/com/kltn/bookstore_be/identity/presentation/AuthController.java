@@ -96,8 +96,14 @@ public class AuthController {
                     .role(user.getRole().name())
                     .status(user.getStatus().name())
                     .build());
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email hoặc mật khẩu không chính xác."));
+        } catch (org.springframework.security.authentication.LockedException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên."));
+        } catch (org.springframework.security.authentication.DisabledException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP qua Email."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Sai email hoặc mật khẩu. " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Đã có lỗi xảy ra khi đăng nhập."));
         }
     }
 

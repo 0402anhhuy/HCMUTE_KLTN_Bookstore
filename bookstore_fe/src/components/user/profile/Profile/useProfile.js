@@ -47,22 +47,32 @@ export const useProfile = () => {
     useEffect(() => {
         if (user) {
             setFullName(user.fullName || "");
-            setPhone(user.phone || "0909123456");
+            setPhone(user.phone ?? "");
             setEmail(user.email || "");
         }
     }, [user]);
 
     const handleProfileSubmit = async (e) => {
         if (e) e.preventDefault();
+        
+        const trimmedPhone = phone ? phone.trim() : "";
+        if (trimmedPhone !== "") {
+            const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+            if (!phoneRegex.test(trimmedPhone)) {
+                showToast?.("Số điện thoại không đúng định dạng Việt Nam (10 chữ số, ví dụ: 0909123456).", "error");
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             await api.put("/users/profile", {
                 fullName: fullName.trim(),
-                phone,
+                phone: trimmedPhone,
                 address: user?.address,
                 avatarUrl: user?.avatarUrl,
             });
-            updateUser?.({ fullName: fullName.trim(), phone });
+            updateUser?.({ fullName: fullName.trim(), phone: trimmedPhone });
             showToast?.("Cập nhật thông tin cá nhân thành công!", "success");
         } catch (err) {
             showToast?.(

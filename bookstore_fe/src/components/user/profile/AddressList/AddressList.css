@@ -222,3 +222,47 @@
     justify-content: center;
     gap: 6px;
 }
+
+/* Mobile high-density compact styles */
+@media (max-width: 768px) {
+    .address-list-card {
+        padding: 10px 8px !important;
+        border-radius: 10px !important;
+    }
+
+    .address-list-title {
+        font-size: 0.86rem !important;
+        margin-bottom: 8px !important;
+    }
+
+    .address-item-card {
+        padding: 8px 8px !important;
+        border-radius: 8px !important;
+    }
+
+    .address-recipient-info {
+        font-size: 0.78rem !important;
+    }
+
+    .address-text-display {
+        font-size: 0.73rem !important;
+        margin-top: 3px !important;
+        line-height: 1.3 !important;
+    }
+
+    .address-badge {
+        font-size: 0.62rem !important;
+        padding: 2px 5px !important;
+    }
+
+    .address-btn-set-default {
+        font-size: 0.64rem !important;
+        padding: 2px 5px !important;
+    }
+
+    .address-btn-open-add {
+        padding: 6px !important;
+        font-size: 0.75rem !important;
+        margin-top: 8px !important;
+    }
+}

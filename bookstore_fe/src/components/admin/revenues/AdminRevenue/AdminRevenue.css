@@ -20,7 +20,7 @@
 .admin-revenue-subtitle {
     font-size: 0.875rem;
     margin: 0;
-    color: #0c0d0dff;
+    color: #64748b;
 }
 
 .admin-revenue-header-actions {
@@ -344,4 +344,30 @@
     text-align: center;
     color: #6b7280;
     font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .admin-revenue-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    .admin-revenue-header-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .admin-revenue-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .admin-revenue-chart-card {
+        padding: 16px;
+    }
+    .admin-revenue-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
 }

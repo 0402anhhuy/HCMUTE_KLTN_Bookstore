@@ -103,12 +103,12 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
           Quản lý người giao hàng
         </h1>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <select
             value={shipperStatusFilter}
             onChange={(e) => { setShipperStatusFilter(e.target.value); setShipperPage(1); }}
@@ -118,7 +118,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
               border: '1px solid #e2e8f0',
               outline: 'none',
               fontSize: '0.9rem',
-              minWidth: '180px',
+              minWidth: '160px',
               backgroundColor: '#ffffff'
             }}
           >
@@ -149,15 +149,14 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
         </div>
       </div>
 
-      {/* Shippers Table */}
-      <div style={{
+      {/* Shippers Table (Desktop) */}
+      <div className="manager-desktop-table manager-table-responsive" style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
-        overflow: 'hidden',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>MÃ NGƯỜI GIAO HÀNG</th>
@@ -262,8 +261,8 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
         </table>
 
         {/* Pagination Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '12px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+          <span style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap' }}>
             Hiển thị {paginatedShippers.length} trên tổng số {filteredShippers.length} người giao hàng
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -317,6 +316,108 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Shippers Cards (Mobile-first card view) */}
+      <div className="manager-mobile-card-list">
+        {paginatedShippers.map(s => (
+          <div key={s.id} className="manager-card-item">
+            <div className="manager-card-header">
+              <span className="manager-card-title">{s.fullName} (#{s.id})</span>
+              <span style={{
+                display: 'inline-flex',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                backgroundColor: s.status === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
+                color: s.status === 'ACTIVE' ? '#10b981' : '#ef4444'
+              }}>
+                {s.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm nghỉ'}
+              </span>
+            </div>
+
+            <div className="manager-card-body">
+              <div className="manager-card-row">
+                <span className="manager-card-label">Số điện thoại:</span>
+                <span className="manager-card-value">{s.phone}</span>
+              </div>
+              <div className="manager-card-row">
+                <span className="manager-card-label">Phương tiện:</span>
+                <span className="manager-card-value">{s.vehicle || 'Chưa cập nhật'}</span>
+              </div>
+            </div>
+
+            <div className="manager-card-footer">
+              <button
+                onClick={() => setSelectedShipperForOrders(s)}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: '#ecfdf5',
+                  color: '#10b981',
+                  border: '1px solid #a7f3d0',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Eye size={15} />
+                <span>Xem đơn</span>
+              </button>
+              <button
+                onClick={() => handleOpenEditShipperModal(s)}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: '#eff6ff',
+                  color: '#3b82f6',
+                  border: '1px solid #bfdbfe',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Edit size={15} />
+                <span>Sửa</span>
+              </button>
+              <button
+                onClick={() => handleDeleteShipper(s.id)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: '#fef2f2',
+                  color: '#ef4444',
+                  border: '1px solid #fecaca',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Xóa người giao hàng"
+              >
+                <Trash2 size={15} />
+              </button>
+            </div>
+          </div>
+        ))}
+        {filteredShippers.length === 0 && (
+          <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            Không tìm thấy người giao hàng nào phù hợp
+          </div>
+        )}
       </div>
 
       {/* ADD SHIPPER MODAL */}

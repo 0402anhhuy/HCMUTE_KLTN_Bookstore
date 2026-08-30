@@ -21,9 +21,6 @@ export const useCart = () => {
                         next.delete(id);
                     }
                 });
-                if (prev.size === 0 && cart.items.length > 0) {
-                    cart.items.forEach((item) => next.add(item.id));
-                }
                 return next;
             });
         }
@@ -61,9 +58,13 @@ export const useCart = () => {
         }).format(price || 0);
     };
 
-    const totalAmount = (cart.items || [])
-        .filter((item) => selectedItemIds.has(item.id))
-        .reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    const totalAmount = (cart?.items || [])
+        .filter((item) => item && item.product && selectedItemIds.has(item.id))
+        .reduce(
+            (sum, item) =>
+                sum + (item.product.price || 0) * (item.quantity || 0),
+            0,
+        );
 
     const [coupons, setCoupons] = useState([]);
     const [bestCoupon, setBestCoupon] = useState(null);

@@ -36,7 +36,7 @@ const Register = () => {
                         <h2 className="register-header-title">
                             Tạo tài khoản{" "}
                             <span className="register-brand-highlight">
-                                UTEShop
+                                Bookstore
                             </span>
                         </h2>
 
@@ -174,7 +174,7 @@ const Register = () => {
                         <h2 className="register-header-title">
                             Tạo tài khoản{" "}
                             <span className="register-brand-highlight">
-                                UTEShop
+                                Bookstore
                             </span>
                         </h2>
 

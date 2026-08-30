@@ -394,3 +394,31 @@
     font-weight: 600;
     cursor: pointer;
 }
+
+@media (max-width: 768px) {
+    .admin-coupons-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .admin-coupons-create-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .admin-coupons-filter-box {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .admin-coupons-filter-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .admin-coupons-filter-label {
+        min-width: 80px;
+    }
+    .admin-coupons-reset-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -65,7 +65,7 @@ const ManagerReviews = ({ reviews, loadData }) => {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
           Bình luận & Review
         </h1>
@@ -79,7 +79,7 @@ const ManagerReviews = ({ reviews, loadData }) => {
             border: '1px solid #e2e8f0',
             outline: 'none',
             fontSize: '0.9rem',
-            minWidth: '180px',
+            minWidth: '160px',
             backgroundColor: '#ffffff'
           }}
         >
@@ -92,15 +92,14 @@ const ManagerReviews = ({ reviews, loadData }) => {
         </select>
       </div>
 
-      {/* Reviews Table */}
-      <div style={{
+      {/* Reviews Table (Desktop) */}
+      <div className="manager-desktop-table manager-table-responsive" style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
-        overflow: 'hidden',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>NGƯỜI ĐÁNH GIÁ</th>
@@ -223,8 +222,8 @@ const ManagerReviews = ({ reviews, loadData }) => {
         </table>
 
         {/* Pagination Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '16px 24px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+          <span style={{ fontSize: '0.85rem', color: '#64748b', whiteSpace: 'nowrap' }}>
             Hiển thị {paginatedReviews.length} trên tổng số {filteredReviews.length} đánh giá
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -278,6 +277,111 @@ const ManagerReviews = ({ reviews, loadData }) => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Reviews Cards (Mobile-first card view) */}
+      <div className="manager-mobile-card-list">
+        {paginatedReviews.map(review => (
+          <div key={review.id} className="manager-card-item">
+            <div className="manager-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  backgroundColor: '#8b5cf6',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.85rem'
+                }}>
+                  {review.user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <div>
+                  <span className="manager-card-title">{review.user?.fullName || 'Khách hàng'}</span>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    {review.createdAt ? new Date(review.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'}
+                  </div>
+                </div>
+              </div>
+              <div style={{ color: '#f59e0b', fontSize: '0.95rem', letterSpacing: '1px' }}>
+                {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+              </div>
+            </div>
+
+            <div className="manager-card-body">
+              <div style={{ fontWeight: 600, color: '#2563eb', fontSize: '0.9rem', marginBottom: '4px' }}>
+                📖 {review.product?.name}
+              </div>
+              <div style={{ color: '#334155', fontSize: '0.875rem', fontWeight: 500, lineHeight: '1.4' }}>
+                "{review.comment}"
+              </div>
+              {review.reply && (
+                <div style={{
+                  marginTop: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  backgroundColor: '#f8fafc',
+                  borderLeft: '3px solid #7c3aed',
+                  fontSize: '0.8rem',
+                  color: '#475569'
+                }}>
+                  <span style={{ fontWeight: 700, color: '#7c3aed', marginRight: '6px' }}>Cửa hàng:</span>
+                  {review.reply}
+                </div>
+              )}
+            </div>
+
+            <div className="manager-card-footer">
+              <button
+                onClick={() => {
+                  setReplyReviewId(review.id);
+                  setReplyText(review.reply || '');
+                  setReplyUser(review.user?.fullName || 'Khách hàng');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: '#f5f3ff',
+                  color: '#7c3aed',
+                  border: '1px solid #ddd6fe',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {review.reply ? 'Sửa phản hồi' : 'Phản hồi'}
+              </button>
+              <button
+                onClick={() => {
+                  setDeleteReviewId(review.id);
+                  setDeleteReason('');
+                  setDeleteUser(review.user?.fullName || 'Khách hàng');
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: '#fef2f2',
+                  color: '#ef4444',
+                  border: '1px solid #fecaca',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Xóa
+              </button>
+            </div>
+          </div>
+        ))}
+        {filteredReviews.length === 0 && (
+          <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            Không tìm thấy đánh giá nào phù hợp
+          </div>
+        )}
       </div>
       </div>
 

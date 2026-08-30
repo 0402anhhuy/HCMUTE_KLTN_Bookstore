@@ -17,6 +17,7 @@ export const useCatalog = () => {
     const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
+    const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
     const [searchInput, setSearchInput] = useState(keyword);
 
     const [selectedPublishers, setSelectedPublishers] = useState([]);
@@ -62,7 +63,20 @@ export const useCatalog = () => {
             console.error("Lỗi lấy sản phẩm:", e);
         } finally {
             setLoading(false);
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            const targetElem =
+                document.querySelector(".catalog-grid") ||
+                document.querySelector(".catalog-content-section") ||
+                document.querySelector(".catalog-main-layout");
+            if (targetElem) {
+                const yOffset = -75;
+                const y =
+                    targetElem.getBoundingClientRect().top +
+                    window.pageYOffset +
+                    yOffset;
+                window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+            } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
         }
     }, [page, selectedCategory, keyword, minPrice, maxPrice]);
 
@@ -91,7 +105,7 @@ export const useCatalog = () => {
         return Array.from(set);
     }, [products]);
 
-    // Lọc theo NXB và Ngôn ngữ trên tập dữ liệu trả về
+    // Lọc theo NXB, Ngôn ngữ & Các khoảng giá đã chọn trên tập dữ liệu
     const filteredProducts = useMemo(() => {
         return products.filter((p) => {
             if (
@@ -106,12 +120,21 @@ export const useCatalog = () => {
             ) {
                 return false;
             }
+            if (selectedPriceRanges.length > 0) {
+                const price = Number(p.price || 0);
+                const matches = selectedPriceRanges.some((r) => {
+                    const min = r.min !== "" ? Number(r.min) : 0;
+                    const max = r.max !== "" ? Number(r.max) : Infinity;
+                    return price >= min && price <= max;
+                });
+                if (!matches) return false;
+            }
             return true;
         });
-    }, [products, selectedPublishers, selectedLanguages]);
+    }, [products, selectedPublishers, selectedLanguages, selectedPriceRanges]);
 
     const handleSearch = (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
         setPage(0);
         const params = {};
         if (searchInput.trim()) params.keyword = searchInput.trim();
@@ -124,6 +147,7 @@ export const useCatalog = () => {
         setSelectedCategory("");
         setMinPrice("");
         setMaxPrice("");
+        setSelectedPriceRanges([]);
         setSearchInput("");
         setSelectedPublishers([]);
         setSelectedLanguages([]);
@@ -165,9 +189,37 @@ export const useCatalog = () => {
 
     const [showMoreCategory, setShowMoreCategory] = useState(false);
 
-    const handlePriceRangeSelect = (min, max) => {
-        setMinPrice(min);
-        setMaxPrice(max);
+    const togglePriceRange = (min, max) => {
+        setSelectedPriceRanges((prev) => {
+            const exists = prev.some((r) => r.min === min && r.max === max);
+            let updated;
+            if (exists) {
+                updated = prev.filter((r) => !(r.min === min && r.max === max));
+            } else {
+                updated = [...prev, { min, max }];
+            }
+
+            if (updated.length === 0) {
+                setMinPrice("");
+                setMaxPrice("");
+            } else if (updated.length === 1) {
+                setMinPrice(updated[0].min);
+                setMaxPrice(updated[0].max);
+            } else {
+                // Multi range selected: compute overall min and max for API call
+                const mins = updated.map((r) => (r.min !== "" ? Number(r.min) : 0));
+                const overallMin = Math.min(...mins);
+                const hasNoMax = updated.some((r) => r.max === "");
+                const maxs = updated
+                    .map((r) => (r.max !== "" ? Number(r.max) : 0))
+                    .filter(Boolean);
+                const overallMax = hasNoMax || maxs.length === 0 ? "" : String(Math.max(...maxs));
+                setMinPrice(String(overallMin));
+                setMaxPrice(overallMax);
+            }
+
+            return updated;
+        });
         setPage(0);
     };
 
@@ -187,7 +239,6 @@ export const useCatalog = () => {
         );
     };
 
-    // Thêm các hàm xóa từng field lọc riêng lẻ vào useCatalog.js
     const removeCategoryFilter = () => {
         setSelectedCategory("");
         setPage(0);
@@ -199,6 +250,7 @@ export const useCatalog = () => {
     const removePriceFilter = () => {
         setMinPrice("");
         setMaxPrice("");
+        setSelectedPriceRanges([]);
         setPage(0);
     };
 
@@ -221,6 +273,8 @@ export const useCatalog = () => {
         setMinPrice,
         maxPrice,
         setMaxPrice,
+        selectedPriceRanges,
+        togglePriceRange,
         products: filteredProducts,
         page,
         setPage,
@@ -241,7 +295,6 @@ export const useCatalog = () => {
         togglePublisher,
         selectedLanguages,
         toggleLanguage,
-        handlePriceRangeSelect,
         removeCategoryFilter,
         removePriceFilter,
         removeKeywordFilter,

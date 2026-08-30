@@ -10,18 +10,35 @@ import {
   ArrowDownRight 
 } from 'lucide-react';
 
+import { exportToCSV } from '../../utils/exportUtils';
+import { useApp } from '../../context/AppContext';
+
 const DashboardHome = ({ user, products, orders }) => {
+  const { showToast } = useApp();
+
   // Calculations for stats
   const deliveredOrders = orders.filter(o => o.status === 'delivered');
-  const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
-  const averageOrderValue = deliveredOrders.length > 0 ? (totalRevenue / deliveredOrders.length) : 0;
+  const totalRevenue = deliveredOrders.reduce((sum, o) => sum + parseFloat(o.finalAmount || o.totalAmount || 0), 0);
+  const totalOrdersCount = orders.length;
+  const averageOrderValue = deliveredOrders.length > 0 ? Math.round(totalRevenue / deliveredOrders.length) : 0;
+
+  const handleExportCSV = () => {
+    const headers = ["Chỉ số", "Giá trị", "Tăng trưởng"];
+    const rows = [
+      ["Tổng doanh thu", `${totalRevenue.toLocaleString('vi-VN')}đ`, "+14.2%"],
+      ["Tổng đơn hàng", totalOrdersCount, "+5.1%"],
+      ["Tỷ lệ tăng trưởng", "18.4%", "+22.4%"],
+      ["Trung bình giá đơn", `${averageOrderValue.toLocaleString('vi-VN')}đ`, "-2.3%"]
+    ];
+    exportToCSV("overview_dashboard.csv", headers, rows, showToast);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Header stats control */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
+      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="manager-header-title-group">
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
             Tổng quan kinh doanh
           </h1>
@@ -30,7 +47,7 @@ const DashboardHome = ({ user, products, orders }) => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <button style={{
             display: 'flex',
             alignItems: 'center',
@@ -47,19 +64,21 @@ const DashboardHome = ({ user, products, orders }) => {
             <Calendar size={16} />
             <span>30 ngày qua</span>
           </button>
-          <button style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            border: 'none',
-            backgroundColor: '#7c3aed',
-            color: '#ffffff',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}>
+          <button 
+            onClick={handleExportCSV}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: '#7c3aed',
+              color: '#ffffff',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}>
             <Download size={16} />
             <span>Xuất file CSV</span>
           </button>
@@ -67,10 +86,10 @@ const DashboardHome = ({ user, products, orders }) => {
       </div>
 
       {/* Metrics cards grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+      <div className="dashboard-home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
         
         {/* CARD 1 */}
-        <div style={{
+        <div className="manager-metric-card" style={{
           padding: '24px',
           backgroundColor: '#ffffff',
           borderRadius: '16px',
@@ -78,7 +97,7 @@ const DashboardHome = ({ user, products, orders }) => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{
+            <div className="metric-icon-box" style={{
               width: '40px',
               height: '40px',
               borderRadius: '10px',
@@ -90,7 +109,7 @@ const DashboardHome = ({ user, products, orders }) => {
             }}>
               <Wallet size={20} />
             </div>
-            <span style={{
+            <span className="metric-badge" style={{
               fontSize: '0.75rem',
               fontWeight: 600,
               color: '#10b981',
@@ -105,16 +124,16 @@ const DashboardHome = ({ user, products, orders }) => {
               +14.2%
             </span>
           </div>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
+          <h3 className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
             TỔNG DOANH THU
           </h3>
-          <div style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
+          <div className="metric-value" style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
             {totalRevenue.toLocaleString('vi-VN')}đ
           </div>
         </div>
 
         {/* CARD 2 */}
-        <div style={{
+        <div className="manager-metric-card" style={{
           padding: '24px',
           backgroundColor: '#ffffff',
           borderRadius: '16px',
@@ -122,7 +141,7 @@ const DashboardHome = ({ user, products, orders }) => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{
+            <div className="metric-icon-box" style={{
               width: '40px',
               height: '40px',
               borderRadius: '10px',
@@ -134,7 +153,7 @@ const DashboardHome = ({ user, products, orders }) => {
             }}>
               <ShoppingBag size={20} />
             </div>
-            <span style={{
+            <span className="metric-badge" style={{
               fontSize: '0.75rem',
               fontWeight: 600,
               color: '#10b981',
@@ -149,16 +168,16 @@ const DashboardHome = ({ user, products, orders }) => {
               +5.1%
             </span>
           </div>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
+          <h3 className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
             TỔNG ĐƠN HÀNG
           </h3>
-          <div style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
+          <div className="metric-value" style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
             {orders.length}
           </div>
         </div>
 
         {/* CARD 3 */}
-        <div style={{
+        <div className="manager-metric-card" style={{
           padding: '24px',
           backgroundColor: '#ffffff',
           borderRadius: '16px',
@@ -166,7 +185,7 @@ const DashboardHome = ({ user, products, orders }) => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{
+            <div className="metric-icon-box" style={{
               width: '40px',
               height: '40px',
               borderRadius: '10px',
@@ -178,7 +197,7 @@ const DashboardHome = ({ user, products, orders }) => {
             }}>
               <TrendingUp size={20} />
             </div>
-            <span style={{
+            <span className="metric-badge" style={{
               fontSize: '0.75rem',
               fontWeight: 600,
               color: '#10b981',
@@ -193,16 +212,16 @@ const DashboardHome = ({ user, products, orders }) => {
               +22.4%
             </span>
           </div>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
+          <h3 className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
             TỶ LỆ TĂNG TRƯỞNG
           </h3>
-          <div style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
+          <div className="metric-value" style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
             18.4%
           </div>
         </div>
 
         {/* CARD 4 */}
-        <div style={{
+        <div className="manager-metric-card" style={{
           padding: '24px',
           backgroundColor: '#ffffff',
           borderRadius: '16px',
@@ -210,7 +229,7 @@ const DashboardHome = ({ user, products, orders }) => {
           boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{
+            <div className="metric-icon-box" style={{
               width: '40px',
               height: '40px',
               borderRadius: '10px',
@@ -222,7 +241,7 @@ const DashboardHome = ({ user, products, orders }) => {
             }}>
               <Coins size={20} />
             </div>
-            <span style={{
+            <span className="metric-badge" style={{
               fontSize: '0.75rem',
               fontWeight: 600,
               color: '#ef4444',
@@ -237,10 +256,10 @@ const DashboardHome = ({ user, products, orders }) => {
               -2.3%
             </span>
           </div>
-          <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
+          <h3 className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b', margin: '20px 0 4px' }}>
             TRUNG BÌNH GIÁ ĐƠN
           </h3>
-          <div style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
+          <div className="metric-value" style={{ fontSize: '1.625rem', fontWeight: 700, color: '#0f172a' }}>
             {Math.round(averageOrderValue).toLocaleString('vi-VN')}đ
           </div>
         </div>

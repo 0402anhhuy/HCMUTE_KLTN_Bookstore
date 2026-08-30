@@ -223,3 +223,17 @@
     font-weight: 600;
     color: #0056c6;
 }
+
+/* ================= MOBILE RESPONSIVE STYLES ================= */
+@media (max-width: 480px) {
+    .register-card-wrapper {
+        padding: 24px 16px;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .register-header-title {
+        font-size: 1.4rem;
+    }
+}
+

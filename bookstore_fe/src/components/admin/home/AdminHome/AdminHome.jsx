@@ -26,63 +26,8 @@ const AdminHome = ({ user, users, userCount, products, orders, auditLogs }) => {
             <div className="admin-home-header">
                 <h1 className="admin-home-title">Tổng quan hệ thống</h1>
                 <p className="admin-home-subtitle">
-                    Trạng thái thời gian thực và các chỉ số vận hành của UTEShop
+                    Trạng thái thời gian thực và các chỉ số vận hành của Bookstore
                 </p>
-            </div>
-
-            {/* Main Chart Card */}
-            <div className="admin-home-chart-card">
-                <div className="admin-home-chart-header">
-                    <h2 className="admin-home-chart-title">
-                        Doanh số toàn hệ thống
-                    </h2>
-
-                    <div className="admin-home-time-segmented-control">
-                        {["Ngày", "Tháng", "Năm"].map((range) => (
-                            <button
-                                key={range}
-                                type="button"
-                                onClick={() => setTimeRange(range)}
-                                className={`admin-home-time-btn ${
-                                    timeRange === range ? "active" : ""
-                                }`}
-                            >
-                                {range}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Chart Bars */}
-                <div className="admin-home-chart-bars-container">
-                    {chartBars.map((bar, idx) => (
-                        <div
-                            key={idx}
-                            style={{
-                                height: bar.height,
-                                backgroundColor: bar.bg,
-                            }}
-                            className="admin-home-chart-bar"
-                        ></div>
-                    ))}
-                </div>
-
-                <div className="admin-home-divider"></div>
-
-                <div className="admin-home-chart-bottom">
-                    <div>
-                        <div className="admin-home-stat-label">
-                            TỔNG GIÁ TRỊ
-                        </div>
-                        <div className="admin-home-stat-value">
-                            {totalRevenue.toLocaleString("vi-VN")}đ
-                        </div>
-                    </div>
-                    <div className="admin-home-growth-container">
-                        <div className="admin-home-stat-label">TĂNG TRƯỞNG</div>
-                        <div className="admin-home-growth-value">+12.4%</div>
-                    </div>
-                </div>
             </div>
 
             {/* Three Info Cards */}
@@ -129,6 +74,66 @@ const AdminHome = ({ user, users, userCount, products, orders, auditLogs }) => {
                     </div>
                     <div className="admin-home-icon-box out-of-stock">
                         <AlertTriangle size={20} color="#ef4444" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Chart Card */}
+            <div className="admin-home-chart-card">
+                <div className="admin-home-chart-header">
+                    <h2 className="admin-home-chart-title">
+                        Doanh số toàn hệ thống
+                    </h2>
+
+                    <div className="admin-home-time-segmented-control">
+                        {["Ngày", "Tháng", "Năm"].map((range) => (
+                            <button
+                                key={range}
+                                type="button"
+                                onClick={() => setTimeRange(range)}
+                                className={`admin-home-time-btn ${
+                                    timeRange === range ? "active" : ""
+                                }`}
+                            >
+                                {range}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Chart Bars */}
+                <div className="admin-home-chart-bars-container">
+                    {chartBars.map((bar, idx) => (
+                        <div key={idx} className="admin-home-chart-bar-wrapper">
+                            <div
+                                style={{
+                                    height: bar.height,
+                                    backgroundColor: bar.bg,
+                                }}
+                                className="admin-home-chart-bar"
+                                title={`${bar.label || ""}: ${bar.height}`}
+                            ></div>
+                            <span className="admin-home-chart-label">
+                                {bar.label}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="admin-home-divider"></div>
+
+                <div className="admin-home-chart-bottom">
+                    <div>
+                        <div className="admin-home-stat-label">
+                            TỔNG GIÁ TRỊ
+                        </div>
+                        <div className="admin-home-stat-value">
+                            {totalRevenue.toLocaleString("vi-VN")}đ
+                        </div>
+                    </div>
+                    <div className="admin-home-growth-container">
+                        <div className="admin-home-stat-label">TĂNG TRƯỞNG</div>
+                        <div className="admin-home-growth-value">+12.4%</div>
                     </div>
                 </div>
             </div>
