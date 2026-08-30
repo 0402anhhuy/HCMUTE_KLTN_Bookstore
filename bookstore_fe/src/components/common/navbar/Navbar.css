@@ -491,7 +491,7 @@
     width: 100%;
     height: 42px;
     background-color: #0a422d;
-    color: #ffffff;
+    color: #ffffff !important;
     border: none;
     border-radius: 8px;
     font-weight: 700;
@@ -508,13 +508,14 @@
 
 .navbar-btn-login-solid:hover {
     background-color: #072e20;
+    color: #ffffff !important;
 }
 
 .navbar-btn-register-outline {
     width: 100%;
     height: 42px;
     background-color: #ffffff;
-    color: #0a422d;
+    color: #0a422d !important;
     border: 1.5px solid #0a422d;
     border-radius: 8px;
     font-weight: 700;
@@ -530,6 +531,7 @@
 
 .navbar-btn-register-outline:hover {
     background-color: #ecfdf5;
+    color: #0a422d !important;
 }
 
 .navbar-notif-list {

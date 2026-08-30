@@ -207,7 +207,7 @@ export const useProductDetail = () => {
     };
 
     const handleMouseDown = (e) => {
-        if (zoomLevel <= 1) return;
+        if (zoomLevel <= 1 || !e) return;
         setIsDragging(true);
         setHasDragged(false);
         setDragStart({
@@ -217,7 +217,7 @@ export const useProductDetail = () => {
     };
 
     const handleMouseMove = (e) => {
-        if (!isDragging || zoomLevel <= 1) return;
+        if (!isDragging || zoomLevel <= 1 || !e) return;
         const newX = e.clientX - dragStart.x;
         const newY = e.clientY - dragStart.y;
         if (Math.abs(newX - panPosition.x) > 3 || Math.abs(newY - panPosition.y) > 3) {
@@ -233,7 +233,7 @@ export const useProductDetail = () => {
     };
 
     const handleTouchStart = (e) => {
-        if (zoomLevel <= 1 || !e.touches[0]) return;
+        if (zoomLevel <= 1 || !e || !e.touches || !e.touches[0]) return;
         setIsDragging(true);
         setHasDragged(false);
         setDragStart({
@@ -243,7 +243,7 @@ export const useProductDetail = () => {
     };
 
     const handleTouchMove = (e) => {
-        if (!isDragging || zoomLevel <= 1 || !e.touches[0]) return;
+        if (!isDragging || zoomLevel <= 1 || !e || !e.touches || !e.touches[0]) return;
         const newX = e.touches[0].clientX - dragStart.x;
         const newY = e.touches[0].clientY - dragStart.y;
         if (Math.abs(newX - panPosition.x) > 3 || Math.abs(newY - panPosition.y) > 3) {
@@ -260,7 +260,9 @@ export const useProductDetail = () => {
 
     const handleImageClick = (e) => {
         if (hasDragged) {
-            e.stopPropagation();
+            if (e && typeof e.stopPropagation === "function") {
+                e.stopPropagation();
+            }
             setHasDragged(false);
             return;
         }
