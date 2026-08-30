@@ -52,6 +52,9 @@ public class ProductService {
         List<Long> categoryIds = null;
         if (categoryId != null) {
             categoryIds = getAllCategoryAndDescendantIds(categoryId);
+            if (categoryIds.isEmpty()) {
+                categoryIds = null;
+            }
         }
         return productRepository.searchProducts(keyword, categoryIds, minPrice, maxPrice, pageable);
     }

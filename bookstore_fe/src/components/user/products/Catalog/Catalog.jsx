@@ -35,8 +35,8 @@ const Catalog = () => {
         selectedPublishers,
         togglePublisher,
         selectedLanguages,
-        toggleLanguage,
-        handlePriceRangeSelect,
+        selectedPriceRanges = [],
+        togglePriceRange,
         selectedCategoryName,
         removeCategoryFilter,
         removePriceFilter,
@@ -88,17 +88,24 @@ const Catalog = () => {
         );
     }, [selectedCategory, categories]);
 
-    // Lấy nhãn khoảng giá đang chọn
-    const selectedPriceLabel = useMemo(() => {
-        if (!minPrice && !maxPrice) return null;
-        if (minPrice === "0" && maxPrice === "150000") return "0đ - 150.000đ";
-        if (minPrice === "150000" && maxPrice === "300000")
-            return "150.000đ - 300.000đ";
-        if (minPrice === "300000" && maxPrice === "500000")
-            return "300.000đ - 500.000đ";
-        if (minPrice === "500000" && !maxPrice) return "Trên 500.000đ";
-        return `${Number(minPrice).toLocaleString("vi-VN")}đ - ${maxPrice ? Number(maxPrice).toLocaleString("vi-VN") + "đ" : "trở lên"}`;
-    }, [minPrice, maxPrice]);
+    // Lấy danh sách nhãn khoảng giá đang chọn
+    const selectedPriceLabels = useMemo(() => {
+        if (selectedPriceRanges.length > 0) {
+            return selectedPriceRanges.map((r) => {
+                if (r.min === "0" && r.max === "150000") return { ...r, label: "0đ - 150.000đ" };
+                if (r.min === "150000" && r.max === "300000") return { ...r, label: "150.000đ - 300.000đ" };
+                if (r.min === "300000" && r.max === "500000") return { ...r, label: "300.000đ - 500.000đ" };
+                if (r.min === "500000" && !r.max) return { ...r, label: "Trên 500.000đ" };
+                return { ...r, label: `${Number(r.min).toLocaleString("vi-VN")}đ - ${r.max ? Number(r.max).toLocaleString("vi-VN") + "đ" : "trở lên"}` };
+            });
+        }
+        if (!minPrice && !maxPrice) return [];
+        if (minPrice === "0" && maxPrice === "150000") return [{ min: minPrice, max: maxPrice, label: "0đ - 150.000đ" }];
+        if (minPrice === "150000" && maxPrice === "300000") return [{ min: minPrice, max: maxPrice, label: "150.000đ - 300.000đ" }];
+        if (minPrice === "300000" && maxPrice === "500000") return [{ min: minPrice, max: maxPrice, label: "300.000đ - 500.000đ" }];
+        if (minPrice === "500000" && !maxPrice) return [{ min: minPrice, max: maxPrice, label: "Trên 500.000đ" }];
+        return [{ min: minPrice, max: maxPrice, label: `${Number(minPrice).toLocaleString("vi-VN")}đ - ${maxPrice ? Number(maxPrice).toLocaleString("vi-VN") + "đ" : "trở lên"}` }];
+    }, [minPrice, maxPrice, selectedPriceRanges]);
 
     // Kiểm tra có filter nào đang áp dụng không
     const hasActiveFilters = Boolean(
@@ -106,6 +113,7 @@ const Catalog = () => {
         selectedCategory ||
         minPrice ||
         maxPrice ||
+        selectedPriceRanges.length > 0 ||
         selectedPublishers.length > 0 ||
         selectedLanguages.length > 0,
     );
@@ -207,23 +215,6 @@ const Catalog = () => {
                 </p>
             </div>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="catalog-search-form">
-                <div className="catalog-search-input-wrapper">
-                    <Search size={18} className="catalog-search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên sách, tác giả..."
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        className="catalog-search-input"
-                    />
-                </div>
-                <button type="submit" className="catalog-search-btn">
-                    Tìm kiếm
-                </button>
-            </form>
-
             {/* ACTIVE FILTER CHIPS (Hiển thị các field đang lọc xếp hàng ngang) */}
             {hasActiveFilters && (
                 <div className="catalog-active-filters-bar">
@@ -260,18 +251,22 @@ const Catalog = () => {
                         )}
 
                         {/* Chip Price */}
-                        {selectedPriceLabel && (
-                            <div className="catalog-filter-chip">
-                                <span>Giá: {selectedPriceLabel}</span>
+                        {selectedPriceLabels.map((item, idx) => (
+                            <div key={idx} className="catalog-filter-chip">
+                                <span>Giá: {item.label}</span>
                                 <button
                                     type="button"
-                                    onClick={removePriceFilter}
+                                    onClick={() =>
+                                        item.min !== undefined && item.max !== undefined
+                                            ? togglePriceRange(item.min, item.max)
+                                            : removePriceFilter()
+                                    }
                                     className="chip-remove-btn"
                                 >
                                     <X size={13} />
                                 </button>
                             </div>
-                        )}
+                        ))}
 
                         {/* Chips Nhà Xuất Bản */}
                         {selectedPublishers.map((pub) => (
@@ -363,28 +358,20 @@ const Catalog = () => {
                                         max: "",
                                     },
                                 ].map((item, idx) => {
-                                    const isChecked =
-                                        minPrice === item.min &&
-                                        maxPrice === item.max;
+                                    const isChecked = selectedPriceRanges.some(
+                                        (r) => r.min === item.min && r.max === item.max
+                                    );
                                     return (
                                         <label
                                             key={idx}
                                             className="catalog-checkbox-label"
-                                            onClick={() => {
-                                                if (isChecked) {
-                                                    removePriceFilter();
-                                                } else {
-                                                    handlePriceRangeSelect(
-                                                        item.min,
-                                                        item.max,
-                                                    );
-                                                }
-                                            }}
                                         >
                                             <input
                                                 type="checkbox"
                                                 checked={isChecked}
-                                                onChange={() => {}}
+                                                onChange={() =>
+                                                    togglePriceRange(item.min, item.max)
+                                                }
                                                 className="catalog-filter-input-checkbox"
                                             />
                                             <span>{item.label}</span>

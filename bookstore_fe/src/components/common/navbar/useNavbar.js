@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { categoryService } from "@/services/categoryService";
 import { buildCategoryTree } from "@/utils/categoryTree";
@@ -26,6 +26,18 @@ export const useNavbar = () => {
     const searchBoxRef = useRef(null);
     const categoryMenuRef = useRef(null);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Reset/sync navSearch when changing routes
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const kw = params.get("keyword") || "";
+        if (location.pathname !== "/catalog" || !kw) {
+            setNavSearch("");
+        } else {
+            setNavSearch(kw);
+        }
+    }, [location]);
 
     const trendingKeywords = [
         "Bố con cá gai",
