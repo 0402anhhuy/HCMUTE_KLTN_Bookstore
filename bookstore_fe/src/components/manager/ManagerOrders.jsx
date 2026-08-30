@@ -176,12 +176,13 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
           Danh sách đơn hàng
         </h1>
         
         <select
+          className="manager-filter-select"
           value={orderStatusFilter}
           onChange={(e) => { setOrderStatusFilter(e.target.value); setOrderPage(1); }}
           style={{
@@ -190,7 +191,7 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
             border: '1px solid #e2e8f0',
             outline: 'none',
             fontSize: '0.9rem',
-            minWidth: '200px',
+            minWidth: '180px',
             backgroundColor: '#ffffff'
           }}
         >
@@ -206,15 +207,14 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
         </select>
       </div>
 
-      {/* Orders Table */}
-      <div style={{
+      {/* Orders Table (Desktop) */}
+      <div className="manager-desktop-table manager-table-responsive" style={{
         backgroundColor: '#ffffff',
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
-        overflow: 'hidden',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
       }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <table style={{ width: '100%', minWidth: '750px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>MÃ ĐH</th>
@@ -448,8 +448,8 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
         </table>
 
         {/* Pagination Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '12px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
+          <span style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap' }}>
             Hiển thị {paginatedOrders.length} trên tổng số {filteredOrders.length} đơn hàng
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -503,6 +503,207 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Orders Cards (Mobile-first card view) */}
+      <div className="manager-mobile-card-list">
+        {paginatedOrders.map(order => (
+          <div key={order.id} className="manager-card-item">
+            <div className="manager-card-header">
+              <span className="manager-card-title">Đơn hàng #{order.id}</span>
+              <span style={{
+                display: 'inline-flex',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                backgroundColor: 
+                  order.status === 'delivered' ? '#ecfdf5' : 
+                  order.status === 'cancelled' ? '#fef2f2' : 
+                  order.status === 'cancel_requested' ? '#fffbeb' : 
+                  order.status === 'refunded' ? '#eff6ff' : '#f1f5f9',
+                color: 
+                  order.status === 'delivered' ? '#10b981' : 
+                  order.status === 'cancelled' ? '#ef4444' : 
+                  order.status === 'cancel_requested' ? '#d97706' : 
+                  order.status === 'refunded' ? '#3b82f6' : '#475569'
+              }}>
+                {order.status === 'pending' ? 'Chờ xác nhận' :
+                 order.status === 'confirmed' ? 'Đã xác nhận' :
+                 order.status === 'preparing' ? 'Đang chuẩn bị' :
+                 order.status === 'shipping' ? 'Đang giao' :
+                 order.status === 'delivered' ? 'Đã giao hàng' :
+                 order.status === 'cancel_requested' ? 'Yêu cầu đổi trả' :
+                 order.status === 'refunded' ? 'Đã hoàn tiền' :
+                 order.status === 'cancelled' ? 'Đã hủy' : order.status}
+              </span>
+            </div>
+
+            <div className="manager-card-body">
+              <div className="manager-card-row">
+                <span className="manager-card-label">Khách hàng:</span>
+                <span className="manager-card-value">{order.user?.fullName || 'Khách vãng lai'}</span>
+              </div>
+              <div className="manager-card-row">
+                <span className="manager-card-label">SĐT liên hệ:</span>
+                <span className="manager-card-value">{order.shippingPhone || order.user?.phone || '---'}</span>
+              </div>
+              <div className="manager-card-row">
+                <span className="manager-card-label">Thanh toán:</span>
+                <span className="manager-card-value" style={{ color: '#7c3aed' }}>{order.paymentMethod || 'COD'}</span>
+              </div>
+              <div className="manager-card-row">
+                <span className="manager-card-label">Tổng tiền:</span>
+                <span className="manager-card-value" style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700 }}>
+                  {parseFloat(order.finalAmount || order.totalAmount).toLocaleString('vi-VN')}đ
+                </span>
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                <span className="manager-card-label" style={{ display: 'block', marginBottom: '4px' }}>Shipper phụ trách:</span>
+                <select
+                  value={order.shipper?.id || ''}
+                  onChange={(e) => handleAssignShipper(order.id, e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.85rem',
+                    backgroundColor: '#ffffff'
+                  }}
+                >
+                  <option value="">-- Chọn shipper giao hàng --</option>
+                  {shippers.filter(s => s.status === 'ACTIVE').map(s => (
+                    <option key={s.id} value={s.id}>{s.fullName} ({s.vehicle || 'Xe máy'})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="manager-card-footer">
+              <button
+                onClick={() => handleViewDetails(order.id)}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Chi tiết
+              </button>
+
+              {order.status === 'pending' && (
+                <>
+                  <button
+                    onClick={() => handleUpdateStatus(order.id, 'confirmed')}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: '#3b82f6',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Xác nhận
+                  </button>
+                  <button
+                    onClick={() => handleCancelOrder(order.id)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      backgroundColor: '#fef2f2',
+                      color: '#ef4444',
+                      border: '1px solid #fecaca',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Hủy
+                  </button>
+                </>
+              )}
+
+              {order.status === 'confirmed' && (
+                <button
+                  onClick={() => handleUpdateStatus(order.id, 'preparing')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#eab308',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Chuẩn bị hàng
+                </button>
+              )}
+
+              {order.status === 'preparing' && (
+                <button
+                  onClick={() => {
+                    if (!order.shipper) {
+                      showToast('Vui lòng chọn shipper trước khi giao hàng!', 'error');
+                      return;
+                    }
+                    handleUpdateStatus(order.id, 'shipping');
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: !order.shipper ? '#e2e8f0' : '#a855f7',
+                    color: !order.shipper ? '#94a3b8' : '#ffffff',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: !order.shipper ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Giao hàng
+                </button>
+              )}
+
+              {order.status === 'shipping' && (
+                <button
+                  onClick={() => handleUpdateStatus(order.id, 'delivered')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: '#10b981',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Đã giao thành công
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {filteredOrders.length === 0 && (
+          <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            Không tìm thấy đơn hàng nào phù hợp
+          </div>
+        )}
       </div>
 
       {/* Order Details Modal */}
@@ -574,7 +775,7 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                   {/* Customer & Shipping Info */}
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                     gap: '16px',
                     backgroundColor: '#f8fafc',
                     padding: '16px',
@@ -592,9 +793,9 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                       <h4 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0', fontWeight: 700 }}>Thông tin giao hàng & TT</h4>
                       <div style={{ fontSize: '0.85rem', color: '#475569' }}>Địa chỉ: <strong style={{ color: '#0f172a' }}>{orderDetails.order?.shippingAddress}</strong></div>
                       <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '4px' }}>Phương thức: <strong>{orderDetails.order?.paymentMethod}</strong></div>
-                      <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '2px' }}>Trạng thái: 
+                      <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '4px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                        <span>Trạng thái:</span>
                         <span style={{
-                          marginLeft: '6px',
                           display: 'inline-flex',
                           padding: '2px 8px',
                           borderRadius: '999px',
@@ -888,14 +1089,14 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                   {/* Order Items */}
                   <div>
                     <h4 style={{ fontSize: '0.9rem', color: '#0f172a', margin: '0 0 12px 0', fontWeight: 700, textAlign: 'left' }}>Danh sách sách đã mua</h4>
-                    <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+                    <div style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflowX: 'auto', backgroundColor: '#ffffff' }}>
+                      <table style={{ width: '100%', minWidth: '450px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                         <thead>
                           <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600 }}>Tên sách</th>
-                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, textAlign: 'center' }}>Số lượng</th>
-                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, textAlign: 'right' }}>Đơn giá</th>
-                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, textAlign: 'right' }}>Tổng</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, width: '45%' }}>Tên sách</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, textAlign: 'center', whiteSpace: 'nowrap' }}>Số lượng</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Đơn giá</th>
+                            <th style={{ padding: '12px 16px', color: '#64748b', fontWeight: 600, textAlign: 'right', whiteSpace: 'nowrap' }}>Tổng</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -907,19 +1108,19 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                                     <img
                                       src={item.product.imageUrl}
                                       alt={item.product.name}
-                                      style={{ width: '36px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e2e8f0' }}
+                                      style={{ width: '36px', height: '48px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e2e8f0', flexShrink: 0 }}
                                     />
                                   )}
-                                  <span>{item.product?.name}</span>
+                                  <span style={{ wordBreak: 'break-word', lineHeight: '1.4' }}>{item.product?.name}</span>
                                 </div>
                               </td>
-                              <td style={{ padding: '12px 16px', textAlign: 'center', color: '#475569' }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'center', color: '#475569', whiteSpace: 'nowrap' }}>
                                 {item.quantity}
                               </td>
-                              <td style={{ padding: '12px 16px', textAlign: 'right', color: '#475569' }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', color: '#475569', whiteSpace: 'nowrap' }}>
                                 {parseFloat(item.unitPrice).toLocaleString('vi-VN')}đ
                               </td>
-                              <td style={{ padding: '12px 16px', textAlign: 'right', color: '#0f172a', fontWeight: 600 }}>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', color: '#0f172a', fontWeight: 600, whiteSpace: 'nowrap' }}>
                                 {parseFloat(item.subtotal || (item.unitPrice * item.quantity)).toLocaleString('vi-VN')}đ
                               </td>
                             </tr>

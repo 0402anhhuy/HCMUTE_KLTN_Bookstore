@@ -12,8 +12,11 @@ import {
   LogOut,
   Home,
   Bell,
-  Truck
+  Truck,
+  Menu,
+  X
 } from 'lucide-react';
+import './ManagerDashboard.css';
 
 // Import subcomponents
 import DashboardHome from './DashboardHome';
@@ -37,9 +40,10 @@ const ManagerDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Tab & Notification State
+  // Tab, Sidebar & Notification State
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Set active tab based on query param
   useEffect(() => {
@@ -171,44 +175,50 @@ const ManagerDashboard = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      minHeight: '100vh',
-      backgroundColor: '#f8fafc',
-      fontFamily: "'Outfit', sans-serif",
-      color: '#1e293b'
-    }}>
+    <div className="manager-layout-container">
+      {/* Mobile Drawer Backdrop Overlay */}
+      <div 
+        className={`manager-sidebar-backdrop ${isMobileSidebarOpen ? 'show' : ''}`}
+        onClick={() => setIsMobileSidebarOpen(false)}
+      />
+
       {/* Sidebar container */}
-      <aside style={{
-        width: '260px',
-        backgroundColor: '#ffffff',
-        borderRight: '1px solid #e2e8f0',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'fixed',
-        top: 0,
-        bottom: 0,
-        left: 0,
-        zIndex: 100
-      }}>
+      <aside className={`manager-sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
         {/* Brand/Logo header */}
         <div style={{
-          padding: '24px 20px',
+          padding: '20px',
           borderBottom: '1px solid #e2e8f0',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '4px'
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#7c3aed', letterSpacing: '-0.025em' }}>
-            Quản lý UTEShop
-          </span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>
-            Hệ Thống Quản Trị
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#7c3aed', letterSpacing: '-0.025em' }}>
+              Quản lý Bookstore
+            </span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>
+              Hệ Thống Quản Trị
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsMobileSidebarOpen(false)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#64748b',
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Navigation list */}
-        <nav style={{ padding: '20px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <nav style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
           {[
             { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
             { id: 'products', label: 'Sản phẩm', icon: ShoppingBag },
@@ -223,7 +233,10 @@ const ManagerDashboard = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsMobileSidebarOpen(false);
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -288,22 +301,18 @@ const ManagerDashboard = () => {
       </aside>
 
       {/* Main panel content wrapper */}
-      <div style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="manager-main-wrapper">
         
         {/* Top navbar header */}
-        <header style={{
-          height: '64px',
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 90
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <header className="manager-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button 
+              className="manager-hamburger-btn"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              aria-label="Toggle menu"
+            >
+              <Menu size={22} />
+            </button>
             <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>Kênh Quản Lý</span>
           </div>
 
@@ -469,7 +478,7 @@ const ManagerDashboard = () => {
               }}>
                 {user ? user.fullName.charAt(0).toUpperCase() : 'M'}
               </div>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>
+              <span className="manager-user-name" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>
                 {user ? user.fullName : 'Manager'}
               </span>
             </div>
@@ -477,7 +486,7 @@ const ManagerDashboard = () => {
         </header>
 
         {/* Content body */}
-        <main style={{ padding: '32px', flex: 1 }}>
+        <main className="manager-content-body">
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px', color: '#64748b', fontWeight: 600 }}>
               Đang tải dữ liệu...

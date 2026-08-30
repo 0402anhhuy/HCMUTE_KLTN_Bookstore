@@ -1,0 +1,297 @@
+/* Manager Dashboard Layout & Responsiveness */
+.manager-layout-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Outfit', sans-serif;
+  color: #1e293b;
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Sidebar */
+.manager-sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Overlay Backdrop */
+.manager-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+}
+
+.manager-sidebar-backdrop.show {
+  display: block;
+}
+
+/* Main Panel Wrapper */
+.manager-main-wrapper {
+  flex: 1;
+  margin-left: 260px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 260px);
+  transition: margin-left 0.3s ease, width 0.3s ease;
+  min-width: 0;
+}
+
+/* Header */
+.manager-header {
+  height: 64px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 990;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Content Body */
+.manager-content-body {
+  padding: 32px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* Toggle Menu Button */
+.manager-hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.manager-hamburger-btn:hover {
+  background-color: #f1f5f9;
+}
+
+/* Responsive Table Scroll Container */
+.manager-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile Media Query (iPhone 14 Pro Max & Mobile <= 768px) */
+@media (max-width: 768px) {
+  .manager-sidebar {
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .manager-sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .manager-main-wrapper {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .manager-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: 58px !important;
+    padding: 0 14px !important;
+    z-index: 999 !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    box-sizing: border-box !important;
+  }
+
+  .manager-content-body {
+    padding: 16px 12px !important;
+    margin-top: 58px !important;
+  }
+
+  .manager-hamburger-btn {
+    display: flex !important;
+  }
+
+  /* Responsive Grid Cards (2 rows, 2 columns on mobile) */
+  .dashboard-home-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .manager-metric-card {
+    padding: 12px 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .manager-metric-card .metric-title {
+    font-size: 0.68rem !important;
+    margin: 8px 0 2px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .manager-metric-card .metric-value {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    word-break: break-word;
+  }
+
+  .manager-metric-card .metric-icon-box {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 6px !important;
+  }
+
+  .manager-metric-card .metric-icon-box svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .manager-metric-card .metric-badge {
+    font-size: 0.65rem !important;
+    padding: 1px 5px !important;
+  }
+
+  .manager-flex-responsive-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .manager-header-title-group h1 {
+    font-size: 1.35rem !important;
+  }
+
+  .manager-modal-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .manager-modal-form-grid > div {
+    grid-column: span 1 !important;
+  }
+
+  .revenue-metrics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .manager-table-responsive table th,
+  .manager-table-responsive table td {
+    white-space: nowrap !important;
+  }
+
+/* Card View utilities for mobile responsive tables */
+.manager-mobile-card-list {
+  display: none;
+}
+
+.manager-desktop-table {
+  display: block;
+}
+
+.manager-card-item {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manager-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+
+.manager-card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.manager-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.manager-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.manager-card-label {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.manager-card-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.manager-card-footer {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .manager-desktop-table {
+    display: none !important;
+  }
+  .manager-mobile-card-list {
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .manager-filter-select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .manager-user-name {
+    display: none !important;
+  }
+}

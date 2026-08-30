@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { exportToCSV } from '../../utils/exportUtils';
 
 const ManagerRevenue = ({ user, orders }) => {
   const { showToast } = useApp();
@@ -13,7 +14,19 @@ const ManagerRevenue = ({ user, orders }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [fileType, setFileType] = useState('TXT');
+  const [activePeriod, setActivePeriod] = useState('30 ngày');
   const [chartSubPeriod, setChartSubPeriod] = useState('Tuần');
+
+  const handlePeriodChange = (period) => {
+    setActivePeriod(period);
+    if (period === '7 ngày') {
+      setChartSubPeriod('Hàng ngày');
+    } else if (period === '30 ngày') {
+      setChartSubPeriod('Tuần');
+    } else if (period === '12 tháng') {
+      setChartSubPeriod('Tháng');
+    }
+  };
 
   const handleExportReport = (e) => {
     e.preventDefault();
@@ -25,64 +38,58 @@ const ManagerRevenue = ({ user, orders }) => {
       showToast('Ngày bắt đầu không được lớn hơn ngày kết thúc!', 'error');
       return;
     }
-    
-    showToast(`Đang tạo báo cáo dạng ${fileType} từ ngày ${startDate} đến ngày ${endDate}...`, 'success');
-    
-    // Simulate generation delay
-    setTimeout(() => {
-      try {
-        const reportOrders = deliveredOrders.filter(o => {
-          if (!o.createdAt) return false;
-          const orderDate = new Date(o.createdAt).toISOString().split('T')[0];
-          return orderDate >= startDate && orderDate <= endDate;
+    try {
+      const reportOrders = deliveredOrders.filter(o => {
+        if (!o.createdAt) return false;
+        const orderDate = new Date(o.createdAt).toISOString().split('T')[0];
+        return orderDate >= startDate && orderDate <= endDate;
+      });
+      const periodRevenue = reportOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
+      
+      let blob, filename;
+      if (fileType === 'XLSX') {
+        let content = "\uFEFFMã Đơn Hàng,Khách Hàng,Ngày Tạo,Tổng Tiền,Trạng Thái\n";
+        reportOrders.forEach(o => {
+          const dateStr = new Date(o.createdAt).toLocaleDateString('vi-VN');
+          const name = o.user?.fullName || 'Khách vãng lai';
+          content += `${o.id},${name},${dateStr},${o.finalAmount || 0},Đã giao hàng\n`;
         });
-        const periodRevenue = reportOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
-        
-        let blob, filename;
-        if (fileType === 'XLSX') {
-          let content = "\uFEFFMã Đơn Hàng,Khách Hàng,Ngày Tạo,Tổng Tiền,Trạng Thái\n";
-          reportOrders.forEach(o => {
-            const dateStr = new Date(o.createdAt).toLocaleDateString('vi-VN');
-            const name = o.user?.fullName || 'Khách vãng lai';
-            content += `${o.id},${name},${dateStr},${o.finalAmount || 0},Đã giao hàng\n`;
-          });
-          content += `\nTổng doanh thu,,Thống kê từ ${startDate} đến ${endDate},${periodRevenue}đ,\n`;
-          blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-          filename = `Bao_cao_doanh_thu_${startDate}_den_${endDate}.xlsx`;
-        } else {
-          // TXT report
-          let content = `BÁO CÁO DOANH THU UTESHOP\n`;
-          content += `Khoảng thời gian: Từ ngày ${startDate} đến ngày ${endDate}\n`;
-          content += `==================================================\n`;
-          content += `TỔNG DOANH THU: ${periodRevenue.toLocaleString('vi-VN')}đ\n`;
-          content += `SỐ ĐƠN HÀNG ĐÃ GIAO: ${reportOrders.length}\n`;
-          content += `==================================================\n\n`;
-          content += `DANH SÁCH ĐƠN HÀNG CHI TIẾT:\n`;
-          reportOrders.forEach((o, index) => {
-            const dateStr = new Date(o.createdAt).toLocaleDateString('vi-VN');
-            const name = o.user?.fullName || 'Khách vãng lai';
-            content += `${index + 1}. Mã ĐH: #${o.id} | Khách hàng: ${name} | Ngày: ${dateStr} | Tiền: ${(o.finalAmount || 0).toLocaleString('vi-VN')}đ\n`;
-          });
-          blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
-          filename = `Bao_cao_doanh_thu_${startDate}_den_${endDate}.txt`;
-        }
-        
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        showToast(`Tải báo cáo ${fileType} thành công!`, 'success');
-        setShowReportModal(false);
-      } catch (err) {
-        console.error(err);
-        showToast('Lỗi khi tải tệp báo cáo!', 'error');
+        content += `\nTổng doanh thu,,Thống kê từ ${startDate} đến ${endDate},${periodRevenue}đ,\n`;
+        blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        filename = `Bao_cao_doanh_thu_${startDate}_den_${endDate}.csv`;
+      } else {
+        // TXT report
+        let content = `BÁO CÁO DOANH THU BOOKSTORE\n`;
+        content += `Khoảng thời gian: Từ ngày ${startDate} đến ngày ${endDate}\n`;
+        content += `==================================================\n`;
+        content += `TỔNG DOANH THU: ${periodRevenue.toLocaleString('vi-VN')}đ\n`;
+        content += `SỐ ĐƠN HÀNG ĐÃ GIAO: ${reportOrders.length}\n`;
+        content += `==================================================\n\n`;
+        content += `DANH SÁCH ĐƠN HÀNG CHI TIẾT:\n`;
+        reportOrders.forEach((o, index) => {
+          const dateStr = new Date(o.createdAt).toLocaleDateString('vi-VN');
+          const name = o.user?.fullName || 'Khách vãng lai';
+          content += `${index + 1}. Mã ĐH: #${o.id} | Khách hàng: ${name} | Ngày: ${dateStr} | Tiền: ${(o.finalAmount || 0).toLocaleString('vi-VN')}đ\n`;
+        });
+        blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+        filename = `Bao_cao_doanh_thu_${startDate}_den_${endDate}.txt`;
       }
-    }, 1200);
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      showToast(`Tải báo cáo ${fileType} thành công!`, 'success');
+      setShowReportModal(false);
+    } catch (err) {
+      console.error(err);
+      showToast('Lỗi khi tải tệp báo cáo!', 'error');
+    }
   };
   const getChartData = () => {
     const data = [];
@@ -154,7 +161,7 @@ const ManagerRevenue = ({ user, orders }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
             Thống kê & Tài chính
@@ -164,69 +171,52 @@ const ManagerRevenue = ({ user, orders }) => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', backgroundColor: '#e2e8f0', padding: '4px', borderRadius: '8px' }}>
-          {['7 ngày', '30 ngày', '12 tháng'].map((period, index) => (
-            <button key={period} style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: index === 1 ? '#ffffff' : 'transparent',
-              color: index === 1 ? '#0f172a' : '#64748b',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: index === 1 ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'
-            }}>
-              {period}
-            </button>
-          ))}
-          <button 
-            onClick={() => setShowReportModal(true)}
-            style={{
-              marginLeft: '8px',
-              padding: '6px 14px',
-              borderRadius: '6px',
-              backgroundColor: '#7c3aed',
-              color: '#ffffff',
-              border: 'none',
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            Tạo báo cáo
-          </button>
-        </div>
+        <button 
+          onClick={() => setShowReportModal(true)}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '8px',
+            backgroundColor: '#7c3aed',
+            color: '#ffffff',
+            border: 'none',
+            fontSize: '0.9rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)'
+          }}
+        >
+          Tạo báo cáo
+        </button>
       </div>
 
       {/* Financial Metrics Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+      <div className="revenue-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
         
         {/* DOANH THU */}
-        <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>DOANH THU</span>
-          <div style={{ fontSize: '1.875rem', fontWeight: 800, color: '#0f172a', margin: '12px 0 8px' }}>
+        <div className="manager-metric-card" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+          <span className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>DOANH THU</span>
+          <div className="metric-value" style={{ fontSize: '1.875rem', fontWeight: 800, color: '#0f172a', margin: '12px 0 8px' }}>
             {totalRevenue.toLocaleString('vi-VN')}đ
           </div>
-          <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>+12.5% so với tháng trước</span>
+          <span className="metric-badge" style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>+12.5% so với tháng trước</span>
         </div>
 
         {/* SỐ DƯ VÍ */}
-        <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>SỐ DƯ VÍ</span>
-          <div style={{ fontSize: '1.875rem', fontWeight: 800, color: '#7c3aed', margin: '12px 0 8px' }}>
+        <div className="manager-metric-card" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+          <span className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>SỐ DƯ VÍ</span>
+          <div className="metric-value" style={{ fontSize: '1.875rem', fontWeight: 800, color: '#7c3aed', margin: '12px 0 8px' }}>
             {Math.round(walletBalance).toLocaleString('vi-VN')}đ
           </div>
-          <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>+8.2% so với tháng trước</span>
+          <span className="metric-badge" style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>+8.2% so với tháng trước</span>
         </div>
 
         {/* GIÁ TRỊ ĐƠN */}
-        <div style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>GIÁ TRỊ ĐƠN</span>
-          <div style={{ fontSize: '1.875rem', fontWeight: 800, color: '#0f172a', margin: '12px 0 8px' }}>
+        <div className="manager-metric-card" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+          <span className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>GIÁ TRỊ ĐƠN</span>
+          <div className="metric-value" style={{ fontSize: '1.875rem', fontWeight: 800, color: '#0f172a', margin: '12px 0 8px' }}>
             {Math.round(averageOrderValue).toLocaleString('vi-VN')}đ
           </div>
-          <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({deliveredOrders.length || 0} Đơn hàng)</span>
+          <span className="metric-badge" style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({deliveredOrders.length || 0} Đơn hàng)</span>
         </div>
 
       </div>

@@ -92,6 +92,7 @@ const ManagerWarehouse = ({
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             <div
+                className="manager-flex-responsive-row"
                 style={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -111,8 +112,9 @@ const ManagerWarehouse = ({
                     </h1>
                 </div>
 
-                <div style={{ display: "flex", gap: "12px" }}>
+                <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                     <select
+                        className="manager-filter-select"
                         value={warehouseTypeFilter}
                         onChange={(e) => {
                             setWarehouseTypeFilter(e.target.value);
@@ -125,7 +127,7 @@ const ManagerWarehouse = ({
                             outline: "none",
                             fontSize: "0.9rem",
                             backgroundColor: "#ffffff",
-                            minWidth: "180px",
+                            minWidth: "160px",
                         }}
                     >
                         <option value="ALL">Tất cả giao dịch</option>
@@ -157,17 +159,19 @@ const ManagerWarehouse = ({
 
             {/* Warehouse log table */}
             <div
+                className="manager-desktop-table manager-table-responsive"
                 style={{
                     backgroundColor: "#ffffff",
                     borderRadius: "16px",
                     border: "1px solid #e2e8f0",
-                    overflow: "hidden",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                    overflowX: "auto"
                 }}
             >
                 <table
                     style={{
                         width: "100%",
+                        minWidth: "650px",
                         borderCollapse: "collapse",
                         textAlign: "left",
                     }}
@@ -358,12 +362,14 @@ const ManagerWarehouse = ({
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        padding: "16px 24px",
+                        flexWrap: "wrap",
+                        gap: "10px",
+                        padding: "12px 16px",
                         borderTop: "1px solid #e2e8f0",
                         backgroundColor: "#ffffff",
                     }}
                 >
-                    <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                    <span style={{ fontSize: "0.78rem", color: "#64748b", whiteSpace: "nowrap" }}>
                         Hiển thị {paginatedWarehouse.length} trên tổng số{" "}
                         {filteredWarehouse.length} giao dịch
                     </span>
@@ -446,6 +452,79 @@ const ManagerWarehouse = ({
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* Warehouse Cards (Mobile-first card view) */}
+            <div className="manager-mobile-card-list">
+                {paginatedWarehouse.map((mov) => (
+                    <div key={mov.id} className="manager-card-item">
+                        <div className="manager-card-header">
+                            <span className="manager-card-title">Mã GD #{mov.id}</span>
+                            <span
+                                style={{
+                                    display: "inline-flex",
+                                    padding: "4px 10px",
+                                    borderRadius: "999px",
+                                    fontSize: "0.75rem",
+                                    fontWeight: 700,
+                                    backgroundColor:
+                                        mov.type === "IMPORT"
+                                            ? "#ecfdf5"
+                                            : mov.type === "EXPORT"
+                                              ? "#fff7ed"
+                                              : "#f1f5f9",
+                                    color:
+                                        mov.type === "IMPORT"
+                                            ? "#10b981"
+                                            : mov.type === "EXPORT"
+                                              ? "#f97316"
+                                              : "#64748b",
+                                }}
+                            >
+                                {mov.type === "IMPORT"
+                                    ? "Nhập kho"
+                                    : mov.type === "EXPORT"
+                                      ? "Xuất kho"
+                                      : "Điều chỉnh"}
+                            </span>
+                        </div>
+
+                        <div className="manager-card-body">
+                            <div className="manager-card-row">
+                                <span className="manager-card-label">Sản phẩm sách:</span>
+                                <span className="manager-card-value" style={{ maxWidth: '60%', textAlign: 'right' }}>
+                                    {mov.productTitle || mov.productName || 'Chưa xác định'}
+                                </span>
+                            </div>
+                            <div className="manager-card-row">
+                                <span className="manager-card-label">Số lượng:</span>
+                                <span
+                                    className="manager-card-value"
+                                    style={{
+                                        fontWeight: 700,
+                                        fontSize: "0.95rem",
+                                        color: mov.type === "IMPORT" ? "#10b981" : mov.type === "EXPORT" ? "#ef4444" : "#64748b"
+                                    }}
+                                >
+                                    {mov.type === "IMPORT" ? `+${mov.quantity}` : mov.type === "EXPORT" ? `-${mov.quantity}` : `${mov.quantity}`}
+                                </span>
+                            </div>
+                            <div className="manager-card-row">
+                                <span className="manager-card-label">Ngày thực hiện:</span>
+                                <span className="manager-card-value">{mov.date}</span>
+                            </div>
+                            <div className="manager-card-row">
+                                <span className="manager-card-label">Người thực hiện:</span>
+                                <span className="manager-card-value">{mov.performer || 'Quản lý'}</span>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {filteredWarehouse.length === 0 && (
+                    <div style={{ padding: "32px", textAlign: "center", color: "#94a3b8", backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
+                        Không tìm thấy nhật ký kho nào
+                    </div>
+                )}
             </div>
 
             {/* STOCK ADJUSTMENT MODAL */}
