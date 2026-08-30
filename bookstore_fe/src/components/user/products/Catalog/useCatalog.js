@@ -62,7 +62,20 @@ export const useCatalog = () => {
             console.error("Lỗi lấy sản phẩm:", e);
         } finally {
             setLoading(false);
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            const targetElem =
+                document.querySelector(".catalog-grid") ||
+                document.querySelector(".catalog-content-section") ||
+                document.querySelector(".catalog-main-layout");
+            if (targetElem) {
+                const yOffset = -75; // Cuộn vừa khít mép trên của Hàng Sản Phẩm dưới Navbar
+                const y =
+                    targetElem.getBoundingClientRect().top +
+                    window.pageYOffset +
+                    yOffset;
+                window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+            } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
         }
     }, [page, selectedCategory, keyword, minPrice, maxPrice]);
 

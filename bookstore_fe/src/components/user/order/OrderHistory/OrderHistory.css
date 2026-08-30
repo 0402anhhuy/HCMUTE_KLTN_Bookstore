@@ -1121,3 +1121,189 @@
     color: #0a422d;
     font-size: 1.3rem;
 }
+
+/* ================= MOBILE RESPONSIVE STYLES ================= */
+@media (max-width: 768px) {
+    .order-history-page-container {
+        padding-top: 95px !important;
+        padding-bottom: 30px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .order-history-header {
+        margin-bottom: 12px !important;
+        margin-top: 0 !important;
+    }
+
+    .order-history-title {
+        font-size: 1.25rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    .order-history-subtitle {
+        font-size: 0.75rem !important;
+    }
+
+    .order-history-tabs-container {
+        padding-bottom: 4px !important;
+        margin-bottom: 12px !important;
+        gap: 2px !important;
+        display: flex !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        scrollbar-width: none !important;
+    }
+
+    .order-history-tabs-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .order-history-tab-btn {
+        padding: 8px 12px !important;
+        font-size: 0.78rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    .order-card-container {
+        border-radius: 10px !important;
+    }
+
+    .order-card-header {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        padding: 10px 12px !important;
+    }
+
+    .order-card-header-left {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        font-size: 0.78rem !important;
+    }
+
+    .order-card-id-text {
+        font-size: 0.8rem !important;
+    }
+
+    .order-card-date-text {
+        font-size: 0.73rem !important;
+    }
+
+    .order-card-status-badge {
+        font-size: 0.75rem !important;
+        gap: 4px !important;
+    }
+
+    .order-card-items-body {
+        padding: 10px 12px !important;
+    }
+
+    .order-item-row {
+        flex-wrap: nowrap !important;
+        gap: 10px !important;
+    }
+
+    .order-item-thumb-wrapper {
+        width: 44px !important;
+        height: 58px !important;
+    }
+
+    .order-item-title {
+        font-size: 0.8rem !important;
+    }
+
+    .order-item-spec-text {
+        font-size: 0.72rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    .order-item-qty-text {
+        font-size: 0.75rem !important;
+    }
+
+    .order-item-right-price-col {
+        text-align: right !important;
+        width: auto !important;
+        display: block !important;
+    }
+
+    .order-item-price-text {
+        font-size: 0.85rem !important;
+    }
+
+    .order-card-footer {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+    }
+
+    .order-card-footer-right {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .order-card-total-group {
+        gap: 4px !important;
+    }
+
+    .order-card-total-label {
+        font-size: 0.78rem !important;
+    }
+
+    .order-card-total-val {
+        font-size: 1.05rem !important;
+    }
+
+    .order-card-actions-group {
+        width: 100% !important;
+        display: flex !important;
+        gap: 6px !important;
+        flex-wrap: nowrap !important;
+    }
+
+    .order-btn-cancel-order,
+    .order-btn-return-order,
+    .order-btn-view-details {
+        flex: 1 !important;
+        text-align: center !important;
+        padding: 6px 8px !important;
+        font-size: 0.75rem !important;
+        white-space: nowrap !important;
+        border-radius: 6px !important;
+    }
+
+    .order-modal-card-large,
+    .order-modal-card-medium,
+    .order-modal-card-small {
+        max-width: 95vw !important;
+        padding: 14px !important;
+        max-height: 90vh !important;
+    }
+
+    .order-stepper-box {
+        padding: 12px 6px !important;
+    }
+
+    .order-stepper-circle {
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    .order-stepper-node-label {
+        font-size: 0.6rem !important;
+        max-width: 55px !important;
+    }
+
+    .order-stepper-node-time {
+        font-size: 0.55rem !important;
+        max-width: 55px !important;
+    }
+}

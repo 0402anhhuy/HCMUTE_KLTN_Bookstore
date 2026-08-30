@@ -21,9 +21,6 @@ export const useCart = () => {
                         next.delete(id);
                     }
                 });
-                if (prev.size === 0 && cart.items.length > 0) {
-                    cart.items.forEach((item) => next.add(item.id));
-                }
                 return next;
             });
         }

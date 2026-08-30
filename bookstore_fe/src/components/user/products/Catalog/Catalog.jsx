@@ -110,6 +110,28 @@ const Catalog = () => {
         selectedLanguages.length > 0,
     );
 
+    // Tính toán dãy số trang rút gọn (tối đa 4 số trang theo block ví dụ: 1 2 3 4 -> 4 5 6 7)
+    const visiblePageNumbers = useMemo(() => {
+        const maxVisible = 4;
+        if (totalPages <= maxVisible) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+
+        // Tính trang bắt đầu block dựa trên vị trí trang hiện tại
+        let start = Math.floor(page / 3) * 3 + 1;
+        let end = Math.min(totalPages, start + maxVisible - 1);
+
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+
+        const pages = [];
+        for (let i = start; i <= end; i++) {
+            pages.push(i);
+        }
+        return pages;
+    }, [page, totalPages]);
+
     // Breadcrumb tự động
     const breadcrumbItems = useMemo(() => {
         if (!selectedCategory) {
@@ -480,16 +502,21 @@ const Catalog = () => {
                             >
                                 ← Trước
                             </button>
-                            {[...Array(totalPages)].map((_, i) => (
-                                <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => setPage(i)}
-                                    className={`catalog-page-btn ${page === i ? "active" : ""}`}
-                                >
-                                    {i + 1}
-                                </button>
-                            ))}
+                            {visiblePageNumbers.map((pNum) => {
+                                const pageIndex = pNum - 1;
+                                return (
+                                    <button
+                                        key={pNum}
+                                        type="button"
+                                        onClick={() => setPage(pageIndex)}
+                                        className={`catalog-page-btn ${
+                                            page === pageIndex ? "active" : ""
+                                        }`}
+                                    >
+                                        {pNum}
+                                    </button>
+                                );
+                            })}
                             <button
                                 type="button"
                                 onClick={() =>

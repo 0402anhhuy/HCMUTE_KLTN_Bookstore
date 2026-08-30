@@ -426,10 +426,36 @@ const ProductDetail = () => {
                     <h4 className="product-detail-desc-book-name">
                         {product.name}
                     </h4>
-                    <div className="product-detail-desc-text">
+                    <div
+                        className={`product-detail-desc-text ${
+                            !isDescExpanded ? "collapsed" : ""
+                        }`}
+                    >
                         {product.description ||
                             "Chưa có mô tả cho tác phẩm này."}
                     </div>
+                    {product.description &&
+                        product.description.length > 100 && (
+                            <div className="product-detail-desc-toggle-wrapper">
+                                <button
+                                    type="button"
+                                    className="product-detail-btn-toggle-desc"
+                                    onClick={() =>
+                                        setIsDescExpanded(!isDescExpanded)
+                                    }
+                                >
+                                    {isDescExpanded ? (
+                                        <>
+                                            Thu gọn <ChevronUp size={16} />
+                                        </>
+                                    ) : (
+                                        <>
+                                            Xem thêm <ChevronDown size={16} />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
                 </div>
             </div>
 
