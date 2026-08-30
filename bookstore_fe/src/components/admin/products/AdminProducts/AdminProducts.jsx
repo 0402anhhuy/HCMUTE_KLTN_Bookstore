@@ -143,8 +143,8 @@ const AdminProducts = ({ products, categories, loadData }) => {
                 </select>
             </div>
 
-            {/* Table grid wrapper */}
-            <div className="admin-products-table-wrapper">
+            {/* Table grid wrapper (Desktop) */}
+            <div className="admin-desktop-table admin-products-table-wrapper">
                 <table className="admin-products-table">
                     <thead>
                         <tr className="admin-products-thead-row">
@@ -309,6 +309,68 @@ const AdminProducts = ({ products, categories, loadData }) => {
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* Mobile Cards List View */}
+            <div className="admin-mobile-card-list">
+                {paginatedProducts.map((p) => {
+                    const isOutOfStock = p.stockQuantity === 0;
+                    const isProductActive = p.status === "ACTIVE" && p.stockQuantity > 0;
+                    return (
+                        <div key={p.id} className="admin-card-item" onClick={() => setSelectedProductId(p.id)}>
+                            <div className="admin-card-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <img
+                                        src={getImagesList(p.imageUrl)[0] || "https://via.placeholder.com/40x60?text=Book"}
+                                        alt={p.name}
+                                        style={{ width: '40px', height: '52px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+                                    />
+                                    <div>
+                                        <div className="admin-card-title">{p.name}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>ISBN: {p.isbn || "N/A"}</div>
+                                    </div>
+                                </div>
+                                <span className={`admin-products-stock-badge ${isProductActive ? "in-stock" : "out-of-stock"}`}>
+                                    {isProductActive ? "Đang bán" : isOutOfStock ? "Hết hàng" : "Tạm ẩn"}
+                                </span>
+                            </div>
+
+                            <div className="admin-card-body">
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Tác giả:</span>
+                                    <span className="admin-card-value">{p.author || "Chưa rõ"}</span>
+                                </div>
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Danh mục:</span>
+                                    <span style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: 600 }}>
+                                        {getCategoryPath(p.category) || p.category?.name || "N/A"}
+                                    </span>
+                                </div>
+                                <div className="admin-card-row">
+                                    <span className="admin-card-label">Đơn giá / Kho:</span>
+                                    <span className="admin-card-value">
+                                        <strong style={{ color: '#ef4444' }}>{p.price?.toLocaleString("vi-VN")}đ</strong> ({p.stockQuantity} cuốn)
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="admin-card-footer">
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setSelectedProductId(p.id); }}
+                                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #3b82f6', backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                    Xem chi tiết & Kiểm duyệt
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+                {filteredProducts.length === 0 && (
+                    <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        Không tìm thấy sản phẩm nào phù hợp
+                    </div>
+                )}
             </div>
         </div>
     );

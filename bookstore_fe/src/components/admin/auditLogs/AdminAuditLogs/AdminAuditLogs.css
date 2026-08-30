@@ -149,3 +149,120 @@
     text-align: center;
     color: #64748b;
 }
+
+/* Filter Card */
+.admin-audit-logs-filter-card {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
+}
+
+.admin-audit-logs-search-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.admin-audit-logs-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-audit-logs-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.admin-audit-logs-filter-select {
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    background-color: #f8fafc;
+}
+
+.admin-audit-logs-reset-btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Pagination */
+.admin-audit-logs-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.admin-audit-logs-pagination-info {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.admin-audit-logs-pagination-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.admin-audit-logs-page-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background-color: #ffffff;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-audit-logs-page-btn.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.admin-audit-logs-page-btn:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .admin-audit-logs-filter-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .admin-audit-logs-search-input {
+        width: 100%;
+    }
+    .admin-audit-logs-reset-btn {
+        width: 100%;
+        text-align: center;
+    }
+    .admin-audit-logs-pagination {
+        flex-direction: column;
+        align-items: center;
+    }
+}

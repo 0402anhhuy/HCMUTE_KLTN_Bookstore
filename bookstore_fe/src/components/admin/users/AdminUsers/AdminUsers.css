@@ -79,7 +79,7 @@
 
 .admin-users-filter-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 16px;
     flex: 1;
 }
@@ -96,6 +96,7 @@
     font-weight: 600;
     color: #475569;
     white-space: nowrap;
+    min-width: 90px;
 }
 
 .admin-users-filter-select {
@@ -428,4 +429,20 @@
 
 .admin-users-delete-confirm-btn:hover {
     background-color: #dc2626;
+}
+
+@media (max-width: 768px) {
+    .admin-users-filter-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .admin-users-filter-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .admin-users-reset-filter-btn {
+        width: 100%;
+        text-align: center;
+    }
 }
