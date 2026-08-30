@@ -154,8 +154,20 @@ public class UserService {
 
     @Transactional
     public User updateProfile(User user, UpdateProfileRequest request) {
+        if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
+            String[] addresses = request.getAddress().split(" \\|\\| ");
+            if (addresses.length > 5) {
+                throw new RuntimeException("Bạn chỉ được phép lưu tối đa 5 địa chỉ nhận hàng.");
+            }
+        }
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            String phone = request.getPhone().trim();
+            if (!phone.matches("^(0|\\+84)[35789]\\d{8}$")) {
+                throw new RuntimeException("Số điện thoại không đúng định dạng Việt Nam (10 chữ số, ví dụ: 0909123456).");
+            }
+        }
         user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
+        user.setPhone(request.getPhone() != null ? request.getPhone().trim() : null);
         user.setAddress(request.getAddress());
         if (request.getAvatarUrl() != null) {
             user.setAvatarUrl(request.getAvatarUrl());
