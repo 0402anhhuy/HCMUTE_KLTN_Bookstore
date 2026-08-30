@@ -137,7 +137,9 @@ const AdminProducts = ({ products, categories, loadData }) => {
                     className="admin-products-status-select"
                 >
                     <option value="ALL">Tất cả trạng thái</option>
-                    <option value="ACTIVE">Còn hàng / Đang bán</option>
+                    <option value="PENDING">Chờ duyệt</option>
+                    <option value="ACTIVE">Đã duyệt (Đang bán)</option>
+                    <option value="REJECTED">Bị từ chối</option>
                     <option value="INACTIVE">Tạm ẩn</option>
                     <option value="OUT_OF_STOCK">Hết hàng</option>
                 </select>
@@ -245,8 +247,8 @@ const AdminProducts = ({ products, categories, loadData }) => {
                                     </td>
                                     <td className="admin-products-td-nowrap">
                                         <div className="admin-products-action-box">
-                                            <span className="admin-products-status-tag">
-                                                Chờ duyệt
+                                            <span className={`admin-products-status-tag ${p.status ? p.status.toLowerCase() : 'pending'}`}>
+                                                {p.status === "ACTIVE" ? "Đã duyệt" : p.status === "REJECTED" ? "Bị từ chối" : p.status === "INACTIVE" ? "Tạm ẩn" : "Chờ duyệt"}
                                             </span>
                                         </div>
                                     </td>
