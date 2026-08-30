@@ -26,11 +26,15 @@ export const useLogin = () => {
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
+        if (!email.trim() || !password.trim()) {
+            setError("Vui lòng nhập đầy đủ Email và Mật khẩu.");
+            return;
+        }
         setLoading(true);
         setError("");
         setMessage("");
         try {
-            const response = await api.post("/auth/login", { email, password, rememberMe });
+            const response = await api.post("/auth/login", { email: email.trim(), password, rememberMe });
             const userData = {
                 email: response.data.email,
                 fullName: response.data.fullName,
@@ -48,7 +52,13 @@ export const useLogin = () => {
                 navigate("/");
             }
         } catch (err) {
-            setError(err.response?.data?.error || "Sai email hoặc mật khẩu.");
+            let errorMsg = err.response?.data?.error;
+            if (!errorMsg || errorMsg === "Bad Request") {
+                errorMsg = "Email hoặc mật khẩu không chính xác.";
+            } else if (errorMsg.includes("Bad credentials")) {
+                errorMsg = "Email hoặc mật khẩu không chính xác.";
+            }
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
