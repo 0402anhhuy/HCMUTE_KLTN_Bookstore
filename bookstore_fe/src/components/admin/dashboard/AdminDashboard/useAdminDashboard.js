@@ -69,7 +69,7 @@ export const useAdminDashboard = () => {
             }
 
             try {
-                const prodRes = await productService.getPendingProducts();
+                const prodRes = await productService.getProducts();
                 setProducts(prodRes.data?.content || prodRes.data || []);
             } catch (err) {
                 console.error("Error loading products", err);

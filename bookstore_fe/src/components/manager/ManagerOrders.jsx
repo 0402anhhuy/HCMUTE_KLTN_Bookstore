@@ -234,7 +234,7 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                 </td>
                 <td style={{ padding: '16px 24px' }}>
                   <div style={{ fontWeight: 600, color: '#0f172a' }}>{order.user?.fullName}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{order.shippingPhone || order.user?.phone}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{order.shippingPhone || order.user?.phone || 'Chưa cập nhật'}</div>
                 </td>
                 <td style={{ padding: '16px 24px', fontWeight: 700, color: '#0f172a' }}>
                   {parseFloat(order.finalAmount || order.totalAmount).toLocaleString('vi-VN')}đ
@@ -546,7 +546,7 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
               </div>
               <div className="manager-card-row">
                 <span className="manager-card-label">SĐT liên hệ:</span>
-                <span className="manager-card-value">{order.shippingPhone || order.user?.phone || '---'}</span>
+                <span className="manager-card-value">{order.shippingPhone || order.user?.phone || 'Chưa cập nhật'}</span>
               </div>
               <div className="manager-card-row">
                 <span className="manager-card-label">Thanh toán:</span>
@@ -787,7 +787,7 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
                       <h4 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0', fontWeight: 700 }}>Thông tin khách hàng</h4>
                       <div style={{ fontSize: '0.9rem', color: '#0f172a', fontWeight: 600 }}>{orderDetails.order?.user?.fullName}</div>
                       <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '4px' }}>Email: {orderDetails.order?.user?.email}</div>
-                      <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '2px' }}>SĐT: {orderDetails.order?.shippingPhone || orderDetails.order?.user?.phone || 'N/A'}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#475569', marginTop: '2px' }}>SĐT: {orderDetails.order?.shippingPhone || orderDetails.order?.user?.phone || 'Chưa cập nhật'}</div>
                     </div>
                     <div>
                       <h4 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px 0', fontWeight: 700 }}>Thông tin giao hàng & TT</h4>

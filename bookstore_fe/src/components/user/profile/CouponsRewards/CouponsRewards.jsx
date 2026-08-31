@@ -10,6 +10,10 @@ const CouponsRewards = () => {
         rewardPoints,
         rewardValue,
         walletBalance,
+        currentPage,
+        setCurrentPage,
+        totalPages,
+        paginatedCoupons,
         handleCopy,
         formatPrice,
     } = useCouponsRewards();
@@ -86,79 +90,113 @@ const CouponsRewards = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="coupons-rewards-scroll-list">
-                            {coupons.map((coupon) => {
-                                const isExpired =
-                                    new Date(coupon.endDate) < new Date();
-                                const isLimitReached =
-                                    coupon.usedCount >= coupon.usageLimit;
-                                const isInactive =
-                                    coupon.status === "INACTIVE" ||
-                                    isExpired ||
-                                    isLimitReached;
-                                const isCopied = copiedCode === coupon.code;
+                        <>
+                            <div className="coupons-rewards-scroll-list">
+                                {paginatedCoupons.map((coupon) => {
+                                    const isExpired =
+                                        new Date(coupon.endDate) < new Date();
+                                    const isLimitReached =
+                                        coupon.usedCount >= coupon.usageLimit;
+                                    const isInactive =
+                                        coupon.status === "INACTIVE" ||
+                                        isExpired ||
+                                        isLimitReached;
+                                    const isCopied = copiedCode === coupon.code;
 
-                                return (
-                                    <div
-                                        key={coupon.id}
-                                        className={`coupon-item-card ${
-                                            isInactive ? "inactive" : ""
-                                        }`}
-                                    >
-                                        <div className="coupon-item-left">
-                                            <div className="coupon-item-code-row">
-                                                <span className="coupon-item-code-badge">
-                                                    {coupon.code}
-                                                </span>
-                                                {isExpired && (
-                                                    <span className="coupon-item-tag-danger">
-                                                        Hết hạn
-                                                    </span>
-                                                )}
-                                                {isLimitReached && (
-                                                    <span className="coupon-item-tag-danger">
-                                                        Đã dùng
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="coupon-item-discount-desc">
-                                                {coupon.discountType ===
-                                                "PERCENT"
-                                                    ? `Giảm ${coupon.discountValue}%`
-                                                    : `Giảm ${formatPrice(coupon.discountValue)}`}
-                                            </div>
-                                            <div className="coupon-item-min-order">
-                                                Đơn tối thiểu:{" "}
-                                                {formatPrice(
-                                                    coupon.minOrderValue,
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                handleCopy(coupon.code)
-                                            }
-                                            disabled={isInactive}
-                                            className={`coupon-item-copy-btn ${
-                                                isCopied ? "copied" : ""
+                                    return (
+                                        <div
+                                            key={coupon.id}
+                                            className={`coupon-item-card ${
+                                                isInactive ? "inactive" : ""
                                             }`}
                                         >
-                                            {isCopied ? (
-                                                <>
-                                                    <Check size={12} /> Đã chép
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Copy size={12} /> Sao chép
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                            <div className="coupon-item-left">
+                                                <div className="coupon-item-code-row">
+                                                    <span className="coupon-item-code-badge">
+                                                        {coupon.code}
+                                                    </span>
+                                                    {isExpired && (
+                                                        <span className="coupon-item-tag-danger">
+                                                            Hết hạn
+                                                        </span>
+                                                    )}
+                                                    {isLimitReached && (
+                                                        <span className="coupon-item-tag-danger">
+                                                            Đã dùng
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="coupon-item-discount-desc">
+                                                    {coupon.discountType ===
+                                                    "PERCENT"
+                                                        ? `Giảm ${coupon.discountValue}%`
+                                                        : `Giảm ${formatPrice(coupon.discountValue)}`}
+                                                </div>
+                                                <div className="coupon-item-min-order">
+                                                    Đơn tối thiểu:{" "}
+                                                    {formatPrice(
+                                                        coupon.minOrderValue,
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleCopy(coupon.code)
+                                                }
+                                                disabled={isInactive}
+                                                className={`coupon-item-copy-btn ${
+                                                    isCopied ? "copied" : ""
+                                                }`}
+                                            >
+                                                {isCopied ? (
+                                                    <>
+                                                        <Check size={12} /> Đã chép
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy size={12} /> Sao chép
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {totalPages > 1 && (
+                                <div className="coupons-rewards-pagination">
+                                    <button
+                                        type="button"
+                                        disabled={currentPage === 1}
+                                        onClick={() =>
+                                            setCurrentPage((prev) =>
+                                                Math.max(prev - 1, 1),
+                                            )
+                                        }
+                                        className="coupons-pagination-btn"
+                                    >
+                                        Trang trước
+                                    </button>
+                                    <span className="coupons-pagination-info">
+                                        Trang {currentPage} / {totalPages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        disabled={currentPage === totalPages}
+                                        onClick={() =>
+                                            setCurrentPage((prev) =>
+                                                Math.min(prev + 1, totalPages),
+                                            )
+                                        }
+                                        className="coupons-pagination-btn"
+                                    >
+                                        Trang sau
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

@@ -43,6 +43,16 @@ export const useCouponsRewards = () => {
     const rewardValue = rewardPoints * 1000;
     const walletBalance = user?.walletBalance || 0;
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 4;
+
+    const totalPages = Math.ceil(coupons.length / ITEMS_PER_PAGE) || 1;
+
+    const paginatedCoupons = coupons.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE,
+    );
+
     return {
         coupons,
         loading,
@@ -50,6 +60,10 @@ export const useCouponsRewards = () => {
         rewardPoints,
         rewardValue,
         walletBalance,
+        currentPage,
+        setCurrentPage,
+        totalPages,
+        paginatedCoupons,
         handleCopy,
         formatPrice,
     };

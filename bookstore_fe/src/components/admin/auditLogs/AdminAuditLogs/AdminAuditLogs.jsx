@@ -201,7 +201,7 @@ const AdminAuditLogs = ({ auditLogs = [], loadData }) => {
             {filteredLogs.length > 0 && (
                 <div className="admin-audit-logs-pagination">
                     <div className="admin-audit-logs-pagination-info">
-                        Hiển thị {Math.min((currentPage - 1) * pageSize + 1, filteredLogs.length)} - {Math.min(currentPage * pageSize, filteredLogs.length)} trên tổng số {filteredLogs.length} kết quả (5 dòng/trang)
+                        Hiển thị {Math.min((currentPage - 1) * pageSize + 1, filteredLogs.length)} - {Math.min(currentPage * pageSize, filteredLogs.length)} trên tổng số {filteredLogs.length} kết quả
                     </div>
                     <div className="admin-audit-logs-pagination-controls">
                         <button

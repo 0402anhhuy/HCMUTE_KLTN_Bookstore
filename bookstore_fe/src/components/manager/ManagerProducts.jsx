@@ -226,7 +226,9 @@ const ManagerProducts = ({ products, categories, loadData }) => {
     const matchesCategory = categoryFilter === '' || isCategoryOrChildOf(p.category, categoryFilter, categories);
 
     let matchesStatus = true;
-    if (productStatusFilter === 'ACTIVE') matchesStatus = p.status === 'ACTIVE' && p.stockQuantity > 0;
+    if (productStatusFilter === 'ACTIVE') matchesStatus = p.status === 'ACTIVE';
+    else if (productStatusFilter === 'PENDING') matchesStatus = p.status === 'PENDING';
+    else if (productStatusFilter === 'REJECTED') matchesStatus = p.status === 'REJECTED';
     else if (productStatusFilter === 'INACTIVE') matchesStatus = p.status === 'INACTIVE';
     else if (productStatusFilter === 'OUT_OF_STOCK') matchesStatus = p.stockQuantity === 0;
 
@@ -357,7 +359,9 @@ const ManagerProducts = ({ products, categories, loadData }) => {
           }}
         >
           <option value="ALL">Tất cả trạng thái</option>
-          <option value="ACTIVE">Còn hàng / Đang bán</option>
+          <option value="ACTIVE">Đã duyệt (Đang bán)</option>
+          <option value="PENDING">Chờ duyệt</option>
+          <option value="REJECTED">Bị từ chối</option>
           <option value="INACTIVE">Tạm ẩn</option>
           <option value="OUT_OF_STOCK">Hết hàng</option>
         </select>
