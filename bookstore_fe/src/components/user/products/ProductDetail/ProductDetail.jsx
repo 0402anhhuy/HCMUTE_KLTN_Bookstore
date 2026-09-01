@@ -14,9 +14,10 @@ import {
     ChevronLeft,
     ChevronRight,
     Maximize2,
-    Eye,
     User,
     Building2,
+    BookOpenText,
+    Store,
 } from "lucide-react";
 import { Breadcrumb, RecommendationSection } from "@/components/common";
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
@@ -197,19 +198,29 @@ const ProductDetail = () => {
                             </div>
 
                             <div className="product-detail-meta-line">
-                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                    <Building2 size={15} color="#0a422d" /> Nhà cung cấp:{" "}
-                                    <strong>
-                                        {product.supplierName ||
-                                            product.publisher ||
-                                            "Chưa cập nhật"}
-                                    </strong>
+                                <span className="product-detail-meta-item">
+                                    <Store size={15} color="#0a422d" />
+                                    <span>
+                                        Nhà cung cấp: <strong>{product.supplierName || "Chưa cập nhật"}</strong>
+                                    </span>
                                 </span>
-                                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                    <User size={15} color="#0a422d" /> Tác giả:{" "}
-                                    <strong>
-                                        {product.author || "Chưa rõ tác giả"}
-                                    </strong>
+                                <span className="product-detail-meta-item">
+                                    <User size={15} color="#0a422d" />
+                                    <span>
+                                        Tác giả: <strong>{product.author || "Chưa rõ tác giả"}</strong>
+                                    </span>
+                                </span>
+                                <span className="product-detail-meta-item">
+                                    <Building2 size={15} color="#0a422d" />
+                                    <span>
+                                        Nhà xuất bản: <strong>{product.publisher || "Chưa cập nhật"}</strong>
+                                    </span>
+                                </span>
+                                <span className="product-detail-meta-item">
+                                    <BookOpenText size={15} color="#0a422d" />
+                                    <span>
+                                        Hình thức bìa: <strong>{product.format || "Chưa cập nhật"}</strong>
+                                    </span>
                                 </span>
                             </div>
 
@@ -379,22 +390,35 @@ const ProductDetail = () => {
                         <table className="product-detail-specs-table">
                             <tbody>
                                 <tr>
+                                    <td className="spec-name">Nhà cung cấp</td>
+                                    <td className="spec-value">
+                                        {product.supplierName}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="spec-name">Tác giả</td>
+                                    <td className="spec-value">
+                                        {product.author}
+                                    </td>
+                                </tr>
+                                {product.translator && (
+                                    <tr>
+                                        <td className="spec-name">Người dịch</td>
+                                        <td className="spec-value">
+                                            {product.translator}
+                                        </td>
+                                    </tr>
+                                )}
+                                <tr>
                                     <td className="spec-name">Nhà xuất bản</td>
                                     <td className="spec-value">
                                         {product.publisher || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td className="spec-name">Hình thức bìa</td>
-                                    <td className="spec-value">
-                                        {product.format || "Bìa Mềm"}
-                                    </td>
-                                </tr>
-                                <tr>
                                     <td className="spec-name">Năm xuất bản</td>
                                     <td className="spec-value">
-                                        {product.publicationYear ||
-                                            "Chưa cập nhật"}
+                                        {product.publicationYear || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 <tr>
@@ -403,14 +427,30 @@ const ProductDetail = () => {
                                         {product.language || "Tiếng Việt"}
                                     </td>
                                 </tr>
-                                {product.page && (
-                                    <tr>
-                                        <td className="spec-name">Số trang</td>
-                                        <td className="spec-value">
-                                            {product.page} trang
-                                        </td>
-                                    </tr>
-                                )}
+                                <tr>
+                                    <td className="spec-name">Trọng lượng (gr)</td>
+                                    <td className="spec-value">
+                                        {product.weight}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="spec-name">Kích thước bao bì</td>
+                                    <td className="spec-value">
+                                        {product.dimensions}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="spec-name">Số trang</td>
+                                    <td className="spec-value">
+                                        {product.page}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="spec-name">Hình thức</td>
+                                    <td className="spec-value">
+                                        {product.format}
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
