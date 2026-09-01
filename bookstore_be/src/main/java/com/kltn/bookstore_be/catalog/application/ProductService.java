@@ -25,8 +25,6 @@ import com.kltn.bookstore_be.catalog.domain.ProductRepository;
 import com.kltn.bookstore_be.catalog.domain.StockMovementRepository;
 
 import org.jspecify.annotations.NonNull;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -175,6 +173,7 @@ public class ProductService {
         product.setName(updatedDetails.getName());
         product.setAuthor(updatedDetails.getAuthor());
         product.setPublisher(updatedDetails.getPublisher());
+        product.setTranslator(updatedDetails.getTranslator());
         product.setIsbn(updatedDetails.getIsbn());
         product.setSupplierName(updatedDetails.getSupplierName());
         product.setPublicationYear(updatedDetails.getPublicationYear());
