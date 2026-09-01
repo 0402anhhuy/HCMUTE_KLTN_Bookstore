@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import {
     ShoppingCart,
     Star,
@@ -80,36 +81,34 @@ const ProductDetail = () => {
     if (!product) {
         return (
             <div className="product-detail-notfound-box">
-                Không tìm thấy sản phẩm yêu cầu.
+                Không tìm thấy sản phẩm yêu cầu
             </div>
         );
     }
 
-    // Tự động xây dựng Breadcrumb đệ quy chuẩn
     const breadcrumbItems = [
         { label: "Khám phá kho sách", path: "/catalog" },
         ...buildCategoryBreadcrumbs(product.category, product.name),
     ];
 
-    // Xử lý hiển thị tối đa 4 hình thumb (nếu > 4 thì hình thứ 4 có mờ +N)
     const maxVisibleThumbs = 4;
     const totalImagesCount = productImages.length;
     const hasMoreThumbs = totalImagesCount > maxVisibleThumbs;
     const visibleThumbs = hasMoreThumbs
         ? productImages.slice(0, 4)
         : productImages;
-    const remainingCount = totalImagesCount - 3; // Ví dụ 5 hình thì +2, 6 hình thì +3
+    const remainingCount = totalImagesCount - 3;
 
     return (
         <div className="page-container animate-fade-in product-detail-container">
-            {/* Breadcrumb đồng bộ */}
+            {/* Breadcrumb */}
             <div className="product-detail-breadcrumb-wrapper">
                 <Breadcrumb items={breadcrumbItems} />
             </div>
 
             {/* Top Layout */}
             <div className="product-detail-main-layout">
-                {/* CỘT TRÁI - KHUNG HÌNH VÀ THUMBNAILS */}
+                {/* CỘT TRÁI - KHUNG HÌNH VÀ THUMBNAILS (STICKY) */}
                 <div className="product-detail-left-card">
                     <div
                         className="product-detail-main-cover-box"
@@ -169,8 +168,9 @@ const ProductDetail = () => {
                     </div>
                 </div>
 
-                {/* CỘT PHẢI - THÔNG TIN VÀ NÚT MUA HÀNG */}
+                {/* CỘT PHẢI - THÔNG TIN, VẬN CHUYỂN, CHI TIẾT & MÔ TẢ SẢN PHẨM */}
                 <div className="product-detail-right-col">
+                    {/* Card 1: Thông tin chính, giá, nút mua */}
                     <div className="product-detail-card-box">
                         <div className="product-detail-header-block">
                             <div className="product-detail-title-row">
@@ -201,25 +201,40 @@ const ProductDetail = () => {
                                 <span className="product-detail-meta-item">
                                     <Store size={15} color="#0a422d" />
                                     <span>
-                                        Nhà cung cấp: <strong>{product.supplierName || "Chưa cập nhật"}</strong>
+                                        Nhà cung cấp:{" "}
+                                        <strong>
+                                            {product.supplierName ||
+                                                "Chưa cập nhật"}
+                                        </strong>
                                     </span>
                                 </span>
                                 <span className="product-detail-meta-item">
                                     <User size={15} color="#0a422d" />
                                     <span>
-                                        Tác giả: <strong>{product.author || "Chưa rõ tác giả"}</strong>
+                                        Tác giả:{" "}
+                                        <strong>
+                                            {product.author ||
+                                                "Chưa rõ tác giả"}
+                                        </strong>
                                     </span>
                                 </span>
                                 <span className="product-detail-meta-item">
                                     <Building2 size={15} color="#0a422d" />
                                     <span>
-                                        Nhà xuất bản: <strong>{product.publisher || "Chưa cập nhật"}</strong>
+                                        Nhà xuất bản:{" "}
+                                        <strong>
+                                            {product.publisher ||
+                                                "Chưa cập nhật"}
+                                        </strong>
                                     </span>
                                 </span>
                                 <span className="product-detail-meta-item">
                                     <BookOpenText size={15} color="#0a422d" />
                                     <span>
-                                        Hình thức bìa: <strong>{product.format || "Chưa cập nhật"}</strong>
+                                        Hình thức bìa:{" "}
+                                        <strong>
+                                            {product.format || "Chưa cập nhật"}
+                                        </strong>
                                     </span>
                                 </span>
                             </div>
@@ -328,7 +343,7 @@ const ProductDetail = () => {
                             </div>
                         </div>
 
-                        {/* Nhóm nút "Thêm vào giỏ hàng" và "Mua ngay" đặt phía dưới Số lượng */}
+                        {/* CTA Buttons */}
                         <div className="product-detail-cta-group">
                             <button
                                 type="button"
@@ -349,7 +364,7 @@ const ProductDetail = () => {
                         </div>
                     </div>
 
-                    {/* Thông tin vận chuyển */}
+                    {/* Card 2: Thông tin vận chuyển */}
                     <div className="product-detail-card-box">
                         <h4 className="product-detail-card-heading">
                             Thông tin vận chuyển
@@ -382,7 +397,7 @@ const ProductDetail = () => {
                         </div>
                     </div>
 
-                    {/* Thông số sách */}
+                    {/* Card 3: Thông số sách */}
                     <div className="product-detail-card-box">
                         <h4 className="product-detail-card-heading">
                             Thông tin chi tiết
@@ -403,7 +418,9 @@ const ProductDetail = () => {
                                 </tr>
                                 {product.translator && (
                                     <tr>
-                                        <td className="spec-name">Người dịch</td>
+                                        <td className="spec-name">
+                                            Người dịch
+                                        </td>
                                         <td className="spec-value">
                                             {product.translator}
                                         </td>
@@ -418,7 +435,8 @@ const ProductDetail = () => {
                                 <tr>
                                     <td className="spec-name">Năm xuất bản</td>
                                     <td className="spec-value">
-                                        {product.publicationYear || "Chưa cập nhật"}
+                                        {product.publicationYear ||
+                                            "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 <tr>
@@ -428,13 +446,17 @@ const ProductDetail = () => {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td className="spec-name">Trọng lượng (gr)</td>
+                                    <td className="spec-name">
+                                        Trọng lượng (gr)
+                                    </td>
                                     <td className="spec-value">
                                         {product.weight}
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td className="spec-name">Kích thước bao bì</td>
+                                    <td className="spec-name">
+                                        Kích thước bao bì
+                                    </td>
                                     <td className="spec-value">
                                         {product.dimensions}
                                     </td>
@@ -454,52 +476,56 @@ const ProductDetail = () => {
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
 
-            {/* Mô tả sản phẩm */}
-            <div className="product-detail-section-card">
-                <h3 className="product-detail-section-heading">
-                    Mô tả sản phẩm
-                </h3>
-                <div className="product-detail-desc-content">
-                    <h4 className="product-detail-desc-book-name">
-                        {product.name}
-                    </h4>
-                    <div
-                        className={`product-detail-desc-text ${
-                            !isDescExpanded ? "collapsed" : ""
-                        }`}
-                    >
-                        {product.description ||
-                            "Chưa có mô tả cho tác phẩm này."}
-                    </div>
-                    {product.description &&
-                        product.description.length > 100 && (
-                            <div className="product-detail-desc-toggle-wrapper">
-                                <button
-                                    type="button"
-                                    className="product-detail-btn-toggle-desc"
-                                    onClick={() =>
-                                        setIsDescExpanded(!isDescExpanded)
-                                    }
-                                >
-                                    {isDescExpanded ? (
-                                        <>
-                                            Thu gọn <ChevronUp size={16} />
-                                        </>
-                                    ) : (
-                                        <>
-                                            Xem thêm <ChevronDown size={16} />
-                                        </>
-                                    )}
-                                </button>
+                    {/* Card 4: Mô tả sản phẩm (Đã đưa vào cột phải) */}
+                    <div className="product-detail-card-box">
+                        <h4 className="product-detail-card-heading">
+                            Mô tả sản phẩm
+                        </h4>
+                        <div className="product-detail-desc-content">
+                            <h5 className="product-detail-desc-book-name">
+                                {product.name}
+                            </h5>
+                            <div
+                                className={`product-detail-desc-text ${
+                                    !isDescExpanded ? "collapsed" : ""
+                                }`}
+                            >
+                                {product.description ||
+                                    "Chưa có mô tả cho tác phẩm này."}
                             </div>
-                        )}
+                            {product.description &&
+                                product.description.length > 100 && (
+                                    <div className="product-detail-desc-toggle-wrapper">
+                                        <button
+                                            type="button"
+                                            className="product-detail-btn-toggle-desc"
+                                            onClick={() =>
+                                                setIsDescExpanded(
+                                                    !isDescExpanded,
+                                                )
+                                            }
+                                        >
+                                            {isDescExpanded ? (
+                                                <>
+                                                    Thu gọn{" "}
+                                                    <ChevronUp size={16} />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Xem thêm{" "}
+                                                    <ChevronDown size={16} />
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Đánh giá sản phẩm */}
+            {/* Đánh giá sản phẩm (Điểm dừng kết thúc của sticky cột trái) */}
             <div className="product-detail-section-card">
                 <h3 className="product-detail-section-heading">
                     Đánh giá sản phẩm
@@ -533,7 +559,9 @@ const ProductDetail = () => {
                         {reviews.length === 0 ? (
                             "Chưa có đánh giá nào cho sản phẩm này."
                         ) : (
-                            <span>Đã có {reviews.length} nhận xét từ độc giả.</span>
+                            <span>
+                                Đã có {reviews.length} nhận xét từ độc giả.
+                            </span>
                         )}
                     </div>
                 </div>
@@ -579,7 +607,8 @@ const ProductDetail = () => {
             <RecommendationSection title="GỢI Ý CHO BẠN" limit={10} />
 
             {/* LIGHTBOX PREVIEW FULLSCREEN MODAL */}
-            {isLightboxOpen && (
+            {/* LIGHTBOX PREVIEW FULLSCREEN MODAL */}
+            {isLightboxOpen && createPortal(
                 <div
                     className="product-detail-lightbox-overlay"
                     onClick={closeLightbox}
@@ -588,7 +617,7 @@ const ProductDetail = () => {
                         className="product-detail-lightbox-card"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Lightbox Header */}
+                        {/* Header */}
                         <div className="product-detail-lightbox-header">
                             <div className="lightbox-title-box">
                                 <span className="lightbox-book-title">
@@ -629,7 +658,7 @@ const ProductDetail = () => {
                             </div>
                         </div>
 
-                        {/* Lightbox Main Stage */}
+                        {/* Vùng xem ảnh tràn viền */}
                         <div className="product-detail-lightbox-stage">
                             {totalImagesCount > 1 && (
                                 <button
@@ -682,7 +711,7 @@ const ProductDetail = () => {
                             )}
                         </div>
 
-                        {/* Lightbox Bottom Thumbnails Carousel */}
+                        {/* Thanh Thumbnails dưới đáy */}
                         {totalImagesCount > 1 && (
                             <div className="product-detail-lightbox-thumbs-bar">
                                 {productImages.map((imgObj, idx) => (
@@ -705,7 +734,8 @@ const ProductDetail = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
