@@ -18,7 +18,7 @@ export const useProductDetail = () => {
     const [isDescExpanded, setIsDescExpanded] = useState(false);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [lightboxIdx, setLightboxIdx] = useState(0);
-    const [zoomLevel, setZoomLevel] = useState(1);
+    const [zoomLevel, setZoomLevel] = useState(1.0);
     const [timeLeft, setTimeLeft] = useState({
         hours: "01",
         minutes: "36",
@@ -174,40 +174,99 @@ export const useProductDetail = () => {
         setHasDragged(false);
     };
 
+    // Thang đo bắt đầu từ 100% trở lên
+    const ZOOM_LEVELS = [1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0];
+
+    const zoomIn = () => {
+        setZoomLevel((prev) => {
+            const nextIdx = ZOOM_LEVELS.findIndex((val) => val > prev + 0.001);
+            if (nextIdx !== -1) {
+                return ZOOM_LEVELS[nextIdx];
+            }
+            return prev;
+        });
+    };
+
+    const zoomOut = () => {
+        resetPan();
+        setZoomLevel((prev) => {
+            const reversedIdx = [...ZOOM_LEVELS]
+                .reverse()
+                .findIndex((val) => val < prev - 0.001);
+            if (reversedIdx !== -1) {
+                const actualIdx = ZOOM_LEVELS.length - 1 - reversedIdx;
+                return ZOOM_LEVELS[actualIdx];
+            }
+            return 1.0;
+        });
+    };
+
+    const resetZoom = () => {
+        setZoomLevel(1.0);
+        resetPan();
+    };
+
     const openLightbox = (idx = 0) => {
         setLightboxIdx(idx);
-        setZoomLevel(1);
+        setZoomLevel(1.0);
         resetPan();
         setIsLightboxOpen(true);
     };
 
     const closeLightbox = () => {
         setIsLightboxOpen(false);
-        setZoomLevel(1);
+        setZoomLevel(1.0);
         resetPan();
     };
 
     const nextLightboxImage = () => {
-        setZoomLevel(1);
+        setZoomLevel(1.0);
         resetPan();
         setLightboxIdx((prev) => (prev + 1) % productImages.length);
     };
 
     const prevLightboxImage = () => {
-        setZoomLevel(1);
+        setZoomLevel(1.0);
         resetPan();
         setLightboxIdx((prev) => (prev - 1 + productImages.length) % productImages.length);
     };
 
-    const toggleZoom = () => {
+    // Click vào ảnh: nếu đang ở 100% thì phóng lên 150%, nếu đang phóng to thì thu về 100%
+    const handleImageClick = (e) => {
+        if (hasDragged) {
+            if (e && typeof e.stopPropagation === "function") {
+                e.stopPropagation();
+            }
+            setHasDragged(false);
+            return;
+        }
         setZoomLevel((prev) => {
-            resetPan();
-            return prev > 1 ? 1 : 2.2;
+            if (prev > 1.0) {
+                resetPan();
+                return 1.0;
+            }
+            return 1.5;
         });
     };
 
+    // Hàm giới hạn vị trí pan theo kích thước zoom
+    const getClampedPan = (pos, currentZoom) => {
+        if (currentZoom <= 1.0) {
+            return { x: 0, y: 0 };
+        }
+        // Giới hạn vùng di chuyển tối đa tương ứng với mức zoom
+        const maxOffsetFactor = 0.5 * (currentZoom - 1);
+        const maxY = window.innerHeight * maxOffsetFactor;
+
+        // Nếu người dùng kéo vượt quá biên cho phép, trả về biên tối đa
+        return {
+            x: 0,
+            y: Math.max(-maxY, Math.min(maxY, pos.y)),
+        };
+    };
+
     const handleMouseDown = (e) => {
-        if (zoomLevel <= 1 || !e) return;
+        if (zoomLevel <= 1.0 || !e) return;
         setIsDragging(true);
         setHasDragged(false);
         setDragStart({
@@ -217,23 +276,24 @@ export const useProductDetail = () => {
     };
 
     const handleMouseMove = (e) => {
-        if (!isDragging || zoomLevel <= 1 || !e) return;
-        const newX = e.clientX - dragStart.x;
+        if (!isDragging || zoomLevel <= 1.0 || !e) return;
         const newY = e.clientY - dragStart.y;
-        if (Math.abs(newX - panPosition.x) > 3 || Math.abs(newY - panPosition.y) > 3) {
+        if (Math.abs(newY - panPosition.y) > 3) {
             setHasDragged(true);
         }
-        setPanPosition({ x: newX, y: newY });
+        setPanPosition({ x: 0, y: newY });
     };
 
+    // Khi thả chuột hoặc rê chuột ra ngoài vùng xem: tự động kéo về biên chuẩn hoặc trung tâm
     const handleMouseUp = () => {
         if (isDragging) {
             setIsDragging(false);
+            setPanPosition((prev) => getClampedPan(prev, zoomLevel));
         }
     };
 
     const handleTouchStart = (e) => {
-        if (zoomLevel <= 1 || !e || !e.touches || !e.touches[0]) return;
+        if (zoomLevel <= 1.0 || !e || !e.touches || !e.touches[0]) return;
         setIsDragging(true);
         setHasDragged(false);
         setDragStart({
@@ -243,30 +303,19 @@ export const useProductDetail = () => {
     };
 
     const handleTouchMove = (e) => {
-        if (!isDragging || zoomLevel <= 1 || !e || !e.touches || !e.touches[0]) return;
-        const newX = e.touches[0].clientX - dragStart.x;
+        if (!isDragging || zoomLevel <= 1.0 || !e || !e.touches || !e.touches[0]) return;
         const newY = e.touches[0].clientY - dragStart.y;
-        if (Math.abs(newX - panPosition.x) > 3 || Math.abs(newY - panPosition.y) > 3) {
+        if (Math.abs(newY - panPosition.y) > 3) {
             setHasDragged(true);
         }
-        setPanPosition({ x: newX, y: newY });
+        setPanPosition({ x: 0, y: newY });
     };
 
     const handleTouchEnd = () => {
         if (isDragging) {
             setIsDragging(false);
+            setPanPosition((prev) => getClampedPan(prev, zoomLevel));
         }
-    };
-
-    const handleImageClick = (e) => {
-        if (hasDragged) {
-            if (e && typeof e.stopPropagation === "function") {
-                e.stopPropagation();
-            }
-            setHasDragged(false);
-            return;
-        }
-        toggleZoom();
     };
 
     return {
@@ -307,10 +356,12 @@ export const useProductDetail = () => {
         closeLightbox,
         nextLightboxImage,
         prevLightboxImage,
-        toggleZoom,
         handleAddToCart,
         handleToggleFavorite,
         handleBuyNow,
         getProductImagesList,
+        zoomIn,
+        zoomOut,
+        resetZoom,
     };
 };
