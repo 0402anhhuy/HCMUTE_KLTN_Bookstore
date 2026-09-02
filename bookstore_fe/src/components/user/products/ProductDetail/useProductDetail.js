@@ -256,11 +256,15 @@ export const useProductDetail = () => {
         }
         // Giới hạn vùng di chuyển tối đa tương ứng với mức zoom
         const maxOffsetFactor = 0.5 * (currentZoom - 1);
+        const isMobileViewport = window.innerWidth <= 768;
+        const maxX = window.innerWidth * maxOffsetFactor;
         const maxY = window.innerHeight * maxOffsetFactor;
 
         // Nếu người dùng kéo vượt quá biên cho phép, trả về biên tối đa
         return {
-            x: 0,
+            x: isMobileViewport
+                ? Math.max(-maxX, Math.min(maxX, pos.x))
+                : 0,
             y: Math.max(-maxY, Math.min(maxY, pos.y)),
         };
     };
@@ -277,11 +281,16 @@ export const useProductDetail = () => {
 
     const handleMouseMove = (e) => {
         if (!isDragging || zoomLevel <= 1.0 || !e) return;
+        const isMobileViewport = window.innerWidth <= 768;
+        const newX = isMobileViewport ? e.clientX - dragStart.x : 0;
         const newY = e.clientY - dragStart.y;
-        if (Math.abs(newY - panPosition.y) > 3) {
+        if (
+            Math.abs(newX - panPosition.x) > 3 ||
+            Math.abs(newY - panPosition.y) > 3
+        ) {
             setHasDragged(true);
         }
-        setPanPosition({ x: 0, y: newY });
+        setPanPosition({ x: newX, y: newY });
     };
 
     // Khi thả chuột hoặc rê chuột ra ngoài vùng xem: tự động kéo về biên chuẩn hoặc trung tâm
@@ -304,11 +313,18 @@ export const useProductDetail = () => {
 
     const handleTouchMove = (e) => {
         if (!isDragging || zoomLevel <= 1.0 || !e || !e.touches || !e.touches[0]) return;
+        const isMobileViewport = window.innerWidth <= 768;
+        const newX = isMobileViewport
+            ? e.touches[0].clientX - dragStart.x
+            : 0;
         const newY = e.touches[0].clientY - dragStart.y;
-        if (Math.abs(newY - panPosition.y) > 3) {
+        if (
+            Math.abs(newX - panPosition.x) > 3 ||
+            Math.abs(newY - panPosition.y) > 3
+        ) {
             setHasDragged(true);
         }
-        setPanPosition({ x: 0, y: newY });
+        setPanPosition({ x: newX, y: newY });
     };
 
     const handleTouchEnd = () => {

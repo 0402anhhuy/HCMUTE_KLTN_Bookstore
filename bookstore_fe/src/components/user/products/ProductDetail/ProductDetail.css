@@ -1079,4 +1079,214 @@ body {
         max-width: 90vw;
         max-height: 80vh;
     }
+
+    .product-detail-container {
+        width: 100%;
+        max-width: 100%;
+        gap: 12px;
+        box-sizing: border-box;
+    }
+
+    .product-detail-breadcrumb-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .product-detail-breadcrumb-wrapper::-webkit-scrollbar {
+        display: none;
+    }
+
+    .product-detail-main-layout,
+    .product-detail-right-col {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .product-detail-left-card,
+    .product-detail-card-box,
+    .product-detail-section-card {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .product-detail-main-cover-box {
+        height: min(78vw, 340px);
+        min-height: 240px;
+    }
+
+    .product-detail-meta-line {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .product-detail-title-row {
+        gap: 10px;
+    }
+
+    .product-detail-book-title {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .product-detail-flashsale-banner {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .product-detail-flashsale-label,
+    .product-detail-flashsale-timer {
+        min-width: 0;
+    }
+
+    .product-detail-pricing-box {
+        align-items: center;
+        gap: 8px;
+    }
+
+    .product-detail-sale-price {
+        font-size: clamp(1.25rem, 6vw, 1.55rem);
+    }
+
+    .product-detail-old-price,
+    .product-detail-discount-tag {
+        font-size: 0.78rem;
+    }
+
+    .product-detail-quantity-row {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+
+    .product-detail-cta-group {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .product-detail-specs-table {
+        table-layout: fixed;
+    }
+
+    .product-detail-specs-table td {
+        overflow-wrap: anywhere;
+        vertical-align: top;
+    }
+
+    .product-detail-review-summary-row {
+        width: 100%;
+    }
+
+    .product-detail-similar-item {
+        padding: 8px;
+    }
+
+    .similar-thumb-box {
+        height: 130px;
+    }
+
+    .product-detail-lightbox-header {
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .lightbox-title-box {
+        min-width: 0;
+        flex: 1;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .lightbox-actions-group {
+        flex-shrink: 0;
+        gap: 4px;
+    }
+
+    .lightbox-book-title {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+
+    .lightbox-page-badge {
+        white-space: nowrap;
+    }
+
+    .product-detail-lightbox-stage {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .lightbox-arrow-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .lightbox-image-wrapper {
+        min-width: 0;
+        max-width: calc(100vw - 100px);
+        max-height: 78vh;
+    }
+
+    .lightbox-image-wrapper.can-drag {
+        touch-action: none;
+    }
+
+    .lightbox-main-img {
+        max-width: calc(100vw - 100px);
+        max-height: 78vh;
+    }
+
+    .product-detail-lightbox-thumbs-bar {
+        justify-content: flex-start;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+@media (max-width: 380px) {
+    .product-detail-container {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .product-detail-left-card,
+    .product-detail-card-box,
+    .product-detail-section-card {
+        padding: 12px;
+    }
+
+    .product-detail-main-cover-box {
+        min-height: 220px;
+    }
+
+    .product-detail-title-row {
+        align-items: flex-start;
+    }
+
+    .product-detail-btn-fav-round {
+        width: 32px;
+        height: 32px;
+    }
+
+    .lightbox-actions-group {
+        gap: 2px;
+    }
+
+    .lightbox-zoom-label {
+        min-width: 42px;
+    }
+
+    .lightbox-zoom-btn {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .lightbox-image-wrapper {
+        max-width: calc(100vw - 84px);
+    }
+
+    .lightbox-main-img {
+        max-width: calc(100vw - 84px);
+    }
 }
