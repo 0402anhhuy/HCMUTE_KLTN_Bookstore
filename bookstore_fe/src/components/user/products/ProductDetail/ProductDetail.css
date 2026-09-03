@@ -1,9 +1,23 @@
-/* Page Wrapper */
+html,
+body {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 100vh;
+}
+
+#root {
+    overflow: visible !important;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
 /* Page Wrapper */
 .product-detail-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding-top: 12px !important; /* Đồng bộ padding-top như Catalog */
+    padding-top: 12px !important;
     padding-bottom: 80px;
     padding-left: 16px;
     padding-right: 16px;
@@ -12,6 +26,7 @@
     flex-direction: column;
     gap: 14px;
     box-sizing: border-box;
+    overflow: visible !important;
 }
 
 .product-detail-breadcrumb-wrapper {
@@ -33,13 +48,14 @@
 
 /* ================= 1. TOP MAIN LAYOUT ================= */
 .product-detail-main-layout {
-    display: grid;
-    grid-template-columns: 390px 1fr;
-    gap: 16px;
-    align-items: flex-start;
+    display: grid !important;
+    grid-template-columns: 390px 1fr !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+    position: relative;
 }
 
-/* LEFT COLUMN CARD */
+/* LEFT COLUMN CARD (STICKY) */
 .product-detail-left-card {
     background-color: #ffffff;
     border-radius: 10px;
@@ -48,9 +64,13 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    position: sticky;
-    top: 80px;
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 90px !important;
+    height: fit-content !important;
+    align-self: flex-start !important;
     box-shadow: 0 4px 15px rgba(10, 66, 45, 0.03);
+    z-index: 10;
 }
 
 .product-detail-main-cover-box {
@@ -130,7 +150,6 @@
     object-fit: cover;
 }
 
-/* Lớp phủ mờ +N cho thumb thứ 4 */
 .product-detail-thumb-overlay-more {
     position: absolute;
     top: 0;
@@ -149,11 +168,11 @@
     transition: background-color 0.2s ease;
 }
 
-.product-detail-thumb-box.thumb-has-more:hover .product-detail-thumb-overlay-more {
+.product-detail-thumb-box.thumb-has-more:hover
+    .product-detail-thumb-overlay-more {
     background-color: rgba(10, 66, 45, 0.88);
 }
 
-/* CTA Buttons ở cột bên phải */
 .product-detail-cta-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -210,6 +229,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    min-width: 0;
 }
 
 /* Common Card Box */
@@ -275,10 +295,26 @@
 }
 
 .product-detail-meta-line {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
     font-size: 0.86rem;
     color: #64748b;
+}
+
+.product-detail-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.product-detail-meta-item > span {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
 }
 
 .product-detail-meta-line strong {
@@ -484,28 +520,7 @@
     font-weight: 500;
 }
 
-/* Full-width Section Cards */
-.product-detail-section-card {
-    background-color: #ffffff;
-    border-radius: 10px;
-    padding: 20px 24px;
-    border: 1px solid #e8e5df;
-    box-shadow: 0 4px 15px rgba(10, 66, 45, 0.03);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.product-detail-section-heading {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #0a422d;
-    margin: 0;
-    border-bottom: 1.5px solid #f1f5f9;
-    padding-bottom: 8px;
-}
-
-/* Description */
+/* Description Content bên trong Card */
 .product-detail-desc-content {
     display: flex;
     flex-direction: column;
@@ -540,7 +555,11 @@
     left: 0;
     right: 0;
     height: 65px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #ffffff 100%);
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0%,
+        #ffffff 100%
+    );
     pointer-events: none;
 }
 
@@ -570,6 +589,27 @@
     background-color: #d1fae5;
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(10, 66, 45, 0.12);
+}
+
+/* Full-width Section Cards (Đánh giá & Gợi ý) */
+.product-detail-section-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 20px 24px;
+    border: 1px solid #e8e5df;
+    box-shadow: 0 4px 15px rgba(10, 66, 45, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.product-detail-section-heading {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0a422d;
+    margin: 0;
+    border-bottom: 1.5px solid #f1f5f9;
+    padding-bottom: 8px;
 }
 
 /* Review Summary */
@@ -665,7 +705,6 @@
     color: #1f2937;
     margin: 0;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -679,34 +718,33 @@
     color: #0a422d;
 }
 
-/* ================= 2. LIGHTBOX FULLSCREEN MODAL PREVIEW ================= */
+/* ================= LIGHTBOX FULLSCREEN PREVIEW ================= */
 .product-detail-lightbox-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(15, 23, 42, 0.88);
-    backdrop-filter: blur(6px);
+    background-color: #f8fafc;
     z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 0;
     box-sizing: border-box;
     animation: fadeIn 0.2s ease-out;
 }
 
 .product-detail-lightbox-card {
-    width: 100%;
-    max-width: 1000px;
-    max-height: 92vh;
-    background-color: #ffffff;
-    border-radius: 12px;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    background-color: #f8fafc;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
     position: relative;
 }
 
@@ -714,21 +752,31 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 20px;
-    background-color: #faf8f5;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 24px;
+    background-color: #faf9f7;
+    border-bottom: 1px solid #dfe5eb;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.lightbox-title-box,
+.lightbox-actions-group {
+    display: flex;
+    align-items: center;
 }
 
 .lightbox-title-box {
-    display: flex;
-    align-items: center;
     gap: 12px;
+}
+
+.lightbox-actions-group {
+    gap: 10px;
 }
 
 .lightbox-book-title {
     font-size: 1rem;
     font-weight: 800;
-    color: #1e293b;
+    color: #243044;
     max-width: 500px;
     white-space: nowrap;
     overflow: hidden;
@@ -744,10 +792,12 @@
     border-radius: 12px;
 }
 
-.lightbox-actions-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.lightbox-action-btn,
+.lightbox-close-btn,
+.lightbox-arrow-btn,
+.lightbox-zoom-btn {
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .lightbox-action-btn {
@@ -761,8 +811,6 @@
     color: #0a422d;
     font-size: 0.85rem;
     font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
 }
 
 .lightbox-action-btn:hover {
@@ -774,13 +822,11 @@
     background: none;
     border: none;
     color: #64748b;
-    cursor: pointer;
     padding: 4px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
 }
 
 .lightbox-close-btn:hover {
@@ -790,31 +836,30 @@
 
 .product-detail-lightbox-stage {
     flex: 1;
+    min-height: 0;
+    max-height: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px;
+    padding: 12px 24px;
     position: relative;
     background-color: #f8fafc;
     overflow: auto;
-    min-height: 460px;
-    max-height: calc(92vh - 160px);
+    box-sizing: border-box;
 }
 
 .lightbox-arrow-btn {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.9);
-    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    border: 1px solid #e1e7ed;
     color: #0a422d;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    box-shadow: 0 6px 16px rgba(31, 41, 55, 0.12);
     flex-shrink: 0;
 }
 
@@ -825,19 +870,24 @@
 }
 
 .lightbox-image-wrapper {
-    flex: 1;
+    flex: 0 1 auto;
+    width: fit-content;
+    height: fit-content;
+    max-width: 90vw;
+    max-height: 80vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    height: 100%;
+    overflow: visible;
     padding: 10px;
+    box-sizing: border-box;
     user-select: none;
     -webkit-user-select: none;
 }
 
 .lightbox-image-wrapper.can-drag {
     cursor: grab;
+    touch-action: pan-y;
 }
 
 .lightbox-image-wrapper.dragging {
@@ -845,19 +895,20 @@
 }
 
 .lightbox-main-img {
-    max-width: 100%;
-    max-height: 500px;
+    max-width: 90vw;
+    max-height: 70vh;
     object-fit: contain;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
     border-radius: 4px;
     user-select: none;
     -webkit-user-select: none;
     -webkit-user-drag: none;
+    transform-origin: center center;
 }
 
 .lightbox-main-img.zoomed {
-    max-height: 70vh;
-    max-width: 80vw;
+    max-height: 80vh;
+    max-width: 90vw;
 }
 
 .product-detail-lightbox-thumbs-bar {
@@ -866,15 +917,16 @@
     justify-content: center;
     padding: 12px 20px;
     background-color: #ffffff;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #dfe5eb;
     overflow-x: auto;
+    flex-shrink: 0;
 }
 
 .lightbox-mini-thumb {
     width: 46px;
     height: 60px;
     border-radius: 4px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid #e1e7ed;
     overflow: hidden;
     cursor: pointer;
     flex-shrink: 0;
@@ -893,6 +945,50 @@
     box-shadow: 0 2px 8px rgba(10, 66, 45, 0.25);
 }
 
+.lightbox-zoom-controller {
+    display: inline-flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    overflow: hidden;
+    padding: 2px;
+}
+
+.lightbox-zoom-btn {
+    background: transparent;
+    border: none;
+    color: #0a422d;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-zoom-btn:hover:not(:disabled) {
+    background-color: #ecfdf5;
+}
+
+.lightbox-zoom-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.lightbox-zoom-label {
+    min-width: 52px;
+    padding: 0 4px;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0a422d;
+    cursor: pointer;
+    user-select: none;
+}
+
+.lightbox-zoom-label:hover {
+    text-decoration: underline;
+}
+
 /* ================= MOBILE RESPONSIVE STYLES ================= */
 @media (max-width: 768px) {
     .product-detail-container {
@@ -903,13 +999,13 @@
     }
 
     .product-detail-main-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         gap: 16px;
     }
 
     .product-detail-left-card {
-        position: relative;
-        top: 0;
+        position: relative !important;
+        top: 0 !important;
         padding: 14px;
     }
 
@@ -953,13 +1049,244 @@
         width: 110px;
     }
 
-    .product-detail-lightbox-stage {
-        padding: 10px;
-        min-height: 300px;
+    .product-detail-lightbox-overlay {
+        padding: 0;
+    }
+
+    .product-detail-lightbox-card {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .product-detail-lightbox-header {
+        padding: 12px 16px;
     }
 
     .lightbox-book-title {
         max-width: 180px;
     }
+
+    .product-detail-lightbox-stage {
+        padding: 10px;
+        min-height: 0;
+        max-height: none;
+    }
+
+    .lightbox-main-img {
+        max-width: 90vw;
+        max-height: 80vh;
+    }
+
+    .product-detail-container {
+        width: 100%;
+        max-width: 100%;
+        gap: 12px;
+        box-sizing: border-box;
+    }
+
+    .product-detail-breadcrumb-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .product-detail-breadcrumb-wrapper::-webkit-scrollbar {
+        display: none;
+    }
+
+    .product-detail-main-layout,
+    .product-detail-right-col {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .product-detail-left-card,
+    .product-detail-card-box,
+    .product-detail-section-card {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .product-detail-main-cover-box {
+        height: min(78vw, 340px);
+        min-height: 240px;
+    }
+
+    .product-detail-meta-line {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .product-detail-title-row {
+        gap: 10px;
+    }
+
+    .product-detail-book-title {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .product-detail-flashsale-banner {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .product-detail-flashsale-label,
+    .product-detail-flashsale-timer {
+        min-width: 0;
+    }
+
+    .product-detail-pricing-box {
+        align-items: center;
+        gap: 8px;
+    }
+
+    .product-detail-sale-price {
+        font-size: clamp(1.25rem, 6vw, 1.55rem);
+    }
+
+    .product-detail-old-price,
+    .product-detail-discount-tag {
+        font-size: 0.78rem;
+    }
+
+    .product-detail-quantity-row {
+        flex-wrap: wrap;
+        gap: 8px 12px;
+    }
+
+    .product-detail-cta-group {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .product-detail-specs-table {
+        table-layout: fixed;
+    }
+
+    .product-detail-specs-table td {
+        overflow-wrap: anywhere;
+        vertical-align: top;
+    }
+
+    .product-detail-review-summary-row {
+        width: 100%;
+    }
+
+    .product-detail-similar-item {
+        padding: 8px;
+    }
+
+    .similar-thumb-box {
+        height: 130px;
+    }
+
+    .product-detail-lightbox-header {
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .lightbox-title-box {
+        min-width: 0;
+        flex: 1;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .lightbox-actions-group {
+        flex-shrink: 0;
+        gap: 4px;
+    }
+
+    .lightbox-book-title {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+
+    .lightbox-page-badge {
+        white-space: nowrap;
+    }
+
+    .product-detail-lightbox-stage {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .lightbox-arrow-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .lightbox-image-wrapper {
+        min-width: 0;
+        max-width: calc(100vw - 100px);
+        max-height: 78vh;
+    }
+
+    .lightbox-image-wrapper.can-drag {
+        touch-action: none;
+    }
+
+    .lightbox-main-img {
+        max-width: calc(100vw - 100px);
+        max-height: 78vh;
+    }
+
+    .product-detail-lightbox-thumbs-bar {
+        justify-content: flex-start;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
 }
 
+@media (max-width: 380px) {
+    .product-detail-container {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .product-detail-left-card,
+    .product-detail-card-box,
+    .product-detail-section-card {
+        padding: 12px;
+    }
+
+    .product-detail-main-cover-box {
+        min-height: 220px;
+    }
+
+    .product-detail-title-row {
+        align-items: flex-start;
+    }
+
+    .product-detail-btn-fav-round {
+        width: 32px;
+        height: 32px;
+    }
+
+    .lightbox-actions-group {
+        gap: 2px;
+    }
+
+    .lightbox-zoom-label {
+        min-width: 42px;
+    }
+
+    .lightbox-zoom-btn {
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .lightbox-image-wrapper {
+        max-width: calc(100vw - 84px);
+    }
+
+    .lightbox-main-img {
+        max-width: calc(100vw - 84px);
+    }
+}

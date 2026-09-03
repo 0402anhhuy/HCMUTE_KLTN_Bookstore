@@ -47,6 +47,8 @@ public class Product {
 
     private String publisher;
 
+    private String translator;
+
     private String isbn;
 
     @Column(name = "supplier_name")
@@ -78,7 +80,7 @@ public class Product {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "image_url")
+    @Column(name = "image_url", length = 1000)
     @OrderBy("image_url ASC")
     @Builder.Default
     private List<String> imageUrls = new ArrayList<>();
