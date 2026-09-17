@@ -57,6 +57,9 @@ public class ShipperController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại không được để trống"));
             }
             String phone = shipper.getPhone().trim();
+            if (!phone.matches("^(0|\\+84)[35789]\\d{8}$")) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)"));
+            }
             if (shipperRepository.existsByPhone(phone)) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại này đã tồn tại cho một người giao hàng khác"));
             }
@@ -85,6 +88,9 @@ public class ShipperController {
                 String phone = details.getPhone().trim();
                 if (phone.isEmpty()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại không được để trống"));
+                }
+                if (!phone.matches("^(0|\\+84)[35789]\\d{8}$")) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)"));
                 }
                 if (shipperRepository.existsByPhoneAndIdNot(phone, id)) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại này đã tồn tại cho một người giao hàng khác"));

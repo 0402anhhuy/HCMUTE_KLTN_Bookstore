@@ -40,8 +40,18 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
 
   const handleCreateShipper = async (e) => {
     e.preventDefault();
+    const trimmedPhone = shipperForm.phone ? shipperForm.phone.trim() : '';
+    const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      showToast('Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)', 'error');
+      return;
+    }
     try {
-      await api.post('/shippers', shipperForm);
+      await api.post('/shippers', {
+        ...shipperForm,
+        fullName: shipperForm.fullName.trim(),
+        phone: trimmedPhone
+      });
       showToast('Thêm người giao hàng thành công!', 'success');
       setShowShipperModal(false);
       loadData();
@@ -64,8 +74,18 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
 
   const handleUpdateShipper = async (e) => {
     e.preventDefault();
+    const trimmedPhone = shipperForm.phone ? shipperForm.phone.trim() : '';
+    const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      showToast('Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)', 'error');
+      return;
+    }
     try {
-      await api.put(`/shippers/${editingShipper.id}`, shipperForm);
+      await api.put(`/shippers/${editingShipper.id}`, {
+        ...shipperForm,
+        fullName: shipperForm.fullName.trim(),
+        phone: trimmedPhone
+      });
       showToast('Cập nhật người giao hàng thành công!', 'success');
       setShowEditShipperModal(false);
       loadData();
