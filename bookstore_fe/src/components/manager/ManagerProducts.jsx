@@ -117,7 +117,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
       loadData();
     } catch (error) {
       console.error(error);
-      showToast('Lỗi khi thêm sản phẩm!', 'error');
+      const errMsg = error.response?.data?.error || error.response?.data?.message || 'Lỗi khi thêm sản phẩm!';
+      showToast(errMsg, 'error');
     }
   };
 
@@ -155,7 +156,8 @@ const ManagerProducts = ({ products, categories, loadData }) => {
       loadData();
     } catch (error) {
       console.error(error);
-      showToast('Lỗi khi cập nhật sản phẩm!', 'error');
+      const errMsg = error.response?.data?.error || error.response?.data?.message || 'Lỗi khi cập nhật sản phẩm!';
+      showToast(errMsg, 'error');
     }
   };
 
