@@ -12,16 +12,14 @@ public class HealthController {
     @GetMapping("/")
     public ResponseEntity<?> root() {
         return ResponseEntity.ok(Map.of(
-            "status", "UP",
-            "message", "HCMUTE Bookstore Backend API is running"
-        ));
+                "status", "UP",
+                "message", "HCMUTE Bookstore Backend API is running"));
     }
 
     @GetMapping("/api/health")
     public ResponseEntity<?> health() {
         return ResponseEntity.ok(Map.of(
-            "status", "UP",
-            "service", "bookstore_be"
-        ));
+                "status", "UP",
+                "service", "bookstore_be"));
     }
 }
