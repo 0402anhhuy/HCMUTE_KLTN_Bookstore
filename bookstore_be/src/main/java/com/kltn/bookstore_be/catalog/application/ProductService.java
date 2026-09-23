@@ -46,7 +46,7 @@ public class ProductService {
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
 
-    public Page<Product> searchProducts(String keyword, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+    public Page<Product> searchProducts(String keyword, Long categoryId, String language, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
         List<Long> categoryIds = null;
         if (categoryId != null) {
             categoryIds = getAllCategoryAndDescendantIds(categoryId);
@@ -54,7 +54,7 @@ public class ProductService {
                 categoryIds = null;
             }
         }
-        return productRepository.searchProducts(keyword, categoryIds, minPrice, maxPrice, pageable);
+        return productRepository.searchProducts(keyword, categoryIds, language, minPrice, maxPrice, pageable);
     }
 
     public List<Long> getAllCategoryAndDescendantIds(Long rootCategoryId) {

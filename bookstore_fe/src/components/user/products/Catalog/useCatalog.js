@@ -55,6 +55,9 @@ export const useCatalog = () => {
             if (selectedCategory) url += `&categoryId=${selectedCategory}`;
             if (minPrice) url += `&minPrice=${minPrice}`;
             if (maxPrice) url += `&maxPrice=${maxPrice}`;
+            if (selectedLanguages && selectedLanguages.length > 0) {
+                url += `&language=${encodeURIComponent(selectedLanguages[0])}`;
+            }
 
             const response = await api.get(url);
             setProducts(response.data?.content || []);
@@ -78,7 +81,7 @@ export const useCatalog = () => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
             }
         }
-    }, [page, selectedCategory, keyword, minPrice, maxPrice]);
+    }, [page, selectedCategory, keyword, minPrice, maxPrice, selectedLanguages]);
 
     useEffect(() => {
         fetchCategories();

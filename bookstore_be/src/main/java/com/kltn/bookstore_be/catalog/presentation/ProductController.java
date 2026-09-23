@@ -52,6 +52,7 @@ public class ProductController {
     public ResponseEntity<?> searchProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String language,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(defaultValue = "0") int page,
@@ -68,7 +69,7 @@ public class ProductController {
             }
 
             Pageable pageable = PageRequest.of(page, size, sorting);
-            Page<Product> productPage = productService.searchProducts(keyword, categoryId, minPrice, maxPrice, pageable);
+            Page<Product> productPage = productService.searchProducts(keyword, categoryId, language, minPrice, maxPrice, pageable);
             return ResponseEntity.ok(productPage);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
