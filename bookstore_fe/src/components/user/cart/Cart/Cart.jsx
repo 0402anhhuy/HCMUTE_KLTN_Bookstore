@@ -437,11 +437,29 @@ const Cart = () => {
                             </span>
                         </div>
 
+                        {selectedItemIds.size > 0 && (
+                            <div className="cart-summary-line">
+                                <span>Phí vận chuyển dự kiến</span>
+                                <span className="val-text">
+                                    {shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee)}
+                                </span>
+                            </div>
+                        )}
+
                         {couponDiscount > 0 && (
                             <div className="cart-summary-line discount">
                                 <span>Giảm giá khuyến mãi</span>
                                 <span className="val-discount">
                                     -{formatPrice(couponDiscount)}
+                                </span>
+                            </div>
+                        )}
+
+                        {pointsDiscount > 0 && (
+                            <div className="cart-summary-line discount">
+                                <span>Dùng điểm tích lũy ({pointsUsed} điểm)</span>
+                                <span className="val-discount">
+                                    -{formatPrice(pointsDiscount)}
                                 </span>
                             </div>
                         )}
