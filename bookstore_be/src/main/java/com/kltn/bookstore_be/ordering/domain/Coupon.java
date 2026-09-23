@@ -69,7 +69,7 @@ public class Coupon {
     }
 
     public enum DiscountType {
-        PERCENT, FIXED
+        PERCENT, FIXED, FREESHIP
     }
 
     public enum CouponStatus {

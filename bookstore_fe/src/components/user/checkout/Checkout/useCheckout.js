@@ -45,7 +45,15 @@ export const useCheckout = () => {
     const [customAddress, setCustomAddress] = useState("");
     const [useCustomAddress, setUseCustomAddress] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("COD");
-    const [couponCode, setCouponCode] = useState(initialCoupon);
+    const [couponCode, setCouponCodeState] = useState(initialCoupon);
+    const isManualCouponRef = useRef(!!initialCoupon);
+
+    const setCouponCode = (code, isManual = true) => {
+        if (isManual) {
+            isManualCouponRef.current = true;
+        }
+        setCouponCodeState(code);
+    };
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -305,9 +313,9 @@ export const useCheckout = () => {
         return 35000;
     };
 
-    const shippingFee = getShippingFee(addressOnly, subtotal);
+    const rawShippingFee = getShippingFee(addressOnly, subtotal);
 
-    const calculateDiscount = (coupon, currentSubtotal) => {
+    const calculateDiscount = (coupon, currentSubtotal, rawShipping = 30000) => {
         if (!coupon) return 0;
         if (currentSubtotal < coupon.minOrderValue) return 0;
 
@@ -321,17 +329,24 @@ export const useCheckout = () => {
                 disc = coupon.maxDiscountAmount;
             }
             return disc;
+        } else if (coupon.discountType === "FREESHIP") {
+            let val = coupon.discountValue || rawShipping;
+            let disc = Math.min(rawShipping, val);
+            if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
+                disc = coupon.maxDiscountAmount;
+            }
+            return disc;
         } else {
             return coupon.discountValue;
         }
     };
 
     useEffect(() => {
-        if (coupons.length > 0) {
+        if (coupons.length > 0 && !isManualCouponRef.current && !couponCode) {
             let maxDisc = 0;
             let best = null;
             coupons.forEach((c) => {
-                const disc = calculateDiscount(c, subtotal);
+                const disc = calculateDiscount(c, subtotal, rawShippingFee);
                 if (disc > maxDisc) {
                     maxDisc = disc;
                     best = c;
@@ -339,19 +354,26 @@ export const useCheckout = () => {
             });
             if (best) {
                 setBestCoupon(best);
-                setCouponCode(best.code);
+                setCouponCodeState(best.code);
             }
         }
-    }, [coupons, subtotal]);
+    }, [coupons, subtotal, couponCode, rawShippingFee]);
 
     const activeCouponObj = coupons.find((c) => c.code === couponCode);
-    const couponDiscount = calculateDiscount(activeCouponObj, subtotal);
+    const couponDiscount = calculateDiscount(activeCouponObj, subtotal, rawShippingFee);
+    const isFreeshipCoupon = activeCouponObj?.discountType === "FREESHIP";
+
+    // For freeship coupons, discount reduces shipping fee
+    const shippingFee = isFreeshipCoupon
+        ? Math.max(0, rawShippingFee - couponDiscount)
+        : rawShippingFee;
+    const finalCouponDiscount = isFreeshipCoupon ? 0 : couponDiscount;
 
     const rewardPoints = user?.rewardPoints || 0;
     const maxPointsValue = rewardPoints * 1000;
     const remainingAfterCoupon = Math.max(
         0,
-        subtotal + shippingFee - couponDiscount,
+        subtotal + shippingFee - finalCouponDiscount,
     );
     const pointsDiscount = usePoints
         ? Math.min(maxPointsValue, remainingAfterCoupon)
@@ -360,7 +382,7 @@ export const useCheckout = () => {
 
     const total = Math.max(
         0,
-        subtotal + shippingFee - couponDiscount - pointsDiscount,
+        subtotal + shippingFee - finalCouponDiscount - pointsDiscount,
     );
 
     const handlePlaceOrder = async (e) => {

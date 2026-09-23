@@ -279,7 +279,7 @@ class OrderServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
 
             assertThrows(RuntimeException.class, () -> {
-                orderService.updateOrderAddress(1L, "456 New Street", "0337686257", sampleUser);
+                orderService.updateOrderAddress(1L, "456 New Street", "0337686257", otherUser);
             });
         }
     }
