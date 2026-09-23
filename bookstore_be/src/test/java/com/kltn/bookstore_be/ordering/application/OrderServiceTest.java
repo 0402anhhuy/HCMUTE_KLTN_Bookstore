@@ -23,6 +23,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.test.util.ReflectionTestUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.TimeZone;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -279,7 +286,7 @@ class OrderServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
 
             assertThrows(RuntimeException.class, () -> {
-                orderService.updateOrderAddress(1L, "456 New Street", "0337686257", sampleUser);
+                orderService.updateOrderAddress(1L, "456 New Street", "0337686257", otherUser);
             });
         }
     }
@@ -532,6 +539,41 @@ class OrderServiceTest {
             List<Order> result = orderService.getAllOrders();
 
             assertEquals(1, result.size());
+        }
+    }
+
+    @Nested
+    @DisplayName("Tạo đơn hàng & URL VNPay - Kiểm tra Múi giờ")
+    class VNPayUrlGenerationTests {
+
+        @Test
+        @DisplayName("Tạo URL VNPay phải chứa createDate và expireDate chuẩn GMT+7 kể cả khi máy chủ chạy UTC")
+        void generateVNPayUrl_whenServerInUTC_mustUseVietnamTimezone() {
+            TimeZone originalDefault = TimeZone.getDefault();
+            try {
+                // Giả lập máy chủ chạy UTC
+                TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
+                ReflectionTestUtils.setField(orderService, "vnp_TmnCode", "TEST_TMN");
+                ReflectionTestUtils.setField(orderService, "vnp_HashSecret", "TEST_SECRET");
+                ReflectionTestUtils.setField(orderService, "vnp_ApiUrl", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html");
+                ReflectionTestUtils.setField(orderService, "vnp_ReturnUrl", "http://localhost:5173/payment/vnpay-callback");
+
+                HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+                when(mockRequest.getHeader("X-FORWARDED-FOR")).thenReturn(null);
+                when(mockRequest.getRemoteAddr()).thenReturn("127.0.0.1");
+
+                String url = ReflectionTestUtils.invokeMethod(orderService, "generateVNPayUrl", sampleOrder, mockRequest);
+
+                assertNotNull(url);
+                ZonedDateTime vnNow = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+                String expectedPrefix = vnNow.format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+
+                assertTrue(url.contains("vnp_CreateDate=" + expectedPrefix),
+                        "vnp_CreateDate phải thuộc múi giờ GMT+7 (Asia/Ho_Chi_Minh). URL: " + url);
+            } finally {
+                TimeZone.setDefault(originalDefault);
+            }
         }
     }
 }
