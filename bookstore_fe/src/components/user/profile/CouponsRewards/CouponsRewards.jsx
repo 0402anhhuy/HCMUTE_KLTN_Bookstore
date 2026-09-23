@@ -1,8 +1,10 @@
-import { Award, Ticket, Copy, Check, Wallet } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Award, Ticket, Copy, Check, Wallet, ShoppingCart } from "lucide-react";
 import { useCouponsRewards } from "./useCouponsRewards";
 import "./CouponsRewards.css";
 
 const CouponsRewards = () => {
+    const navigate = useNavigate();
     const {
         coupons,
         loading,
@@ -140,26 +142,42 @@ const CouponsRewards = () => {
                                                 </div>
                                             </div>
 
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    handleCopy(coupon.code)
-                                                }
-                                                disabled={isInactive}
-                                                className={`coupon-item-copy-btn ${
-                                                    isCopied ? "copied" : ""
-                                                }`}
-                                            >
-                                                {isCopied ? (
-                                                    <>
-                                                        <Check size={12} /> Đã chép
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy size={12} /> Sao chép
-                                                    </>
-                                                )}
-                                            </button>
+                                            <div className="coupon-item-actions-row">
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/cart?coupon=${encodeURIComponent(
+                                                                coupon.code,
+                                                            )}`,
+                                                        )
+                                                    }
+                                                    disabled={isInactive}
+                                                    className="coupon-item-buy-btn"
+                                                >
+                                                    <ShoppingCart size={12} /> Mua ngay
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleCopy(coupon.code)
+                                                    }
+                                                    disabled={isInactive}
+                                                    className={`coupon-item-copy-btn ${
+                                                        isCopied ? "copied" : ""
+                                                    }`}
+                                                >
+                                                    {isCopied ? (
+                                                        <>
+                                                            <Check size={12} /> Đã chép
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Copy size={12} /> Sao chép
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
                                     );
                                 })}
