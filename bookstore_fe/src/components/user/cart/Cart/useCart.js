@@ -277,22 +277,25 @@ export const useCart = () => {
         return 35000;
     };
 
-    const shippingFee = getShippingFee(defaultAddress, totalAmount);
+    const hasSelectedItems = selectedItemIds && selectedItemIds.size > 0;
+    const shippingFee = hasSelectedItems ? getShippingFee(defaultAddress, totalAmount) : 0;
     const rewardPoints = user?.rewardPoints || 0;
     const maxPointsValue = rewardPoints * 1000;
     const remainingAfterCoupon = Math.max(
         0,
         totalAmount + shippingFee - couponDiscount,
     );
-    const pointsDiscount = usePoints
+    const pointsDiscount = (usePoints && hasSelectedItems)
         ? Math.min(maxPointsValue, remainingAfterCoupon)
         : 0;
-    const pointsUsed = usePoints ? Math.ceil(pointsDiscount / 1000) : 0;
+    const pointsUsed = (usePoints && hasSelectedItems) ? Math.ceil(pointsDiscount / 1000) : 0;
 
-    const total = Math.max(
-        0,
-        totalAmount + shippingFee - couponDiscount - pointsDiscount,
-    );
+    const total = hasSelectedItems
+        ? Math.max(
+            0,
+            totalAmount + shippingFee - couponDiscount - pointsDiscount,
+        )
+        : 0;
 
     const handleCheckoutRedirect = () => {
         if (!user) {
