@@ -843,6 +843,22 @@ public class DataSeeder implements CommandLineRunner {
                 .build();
             couponRepository.save(c3);
         }
+
+        if (couponRepository.findByCode("FREESHIP").isEmpty()) {
+            Coupon c4 = Coupon.builder()
+                .code("FREESHIP")
+                .description("Miễn phí vận chuyển cho đơn hàng từ 150.000đ")
+                .discountType(Coupon.DiscountType.FREESHIP)
+                .discountValue(new BigDecimal("30000.00"))
+                .minOrderValue(new BigDecimal("150000.00"))
+                .maxDiscountAmount(new BigDecimal("30000.00"))
+                .usageLimit(1000)
+                .startDate(LocalDateTime.now().minusDays(5))
+                .endDate(LocalDateTime.now().plusMonths(12))
+                .status(Coupon.CouponStatus.ACTIVE)
+                .build();
+            couponRepository.save(c4);
+        }
     }
 
     private String generateIsbn(String productName) {

@@ -192,6 +192,8 @@ public class OrderService {
                 if (coupon.getMaxDiscountAmount() != null && couponDiscount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
                     couponDiscount = coupon.getMaxDiscountAmount();
                 }
+            } else if (coupon.getDiscountType() == Coupon.DiscountType.FREESHIP) {
+                couponDiscount = BigDecimal.ZERO;
             } else {
                 couponDiscount = coupon.getDiscountValue();
             }
@@ -204,8 +206,18 @@ public class OrderService {
                 ? request.getShippingAddress()
                 : dbUser.getAddress();
 
-        BigDecimal discountAmount = promotionDiscount.add(couponDiscount);
         BigDecimal shippingFee = calculateShippingFee(shippingAddress, totalAmount);
+        if (coupon != null && coupon.getDiscountType() == Coupon.DiscountType.FREESHIP) {
+            BigDecimal freeshipReduction = (coupon.getDiscountValue() != null && coupon.getDiscountValue().compareTo(BigDecimal.ZERO) > 0)
+                    ? coupon.getDiscountValue().min(shippingFee)
+                    : shippingFee;
+            if (coupon.getMaxDiscountAmount() != null && freeshipReduction.compareTo(coupon.getMaxDiscountAmount()) > 0) {
+                freeshipReduction = coupon.getMaxDiscountAmount();
+            }
+            couponDiscount = freeshipReduction;
+        }
+
+        BigDecimal discountAmount = promotionDiscount.add(couponDiscount);
 
         BigDecimal finalAmountBeforePoints = totalAmount.subtract(discountAmount).add(shippingFee);
         if (finalAmountBeforePoints.compareTo(BigDecimal.ZERO) < 0) {

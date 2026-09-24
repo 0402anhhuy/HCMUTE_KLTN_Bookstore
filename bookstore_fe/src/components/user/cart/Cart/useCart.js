@@ -7,7 +7,15 @@ export const useCart = () => {
     const { cart, updateCartQty, removeFromCart, clearCart, user, showToast } =
         useApp();
     const navigate = useNavigate();
-    const [couponCode, setCouponCode] = useState("");
+    const [couponCode, setCouponCodeState] = useState("");
+    const isManualCouponRef = useRef(false);
+
+    const setCouponCode = (code, isManual = true) => {
+        if (isManual) {
+            isManualCouponRef.current = true;
+        }
+        setCouponCodeState(code);
+    };
     const [usePoints, setUsePoints] = useState(false);
     const [selectedItemIds, setSelectedItemIds] = useState(new Set());
 
@@ -94,7 +102,7 @@ export const useCart = () => {
                 couponVersionRef.current !== nextVersion
             ) {
                 showToast?.(
-                    "Voucher đã được cập nhật. Hệ thống đang tính lại ưu đãi tốt nhất.",
+                    "Voucher đã được cập nhật.",
                     "info",
                 );
             }
@@ -113,7 +121,7 @@ export const useCart = () => {
         }
     }, [user]);
 
-    const calculateDiscount = (coupon, currentSubtotal) => {
+    const calculateDiscount = (coupon, currentSubtotal, rawShipping = 30000) => {
         if (!coupon) return 0;
         if (currentSubtotal < coupon.minOrderValue) return 0;
 
@@ -127,13 +135,20 @@ export const useCart = () => {
                 disc = coupon.maxDiscountAmount;
             }
             return disc;
+        } else if (coupon.discountType === "FREESHIP") {
+            let val = coupon.discountValue || rawShipping;
+            let disc = Math.min(rawShipping, val);
+            if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
+                disc = coupon.maxDiscountAmount;
+            }
+            return disc;
         } else {
             return coupon.discountValue;
         }
     };
 
     useEffect(() => {
-        if (coupons.length > 0) {
+        if (coupons.length > 0 && !isManualCouponRef.current && !couponCode) {
             let maxDisc = 0;
             let best = null;
             coupons.forEach((c) => {
@@ -145,14 +160,12 @@ export const useCart = () => {
             });
             if (best) {
                 setBestCoupon(best);
-                setCouponCode(best.code);
+                setCouponCodeState(best.code);
             }
         }
-    }, [coupons, totalAmount]);
+    }, [coupons, totalAmount, couponCode]);
 
     const activeCouponObj = coupons.find((c) => c.code === couponCode);
-    const couponDiscount = calculateDiscount(activeCouponObj, totalAmount);
-
     const savedAddresses =
         user && user.address ? user.address.split(" || ").filter(Boolean) : [];
     const defaultAddress = savedAddresses[0] || "";
@@ -278,12 +291,21 @@ export const useCart = () => {
     };
 
     const hasSelectedItems = selectedItemIds && selectedItemIds.size > 0;
-    const shippingFee = hasSelectedItems ? getShippingFee(defaultAddress, totalAmount) : 0;
+    const rawShippingFee = hasSelectedItems ? getShippingFee(defaultAddress, totalAmount) : 0;
+    const couponDiscount = hasSelectedItems ? calculateDiscount(activeCouponObj, totalAmount, rawShippingFee) : 0;
+    const isFreeshipCoupon = activeCouponObj?.discountType === "FREESHIP";
+    
+    // For freeship coupons, discount is deducted from shipping fee
+    const shippingFee = isFreeshipCoupon 
+        ? Math.max(0, rawShippingFee - couponDiscount) 
+        : rawShippingFee;
+    const finalCouponDiscount = isFreeshipCoupon ? 0 : couponDiscount;
+
     const rewardPoints = user?.rewardPoints || 0;
     const maxPointsValue = rewardPoints * 1000;
     const remainingAfterCoupon = Math.max(
         0,
-        totalAmount + shippingFee - couponDiscount,
+        totalAmount + shippingFee - finalCouponDiscount,
     );
     const pointsDiscount = (usePoints && hasSelectedItems)
         ? Math.min(maxPointsValue, remainingAfterCoupon)
@@ -293,7 +315,7 @@ export const useCart = () => {
     const total = hasSelectedItems
         ? Math.max(
             0,
-            totalAmount + shippingFee - couponDiscount - pointsDiscount,
+            totalAmount + shippingFee - finalCouponDiscount - pointsDiscount,
         )
         : 0;
 
