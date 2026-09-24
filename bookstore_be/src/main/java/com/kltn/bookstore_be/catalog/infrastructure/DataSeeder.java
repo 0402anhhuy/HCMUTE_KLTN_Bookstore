@@ -22,6 +22,7 @@ import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 import com.kltn.bookstore_be.ordering.domain.PromotionRepository;
 
 @Component
+@org.springframework.core.annotation.Order(2)
 public class DataSeeder implements CommandLineRunner {
 
     private static final String BASE_URL = "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products";

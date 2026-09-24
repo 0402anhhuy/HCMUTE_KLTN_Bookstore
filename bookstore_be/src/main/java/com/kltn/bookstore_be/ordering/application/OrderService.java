@@ -207,12 +207,12 @@ public class OrderService {
                 : dbUser.getAddress();
 
         BigDecimal shippingFee = calculateShippingFee(shippingAddress, totalAmount);
-        if (coupon != null && coupon.getDiscountType() == Coupon.DiscountType.FREESHIP) {
-            BigDecimal freeshipReduction = (coupon.getDiscountValue() != null && coupon.getDiscountValue().compareTo(BigDecimal.ZERO) > 0)
-                    ? coupon.getDiscountValue().min(shippingFee)
+        if (activeCoupon != null && activeCoupon.getDiscountType() == Coupon.DiscountType.FREESHIP) {
+            BigDecimal freeshipReduction = (activeCoupon.getDiscountValue() != null && activeCoupon.getDiscountValue().compareTo(BigDecimal.ZERO) > 0)
+                    ? activeCoupon.getDiscountValue().min(shippingFee)
                     : shippingFee;
-            if (coupon.getMaxDiscountAmount() != null && freeshipReduction.compareTo(coupon.getMaxDiscountAmount()) > 0) {
-                freeshipReduction = coupon.getMaxDiscountAmount();
+            if (activeCoupon.getMaxDiscountAmount() != null && freeshipReduction.compareTo(activeCoupon.getMaxDiscountAmount()) > 0) {
+                freeshipReduction = activeCoupon.getMaxDiscountAmount();
             }
             couponDiscount = freeshipReduction;
         }
