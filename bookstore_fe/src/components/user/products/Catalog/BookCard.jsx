@@ -42,16 +42,23 @@ const BookCard = ({
 
             <div className="book-card-rating-row">
                 <div className="book-card-stars">
-                    {[...Array(5)].map((_, i) => (
-                        <Star
-                            key={i}
-                            size={12}
-                            fill="currentColor"
-                            stroke="none"
-                        />
-                    ))}
+                    {[1, 2, 3, 4, 5].map((starIdx) => {
+                        const isFilled = product.averageRating && product.averageRating >= starIdx;
+                        return (
+                            <Star
+                                key={starIdx}
+                                size={12}
+                                fill={isFilled ? "#ecc94b" : "none"}
+                                color={isFilled ? "#ecc94b" : "#cbd5e1"}
+                            />
+                        );
+                    })}
                 </div>
-                <span className="book-card-rating-text">(5.0)</span>
+                <span className="book-card-rating-text">
+                    {product.averageRating && product.averageRating > 0
+                        ? `(${product.averageRating.toFixed(1)})`
+                        : "(0)"}
+                </span>
             </div>
 
             <div className="book-card-bottom-row">
