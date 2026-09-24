@@ -509,6 +509,23 @@
     outline: none;
 }
 
+.checkout-voucher-apply-btn {
+    padding: 0 14px;
+    background: #0a422d;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.checkout-voucher-apply-btn:hover {
+    background: #072f20;
+}
+
 .checkout-voucher-clear-btn {
     padding: 0 10px;
     background: #f3f4f6;
@@ -517,6 +534,7 @@
     cursor: pointer;
     font-size: 0.8rem;
     color: #4b5563;
+    white-space: nowrap;
 }
 
 .checkout-voucher-list-label {

@@ -63,11 +63,13 @@ const ProductDetail = () => {
         closeLightbox,
         nextLightboxImage,
         prevLightboxImage,
-        toggleZoom,
         handleAddToCart,
         handleToggleFavorite,
         handleBuyNow,
         getProductImagesList,
+        zoomIn,
+        zoomOut,
+        resetZoom,
     } = useProductDetail();
 
     if (loading) {
@@ -627,33 +629,46 @@ const ProductDetail = () => {
                                     Trang {lightboxIdx + 1} / {totalImagesCount}
                                 </span>
                             </div>
+                            {/* Lightbox Actions Group */}
                             <div className="lightbox-actions-group">
-                                <button
-                                    type="button"
-                                    onClick={toggleZoom}
-                                    className="lightbox-action-btn"
-                                    title={
-                                        zoomLevel > 1
-                                            ? "Thu nhỏ"
-                                            : "Phóng to đọc nội dung"
-                                    }
-                                >
-                                    {zoomLevel > 1 ? (
-                                        <ZoomOut size={20} />
-                                    ) : (
-                                        <ZoomIn size={20} />
-                                    )}
-                                    <span>
-                                        {zoomLevel > 1 ? "Thu nhỏ" : "Phóng to"}
+                                {/* Bộ điều khiển nấc zoom */}
+                                <div className="lightbox-zoom-controller">
+                                    <button
+                                        type="button"
+                                        onClick={zoomOut}
+                                        disabled={zoomLevel <= 1.0}
+                                        className="lightbox-zoom-btn"
+                                        title="Thu nhỏ về 100%"
+                                    >
+                                        <ZoomOut size={18} />
+                                    </button>
+                                    
+                                    <span 
+                                        className="lightbox-zoom-label" 
+                                        onClick={resetZoom}
+                                        title="Nhấp để đặt lại về 100%"
+                                    >
+                                        {Math.round(zoomLevel * 100)}%
                                     </span>
-                                </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={zoomIn}
+                                        disabled={zoomLevel >= 3.0}
+                                        className="lightbox-zoom-btn"
+                                        title="Phóng to"
+                                    >
+                                        <ZoomIn size={18} />
+                                    </button>
+                                </div>
+
                                 <button
                                     type="button"
                                     onClick={closeLightbox}
                                     className="lightbox-close-btn"
                                     title="Đóng preview"
                                 >
-                                    <X size={24} />
+                                    <X size={22} />
                                 </button>
                             </div>
                         </div>
@@ -687,13 +702,11 @@ const ProductDetail = () => {
                                 <img
                                     src={productImages[lightboxIdx]?.url}
                                     alt={`Trang ${lightboxIdx + 1}`}
-                                    className={`lightbox-main-img ${
-                                        zoomLevel > 1 ? "zoomed" : ""
-                                    }`}
+                                    className={`lightbox-main-img ${zoomLevel > 1.0 ? "zoomed" : ""}`}
                                     style={{
                                         transform: `translate(${panPosition.x}px, ${panPosition.y}px) scale(${zoomLevel})`,
-                                        transition: isDragging ? "none" : "transform 0.2s ease-out",
-                                        cursor: zoomLevel > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
+                                        transition: isDragging ? "none" : "transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)",
+                                        cursor: zoomLevel > 1.0 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
                                     }}
                                     draggable={false}
                                 />

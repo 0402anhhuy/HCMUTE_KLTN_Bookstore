@@ -35,6 +35,9 @@ const Checkout = () => {
         setPaymentMethod,
         couponCode,
         setCouponCode,
+        couponInput,
+        setCouponInput,
+        handleApplyManualCoupon,
         loading,
         error,
         coupons,
@@ -516,21 +519,37 @@ const Checkout = () => {
                                 <input
                                     type="text"
                                     placeholder="Nhập mã giảm giá..."
-                                    value={couponCode}
+                                    value={couponInput}
                                     onChange={(e) =>
-                                        setCouponCode(
+                                        setCouponInput(
                                             e.target.value.toUpperCase(),
                                         )
                                     }
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleApplyManualCoupon(couponInput);
+                                        }
+                                    }}
                                     className="checkout-voucher-input"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => handleApplyManualCoupon(couponInput)}
+                                    className="checkout-voucher-apply-btn"
+                                >
+                                    Áp dụng
+                                </button>
                                 {couponCode && (
                                     <button
                                         type="button"
-                                        onClick={() => setCouponCode("")}
+                                        onClick={() => {
+                                            setCouponCode("");
+                                            setCouponInput("");
+                                        }}
                                         className="checkout-voucher-clear-btn"
                                     >
-                                        Xóa
+                                        Gỡ mã
                                     </button>
                                 )}
                             </div>

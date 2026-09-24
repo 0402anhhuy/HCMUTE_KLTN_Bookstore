@@ -703,7 +703,7 @@ const OrderHistory = () => {
 
                         const steps = [
                             {
-                                label: "Đặt hàng thành công",
+                                label: "Chờ xác nhận",
                                 time: order.createdAt,
                                 done: true,
                                 icon: ShoppingBag,
@@ -731,7 +731,7 @@ const OrderHistory = () => {
 
                         if (order.preparingAt) {
                             steps.push({
-                                label: "Đang chuẩn bị",
+                                label: "Đang đóng gói",
                                 time: order.preparingAt,
                                 done: true,
                                 icon: Package,
@@ -739,7 +739,7 @@ const OrderHistory = () => {
                             });
                         } else if (!isCancelled && !isRefunded) {
                             steps.push({
-                                label: "Đang chuẩn bị",
+                                label: "Đang đóng gói",
                                 time: null,
                                 done: false,
                                 icon: Package,

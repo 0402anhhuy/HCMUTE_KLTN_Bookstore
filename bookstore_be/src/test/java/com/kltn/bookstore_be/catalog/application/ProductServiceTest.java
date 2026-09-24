@@ -62,8 +62,7 @@ class ProductServiceTest {
                 .price(BigDecimal.valueOf(25000))
                 .stockQuantity(100)
                 .imageUrls(List.of(
-                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"
-                ))
+                        "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"))
                 .status(Product.ProductStatus.ACTIVE)
                 .category(sampleCategory)
                 .build();
@@ -103,6 +102,25 @@ class ProductServiceTest {
             });
 
             assertTrue(exception.getMessage().contains("Không tìm thấy sản phẩm"));
+        }
+
+        @Test
+        @DisplayName("Tìm kiếm sản phẩm theo từ khóa, danh mục, ngôn ngữ và khoảng giá")
+        void searchProducts_withLanguageFilter_callsRepository() {
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+            org.springframework.data.domain.Page<Product> page = new org.springframework.data.domain.PageImpl<>(
+                    List.of(sampleProduct));
+            when(categoryRepository.findByParentCategoryId(1L)).thenReturn(List.of());
+            when(productRepository.searchProducts(eq("Doraemon"), any(), eq("Tiếng Việt"), any(), any(), eq(pageable)))
+                    .thenReturn(page);
+
+            org.springframework.data.domain.Page<Product> result = productService.searchProducts("Doraemon", 1L,
+                    "Tiếng Việt", BigDecimal.ZERO, BigDecimal.valueOf(50000), pageable);
+
+            assertNotNull(result);
+            assertEquals(1, result.getTotalElements());
+            verify(productRepository).searchProducts(eq("Doraemon"), any(), eq("Tiếng Việt"), any(), any(),
+                    eq(pageable));
         }
 
         @Test
@@ -200,8 +218,7 @@ class ProductServiceTest {
                     .price(BigDecimal.valueOf(30000))
                     .stockQuantity(200)
                     .imageUrls(List.of(
-                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"
-                    ))
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"))
                     .status(Product.ProductStatus.ACTIVE)
                     .build();
 
@@ -230,8 +247,7 @@ class ProductServiceTest {
                     .price(BigDecimal.valueOf(25000))
                     .stockQuantity(100)
                     .imageUrls(List.of(
-                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"
-                    ))
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"))
                     .status(Product.ProductStatus.ACTIVE)
                     .build();
 
@@ -259,7 +275,7 @@ class ProductServiceTest {
         @Test
         @DisplayName("Nhập kho (IMPORT) - tăng số lượng tồn kho")
         void adjustStock_import_increasesStock() {
-            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct)); 
+            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
             when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);
             when(stockMovementRepository.save(any(StockMovement.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));

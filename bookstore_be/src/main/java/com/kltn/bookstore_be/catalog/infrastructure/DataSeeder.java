@@ -22,6 +22,7 @@ import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 import com.kltn.bookstore_be.ordering.domain.PromotionRepository;
 
 @Component
+@org.springframework.core.annotation.Order(2)
 public class DataSeeder implements CommandLineRunner {
 
     private static final String BASE_URL = "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products";
@@ -842,6 +843,22 @@ public class DataSeeder implements CommandLineRunner {
                 .status(Coupon.CouponStatus.ACTIVE)
                 .build();
             couponRepository.save(c3);
+        }
+
+        if (couponRepository.findByCode("FREESHIP").isEmpty()) {
+            Coupon c4 = Coupon.builder()
+                .code("FREESHIP")
+                .description("Miễn phí vận chuyển cho đơn hàng từ 150.000đ")
+                .discountType(Coupon.DiscountType.FREESHIP)
+                .discountValue(new BigDecimal("30000.00"))
+                .minOrderValue(new BigDecimal("150000.00"))
+                .maxDiscountAmount(new BigDecimal("30000.00"))
+                .usageLimit(1000)
+                .startDate(LocalDateTime.now().minusDays(5))
+                .endDate(LocalDateTime.now().plusMonths(12))
+                .status(Coupon.CouponStatus.ACTIVE)
+                .build();
+            couponRepository.save(c4);
         }
     }
 
