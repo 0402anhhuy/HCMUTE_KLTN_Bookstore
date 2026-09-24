@@ -47,17 +47,16 @@ public class ProductController {
     private final UserService userService;
     private final FavoriteProductRepository favoriteProductRepository;
 
-
     @GetMapping
     public ResponseEntity<?> searchProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String language,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "id,desc") String sort
-    ) {
+            @RequestParam(defaultValue = "id,desc") String sort) {
         try {
             String[] sortParams = sort.split(",");
             Sort sorting = Sort.by(sortParams[0]);
@@ -68,7 +67,8 @@ public class ProductController {
             }
 
             Pageable pageable = PageRequest.of(page, size, sorting);
-            Page<Product> productPage = productService.searchProducts(keyword, categoryId, minPrice, maxPrice, pageable);
+            Page<Product> productPage = productService.searchProducts(keyword, categoryId, language, minPrice, maxPrice,
+                    pageable);
             return ResponseEntity.ok(productPage);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -129,8 +129,7 @@ public class ProductController {
             @PathVariable Long id,
             @RequestParam Integer quantity,
             @RequestParam StockMovement.MovementType movementType,
-            @RequestParam String note
-    ) {
+            @RequestParam String note) {
         try {
             User manager = userService.getAuthenticatedUser();
             productService.adjustStock(id, quantity, movementType, note, manager);
@@ -144,10 +143,14 @@ public class ProductController {
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<?> createProduct(
             @RequestBody Product product,
-            @RequestParam Long categoryId
-      ) {
+            @RequestParam(required = false) Long categoryId) {
         try {
-            Product created = productService.createProduct(product, categoryId);
+            Long targetCatId = categoryId != null ? categoryId
+                    : (product.getCategory() != null ? product.getCategory().getId() : null);
+            if (targetCatId == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Danh mục không được để trống"));
+            }
+            Product created = productService.createProduct(product, targetCatId);
             return ResponseEntity.ok(created);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -159,10 +162,16 @@ public class ProductController {
     public ResponseEntity<?> updateProduct(
             @PathVariable Long id,
             @RequestBody Product product,
-            @RequestParam Long categoryId
-      ) {
+            @RequestParam(required = false) Long categoryId) {
         try {
-            Product updated = productService.updateProduct(id, product, categoryId);
+            Long targetCatId = categoryId != null ? categoryId
+                    : (product.getCategory() != null ? product.getCategory().getId() : null);
+            Product updated;
+            if (targetCatId != null) {
+                updated = productService.updateProduct(id, product, targetCatId);
+            } else {
+                updated = productService.updateProduct(id, product);
+            }
             return ResponseEntity.ok(updated);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -196,12 +205,13 @@ public class ProductController {
         try {
             User user = userService.getAuthenticatedUser();
             Product product = productService.getProductById(productId);
-            
-            java.util.Optional<FavoriteProduct> existing = favoriteProductRepository.findByUserIdAndProductId(user.getId(), productId);
+
+            java.util.Optional<FavoriteProduct> existing = favoriteProductRepository
+                    .findByUserIdAndProductId(user.getId(), productId);
             if (existing.isPresent()) {
                 return ResponseEntity.ok(Map.of("message", "Sản phẩm đã có trong danh sách yêu thích"));
             }
-            
+
             FavoriteProduct fp = FavoriteProduct.builder()
                     .user(user)
                     .product(product)

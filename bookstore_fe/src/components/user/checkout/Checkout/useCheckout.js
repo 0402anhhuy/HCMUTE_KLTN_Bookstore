@@ -46,6 +46,7 @@ export const useCheckout = () => {
     const [useCustomAddress, setUseCustomAddress] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("COD");
     const [couponCode, setCouponCodeState] = useState(initialCoupon);
+    const [couponInput, setCouponInput] = useState(initialCoupon);
     const isManualCouponRef = useRef(!!initialCoupon);
 
     const setCouponCode = (code, isManual = true) => {
@@ -53,6 +54,7 @@ export const useCheckout = () => {
             isManualCouponRef.current = true;
         }
         setCouponCodeState(code);
+        setCouponInput(code);
     };
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -147,7 +149,7 @@ export const useCheckout = () => {
                     );
                     showToast?.(
                         err.response?.data?.error ||
-                            "Sản phẩm này không còn khả dụng hoặc đã được tạm ẩn.",
+                        "Sản phẩm này không còn khả dụng hoặc đã được tạm ẩn.",
                         "error",
                     );
                     setError("Không thể tải thông tin sản phẩm mua ngay.");
@@ -181,17 +183,17 @@ export const useCheckout = () => {
     const checkoutItems = buyNowProduct
         ? []
         : selectedCartItemIds.length > 0
-          ? (cart?.items || []).filter((item) =>
+            ? (cart?.items || []).filter((item) =>
                 selectedCartItemIds.includes(item.id),
             )
-          : cart?.items || [];
+            : cart?.items || [];
 
     const subtotal = buyNowProduct
         ? buyNowProduct.price * qty
         : checkoutItems.reduce(
-              (sum, item) => sum + item.product.price * item.quantity,
-              0,
-          );
+            (sum, item) => sum + item.product.price * item.quantity,
+            0,
+        );
 
     const getShippingFee = (address, amt) => {
         if (amt >= 500000) return 0;
@@ -407,12 +409,12 @@ export const useCheckout = () => {
                 couponCode: couponCode.trim() || null,
                 couponSnapshot: activeCouponObj
                     ? {
-                          id: activeCouponObj.id,
-                          discountType: activeCouponObj.discountType,
-                          discountValue: activeCouponObj.discountValue,
-                          minOrderValue: activeCouponObj.minOrderValue,
-                          maxDiscountAmount: activeCouponObj.maxDiscountAmount,
-                      }
+                        id: activeCouponObj.id,
+                        discountType: activeCouponObj.discountType,
+                        discountValue: activeCouponObj.discountValue,
+                        minOrderValue: activeCouponObj.minOrderValue,
+                        maxDiscountAmount: activeCouponObj.maxDiscountAmount,
+                    }
                     : null,
                 usePoints,
                 ...(productId
@@ -447,6 +449,34 @@ export const useCheckout = () => {
         }
     };
 
+    const handleApplyManualCoupon = (inputCode = couponInput) => {
+        const code = (inputCode || "").trim().toUpperCase();
+        if (!code) {
+            setCouponCode("");
+            showToast?.("Đã gỡ bỏ mã giảm giá", "info");
+            return;
+        }
+        const targetCoupon = coupons.find((c) => c.code.toUpperCase() === code);
+        if (!targetCoupon) {
+            showToast?.(`Mã giảm giá "${code}" không tồn tại hoặc đã hết hạn`, "error");
+            return;
+        }
+        const disc = calculateDiscount(targetCoupon, subtotal, rawShippingFee);
+        if (disc <= 0) {
+            if (subtotal < targetCoupon.minOrderValue) {
+                showToast?.(
+                    `Đơn hàng chưa đạt mức tối thiểu ${formatPrice(targetCoupon.minOrderValue)} để áp dụng mã này`,
+                    "warning",
+                );
+            } else {
+                showToast?.("Mã giảm giá chưa đủ điều kiện áp dụng", "warning");
+            }
+            return;
+        }
+        setCouponCode(targetCoupon.code);
+        showToast?.(`Áp dụng thành công mã giảm giá ${targetCoupon.code}!`, "success");
+    };
+
     return {
         user,
         cart,
@@ -465,6 +495,9 @@ export const useCheckout = () => {
         setPaymentMethod,
         couponCode,
         setCouponCode,
+        couponInput,
+        setCouponInput,
+        handleApplyManualCoupon,
         loading,
         error,
         coupons,

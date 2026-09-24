@@ -168,6 +168,7 @@ const AdminDashboard = () => {
                                     products={products}
                                     orders={orders}
                                     auditLogs={auditLogs}
+                                    setActiveTab={setActiveTab}
                                 />
                             )}
                             {activeTab === "users" && (

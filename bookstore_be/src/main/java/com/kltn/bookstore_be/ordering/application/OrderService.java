@@ -42,6 +42,8 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -423,13 +425,13 @@ public class OrderService {
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        ZoneId vnZone = ZoneId.of("Asia/Ho_Chi_Minh");
+        ZonedDateTime nowVN = ZonedDateTime.now(vnZone);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        vnp_Params.put("vnp_CreateDate", formatter.format(LocalDateTime.now()));
+        vnp_Params.put("vnp_CreateDate", formatter.format(nowVN));
         
-        cld.add(Calendar.MINUTE, 15);
-        // Expiration
-        vnp_Params.put("vnp_ExpireDate", formatter.format(LocalDateTime.now().plusMinutes(15)));
+        // Expiration (15 minutes from creation)
+        vnp_Params.put("vnp_ExpireDate", formatter.format(nowVN.plusMinutes(15)));
 
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
