@@ -27,21 +27,24 @@ jobs:
 
       - name: 4. Pull Vercel Environment Information
         working-directory: ./bookstore_fe
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          export VERCEL_ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
+          export VERCEL_PROJECT_ID=$(echo "${{ secrets.VERCEL_PROJECT_ID }}" | tr -d '\r\n[:space:]')
+          export VERCEL_TOKEN=$(echo "${{ secrets.VERCEL_TOKEN }}" | tr -d '\r\n[:space:]')
+          vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
       - name: 5. Build Project Artifacts
         working-directory: ./bookstore_fe
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          export VERCEL_ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
+          export VERCEL_PROJECT_ID=$(echo "${{ secrets.VERCEL_PROJECT_ID }}" | tr -d '\r\n[:space:]')
+          export VERCEL_TOKEN=$(echo "${{ secrets.VERCEL_TOKEN }}" | tr -d '\r\n[:space:]')
+          vercel build --prod --token=$VERCEL_TOKEN
 
       - name: 6. Deploy to Vercel (Production)
         working-directory: ./bookstore_fe
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          export VERCEL_ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
+          export VERCEL_PROJECT_ID=$(echo "${{ secrets.VERCEL_PROJECT_ID }}" | tr -d '\r\n[:space:]')
+          export VERCEL_TOKEN=$(echo "${{ secrets.VERCEL_TOKEN }}" | tr -d '\r\n[:space:]')
+          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
