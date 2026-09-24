@@ -32,7 +32,7 @@ export const useCheckout = () => {
     const [buyNowProduct, setBuyNowProduct] = useState(null);
     const [fetchingProduct, setFetchingProduct] = useState(!!productId);
 
-    // Lấy danh sách địa chỉ thực tế từ User profile (Không dùng mock)
+    // Lấy danh sách địa chỉ thực tế từ User profile
     const savedAddresses = useMemo(() => {
         if (!user || !user.address) return [];
         return user.address
@@ -56,6 +56,7 @@ export const useCheckout = () => {
         setCouponCodeState(code);
         setCouponInput(code);
     };
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -113,7 +114,6 @@ export const useCheckout = () => {
 
     useEffect(() => {
         if (user) {
-            // Nếu tài khoản chưa có địa chỉ nào được lưu, bật form nhập địa chỉ
             if (!user.address || savedAddresses.length === 0) {
                 setUseCustomAddress(true);
                 setRecipientName(user.fullName || "");
@@ -357,6 +357,7 @@ export const useCheckout = () => {
             if (best) {
                 setBestCoupon(best);
                 setCouponCodeState(best.code);
+                setCouponInput(best.code);
             }
         }
     }, [coupons, subtotal, couponCode, rawShippingFee]);
