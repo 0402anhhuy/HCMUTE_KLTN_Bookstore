@@ -19,23 +19,29 @@ const Footer = () => {
                     </p>
                     <div className="footer-social-links-row">
                         <a
-                            href="#"
+                            href="https://facebook.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="footer-social-link"
-                            aria-label="Website"
+                            aria-label="Facebook"
                         >
                             <Globe size={18} />
                         </a>
                         <a
-                            href="#"
+                            href="https://instagram.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="footer-social-link"
-                            aria-label="Community"
+                            aria-label="Instagram"
                         >
                             <Share2 size={18} />
                         </a>
                         <a
-                            href="#"
+                            href="https://zalo.me"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="footer-social-link"
-                            aria-label="Contact"
+                            aria-label="Zalo"
                         >
                             <MessageCircle size={18} />
                         </a>
@@ -45,16 +51,16 @@ const Footer = () => {
                 {/* Column 2: Cửa hàng */}
                 <div className="footer-col-nav">
                     <h3 className="footer-col-heading">Cửa hàng</h3>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/catalog" className="footer-nav-link">
                         Về chúng tôi
                     </Link>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/catalog" className="footer-nav-link">
                         Hệ thống cửa hàng
                     </Link>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/catalog" className="footer-nav-link">
                         Tuyển dụng
                     </Link>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/catalog" className="footer-nav-link">
                         Tin tức
                     </Link>
                 </div>
@@ -62,16 +68,16 @@ const Footer = () => {
                 {/* Column 3: Hỗ trợ */}
                 <div className="footer-col-nav">
                     <h3 className="footer-col-heading">Hỗ trợ</h3>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/cart" className="footer-nav-link">
                         Vận chuyển & Giao nhận
                     </Link>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/checkout" className="footer-nav-link">
                         Thanh toán an toàn
                     </Link>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/profile" className="footer-nav-link">
                         Chính sách bảo mật
                     </Link>
-                    <Link to="/" className="footer-nav-link">
+                    <Link to="/profile" className="footer-nav-link">
                         Điều khoản dịch vụ
                     </Link>
                 </div>
