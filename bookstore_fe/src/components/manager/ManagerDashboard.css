@@ -100,6 +100,73 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* Card View utilities for responsive tables */
+.manager-mobile-card-list {
+  display: none;
+}
+
+.manager-desktop-table {
+  display: block;
+}
+
+.manager-card-item {
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manager-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 10px;
+}
+
+.manager-card-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.manager-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.manager-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.manager-card-label {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.manager-card-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.manager-card-footer {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* Mobile Media Query (iPhone 14 Pro Max & Mobile <= 768px) */
 @media (max-width: 768px) {
   .manager-sidebar {
@@ -209,91 +276,22 @@
     white-space: nowrap !important;
   }
 
-  /* Card View utilities for mobile responsive tables */
-  .manager-mobile-card-list {
-    display: none;
-  }
-
   .manager-desktop-table {
-    display: block;
+    display: none !important;
   }
 
-  .manager-card-item {
-    background-color: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-    display: flex;
+  .manager-mobile-card-list {
+    display: flex !important;
     flex-direction: column;
     gap: 12px;
   }
 
-  .manager-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #f1f5f9;
-    padding-bottom: 10px;
+  .manager-filter-select {
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
-  .manager-card-title {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: #0f172a;
-  }
-
-  .manager-card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 0.875rem;
-    color: #334155;
-  }
-
-  .manager-card-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .manager-card-label {
-    color: #64748b;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-
-  .manager-card-value {
-    font-weight: 600;
-    color: #0f172a;
-  }
-
-  .manager-card-footer {
-    border-top: 1px solid #f1f5f9;
-    padding-top: 10px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  @media (max-width: 768px) {
-    .manager-desktop-table {
-      display: none !important;
-    }
-
-    .manager-mobile-card-list {
-      display: flex !important;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .manager-filter-select {
-      width: 100% !important;
-      min-width: 0 !important;
-    }
-
-    .manager-user-name {
-      display: none !important;
-    }
+  .manager-user-name {
+    display: none !important;
   }
 }

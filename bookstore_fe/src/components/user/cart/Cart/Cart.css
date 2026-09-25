@@ -47,17 +47,19 @@
 .cart-empty-btn-shop {
     display: inline-block;
     background-color: #0a422d;
-    color: #ffffff;
+    color: #ffffff !important;
     padding: 10px 24px;
     border-radius: 6px;
     font-weight: 700;
     font-size: 0.9rem;
     text-decoration: none;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
 }
 
 .cart-empty-btn-shop:hover {
     background-color: #072e20;
+    color: #ffffff !important;
+    opacity: 0.95;
 }
 
 /* Main Grid (2 Columns) */

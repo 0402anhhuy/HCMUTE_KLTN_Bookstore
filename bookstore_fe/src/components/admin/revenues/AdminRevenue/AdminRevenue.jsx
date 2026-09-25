@@ -18,19 +18,18 @@ const AdminRevenue = ({ orders }) => {
 
     return (
         <div className="admin-revenue-container">
-            {/* 1. Header Area with exact layout */}
+            {/* 1. Header */}
             <div className="admin-revenue-header">
                 <div>
                     <h1 className="admin-revenue-title">
                         Thống kê & Tài chính
                     </h1>
                     <p className="admin-revenue-subtitle">
-                        Manage your business work
+                        Báo cáo kết quả kinh doanh thực tế từ đơn hàng
                     </p>
                 </div>
 
                 <div className="admin-revenue-header-actions">
-                    {/* Time Filter Segmented Control */}
                     <div className="admin-revenue-time-filter-wrapper">
                         {["7 ngày", "30 ngày", "12 tháng"].map((filter) => (
                             <button
@@ -45,55 +44,58 @@ const AdminRevenue = ({ orders }) => {
                             </button>
                         ))}
                     </div>
-
-                    <button type="button" className="admin-revenue-report-btn">
-                        Tạo báo cáo
-                    </button>
                 </div>
             </div>
 
-            {/* 2. Top Metric Cards (DOANH THU, SỐ DƯ VÍ, GIÁ TRỊ ĐƠN) */}
+            {/* 2. Top Metric Cards */}
             <div className="admin-revenue-metrics-grid">
-                {/* Card 1: Doanh thu */}
+                {/* Doanh thu */}
                 <div className="admin-revenue-metric-card">
-                    <div className="admin-revenue-metric-label">DOANH THU</div>
+                    <div className="admin-revenue-metric-label">
+                        DOANH THU ({timeFilter.toUpperCase()})
+                    </div>
                     <div className="admin-revenue-metric-value">
                         {totalRevenue.toLocaleString("vi-VN")}đ
                     </div>
                     <div className="admin-revenue-metric-growth-row">
-                        <div className="admin-revenue-growth-badge">+12.5%</div>
+                        <div className="admin-revenue-growth-badge">
+                            Thực tế
+                        </div>
                         <span className="admin-revenue-growth-compare">
-                            so với tháng trước
+                            từ các đơn hoàn thành
                         </span>
                     </div>
                 </div>
 
-                {/* Card 2: Số dư ví */}
-                <div className="admin-revenue-metric-card">
-                    <div className="admin-revenue-metric-label">SỐ DƯ VÍ</div>
-                    <div className="admin-revenue-metric-value">
-                        {soDuVi.toLocaleString("vi-VN")}đ
-                    </div>
-                    <div className="admin-revenue-metric-growth-row">
-                        <div className="admin-revenue-growth-badge">+8.2%</div>
-                        <span className="admin-revenue-growth-compare">
-                            so với tháng trước
-                        </span>
-                    </div>
-                </div>
-
-                {/* Card 3: Giá trị đơn */}
+                {/* Số đơn hoàn thành */}
                 <div className="admin-revenue-metric-card">
                     <div className="admin-revenue-metric-label">
-                        GIÁ TRỊ ĐƠN
+                        SỐ ĐƠN HOÀN THÀNH
+                    </div>
+                    <div className="admin-revenue-metric-value">
+                        {totalOrders}
+                    </div>
+                    <div className="admin-revenue-metric-growth-row">
+                        <div className="admin-revenue-orders-badge">
+                            Đã giao thành công
+                        </div>
+                    </div>
+                </div>
+
+                {/* Giá trị trung bình mỗi đơn */}
+                <div className="admin-revenue-metric-card">
+                    <div className="admin-revenue-metric-label">
+                        GIÁ TRỊ TRUNG BÌNH / ĐƠN
                     </div>
                     <div className="admin-revenue-metric-value">
                         {Math.round(averageOrderValue).toLocaleString("vi-VN")}đ
                     </div>
                     <div className="admin-revenue-metric-growth-row">
-                        <div className="admin-revenue-orders-badge">
-                            {totalOrders} Orders
-                        </div>
+                        <span className="admin-revenue-growth-compare">
+                            {totalOrders > 0
+                                ? "Doanh thu / Đơn hàng"
+                                : "Chưa có đơn hoàn thành"}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -102,7 +104,7 @@ const AdminRevenue = ({ orders }) => {
             <div className="admin-revenue-chart-card">
                 <div className="admin-revenue-chart-header">
                     <h2 className="admin-revenue-chart-title">
-                        Tổng quan doanh thu
+                        Biểu đồ Doanh thu theo {chartView.toLowerCase()}
                     </h2>
 
                     <div className="admin-revenue-chart-segmented-control">
@@ -125,11 +127,27 @@ const AdminRevenue = ({ orders }) => {
                 <div className="admin-revenue-chart-container">
                     <div className="admin-revenue-chart-axis-line"></div>
 
-                    {/* Array of bars */}
                     {chartBars.map((bar, idx) => (
                         <div key={idx} className="admin-revenue-bar-item">
+                            {bar.revenue > 0 && (
+                                <span
+                                    style={{
+                                        fontSize: "11px",
+                                        fontWeight: "600",
+                                        color: bar.active
+                                            ? "#f43f5e"
+                                            : "#4b5563",
+                                        marginBottom: "4px",
+                                    }}
+                                >
+                                    {bar.revenue >= 1000000
+                                        ? `${(bar.revenue / 1000000).toFixed(1)}M`
+                                        : `${Math.round(bar.revenue / 1000)}k`}
+                                </span>
+                            )}
                             <div
                                 style={{ height: bar.height }}
+                                title={`${bar.label}: ${(bar.revenue || 0).toLocaleString("vi-VN")} đ`}
                                 className={`admin-revenue-bar-fill ${
                                     bar.active ? "active" : ""
                                 }`}
@@ -142,11 +160,11 @@ const AdminRevenue = ({ orders }) => {
                 </div>
             </div>
 
-            {/* 4. Extra: Recent Transactions Table */}
+            {/* 4. Transactions Table Card */}
             <div className="admin-revenue-table-card">
                 <div className="admin-revenue-table-header">
                     <h2 className="admin-revenue-table-title">
-                        Chi tiết đơn hàng hoàn thành
+                        Chi tiết các đơn hàng hoàn thành gần đây
                     </h2>
                 </div>
                 <div className="admin-revenue-table-scroll-wrapper">
@@ -182,6 +200,7 @@ const AdminRevenue = ({ orders }) => {
                                         <td className="admin-revenue-td-customer">
                                             <div className="admin-revenue-customer-name">
                                                 {order.user?.fullName ||
+                                                    order.recipientPhone ||
                                                     "Khách hàng"}
                                             </div>
                                         </td>
@@ -190,15 +209,21 @@ const AdminRevenue = ({ orders }) => {
                                                 <Calendar size={14} />
                                                 {new Date(
                                                     order.deliveredAt ||
-                                                        order.createdAt,
+                                                        order.delivered_at ||
+                                                        order.shippingAt ||
+                                                        order.shipping_at ||
+                                                        order.createdAt ||
+                                                        order.created_at,
                                                 ).toLocaleDateString("vi-VN")}
                                             </div>
                                         </td>
                                         <td className="admin-revenue-td-amount">
-                                            {(
-                                                order.finalAmount ||
-                                                order.totalAmount ||
-                                                0
+                                            {Number(
+                                                order.finalAmount ??
+                                                    order.final_amount ??
+                                                    order.totalAmount ??
+                                                    order.total_amount ??
+                                                    0,
                                             ).toLocaleString("vi-VN")}
                                             đ
                                         </td>
@@ -216,7 +241,8 @@ const AdminRevenue = ({ orders }) => {
                                         colSpan="5"
                                         className="admin-revenue-empty-cell"
                                     >
-                                        Không có giao dịch nào.
+                                        Không có giao dịch thành công nào trong
+                                        thời gian này.
                                     </td>
                                 </tr>
                             )}

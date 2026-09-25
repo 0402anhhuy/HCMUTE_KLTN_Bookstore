@@ -292,17 +292,41 @@ export const useOrderHistory = () => {
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "";
-        const date = new Date(dateStr);
+        const normalizedStr =
+            typeof dateStr === "string" &&
+            !dateStr.endsWith("Z") &&
+            !/[+-]\d{2}:\d{2}$/.test(dateStr)
+                ? `${dateStr}Z`
+                : dateStr;
+        const date = new Date(normalizedStr);
+        if (isNaN(date.getTime())) {
+            const fallbackDate = new Date(dateStr);
+            if (isNaN(fallbackDate.getTime())) return dateStr;
+            return (
+                fallbackDate.toLocaleDateString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                }) +
+                " " +
+                fallbackDate.toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                })
+            );
+        }
         return (
             date.toLocaleDateString("vi-VN", {
                 day: "2-digit",
                 month: "2-digit",
                 year: "numeric",
+                timeZone: "Asia/Ho_Chi_Minh",
             }) +
             " " +
             date.toLocaleTimeString("vi-VN", {
                 hour: "2-digit",
                 minute: "2-digit",
+                timeZone: "Asia/Ho_Chi_Minh",
             })
         );
     };

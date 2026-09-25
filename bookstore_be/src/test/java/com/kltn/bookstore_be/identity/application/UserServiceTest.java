@@ -157,7 +157,6 @@ class UserServiceTest {
             when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(lockedUser));
             when(otpService.verifyOtp(1L, "123456", OtpToken.OtpType.REGISTER)).thenReturn(true);
             when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
-            when(couponRepository.findByCode(anyString())).thenReturn(Optional.empty());
             when(userRepository.save(any(User.class))).thenReturn(lockedUser);
             when(cartRepository.save(any(Cart.class))).thenReturn(Cart.builder().id(1L).build());
 
@@ -167,7 +166,6 @@ class UserServiceTest {
             assertEquals(User.UserStatus.ACTIVE, lockedUser.getStatus());
             assertNull(lockedUser.getLockedReason());
             verify(cartRepository).save(any(Cart.class));
-            verify(couponRepository, times(2)).save(any());
             verify(auditLogService).log(eq(lockedUser), eq("REGISTER"), anyString());
             verify(notificationService).createNotification(eq(lockedUser), anyString(), anyString(), any(), any(), any());
         }
@@ -296,7 +294,7 @@ class UserServiceTest {
 
             UpdateProfileRequest request = new UpdateProfileRequest();
             request.setFullName("Nguyen Van C");
-            request.setPhone("0111222333");
+            request.setPhone("0911222333");
             request.setAddress("789 GHI Street");
             request.setAvatarUrl(null);
 

@@ -40,8 +40,18 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
 
   const handleCreateShipper = async (e) => {
     e.preventDefault();
+    const trimmedPhone = shipperForm.phone ? shipperForm.phone.trim() : '';
+    const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      showToast('Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)', 'error');
+      return;
+    }
     try {
-      await api.post('/shippers', shipperForm);
+      await api.post('/shippers', {
+        ...shipperForm,
+        fullName: shipperForm.fullName.trim(),
+        phone: trimmedPhone
+      });
       showToast('Thêm người giao hàng thành công!', 'success');
       setShowShipperModal(false);
       loadData();
@@ -64,8 +74,18 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
 
   const handleUpdateShipper = async (e) => {
     e.preventDefault();
+    const trimmedPhone = shipperForm.phone ? shipperForm.phone.trim() : '';
+    const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+    if (!phoneRegex.test(trimmedPhone)) {
+      showToast('Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)', 'error');
+      return;
+    }
     try {
-      await api.put(`/shippers/${editingShipper.id}`, shipperForm);
+      await api.put(`/shippers/${editingShipper.id}`, {
+        ...shipperForm,
+        fullName: shipperForm.fullName.trim(),
+        phone: trimmedPhone
+      });
       showToast('Cập nhật người giao hàng thành công!', 'success');
       setShowEditShipperModal(false);
       loadData();
@@ -750,11 +770,11 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
                           color: order.status === 'delivered' ? '#10b981' : order.status === 'cancelled' ? '#ef4444' : '#475569'
                         }}>
                           {order.status === 'pending' ? 'Chờ xác nhận' :
-                           order.status === 'confirmed' ? 'Đã xác nhận' :
-                           order.status === 'preparing' ? 'Đang chuẩn bị' :
-                           order.status === 'shipping' ? 'Đang giao' :
-                           order.status === 'delivered' ? 'Đã giao hàng' :
-                           order.status === 'cancelled' ? 'Đã hủy' : order.status}
+                            order.status === 'confirmed' ? 'Đã xác nhận' :
+                              order.status === 'preparing' ? 'Đang chuẩn bị' :
+                                order.status === 'shipping' ? 'Đang giao' :
+                                  order.status === 'delivered' ? 'Đã giao hàng' :
+                                    order.status === 'cancelled' ? 'Đã hủy' : order.status}
                         </span>
                       </td>
                     </tr>
@@ -810,15 +830,15 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
             }}>
               <Trash2 size={28} style={{ color: '#ef4444' }} />
             </div>
-            
+
             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>
               Xác nhận xóa người giao hàng
             </h3>
-            
+
             <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 24px 0', lineHeight: '1.5' }}>
               Bạn có chắc chắn muốn xóa người giao hàng này? Thao tác này không thể hoàn tác và thông tin người giao hàng sẽ bị gỡ bỏ vĩnh viễn khỏi hệ thống.
             </p>
-            
+
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 onClick={() => setShowDeleteConfirm(null)}

@@ -55,6 +55,9 @@ export const useCatalog = () => {
             if (selectedCategory) url += `&categoryId=${selectedCategory}`;
             if (minPrice) url += `&minPrice=${minPrice}`;
             if (maxPrice) url += `&maxPrice=${maxPrice}`;
+            if (selectedLanguages && selectedLanguages.length > 0) {
+                url += `&language=${encodeURIComponent(selectedLanguages[0])}`;
+            }
 
             const response = await api.get(url);
             setProducts(response.data?.content || []);
@@ -63,22 +66,9 @@ export const useCatalog = () => {
             console.error("Lỗi lấy sản phẩm:", e);
         } finally {
             setLoading(false);
-            const targetElem =
-                document.querySelector(".catalog-grid") ||
-                document.querySelector(".catalog-content-section") ||
-                document.querySelector(".catalog-main-layout");
-            if (targetElem) {
-                const yOffset = -75;
-                const y =
-                    targetElem.getBoundingClientRect().top +
-                    window.pageYOffset +
-                    yOffset;
-                window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-            } else {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
-    }, [page, selectedCategory, keyword, minPrice, maxPrice]);
+    }, [page, selectedCategory, keyword, minPrice, maxPrice, selectedLanguages]);
 
     useEffect(() => {
         fetchCategories();

@@ -57,8 +57,13 @@ public class ShipperController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại không được để trống"));
             }
             String phone = shipper.getPhone().trim();
+            if (!phone.matches("^(0|\\+84)[35789]\\d{8}$")) {
+                return ResponseEntity.badRequest().body(Map.of("error",
+                        "Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)"));
+            }
             if (shipperRepository.existsByPhone(phone)) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại này đã tồn tại cho một người giao hàng khác"));
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Số điện thoại này đã tồn tại cho một người giao hàng khác"));
             }
             shipper.setPhone(phone);
             Shipper saved = shipperRepository.save(shipper);
@@ -86,8 +91,13 @@ public class ShipperController {
                 if (phone.isEmpty()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại không được để trống"));
                 }
+                if (!phone.matches("^(0|\\+84)[35789]\\d{8}$")) {
+                    return ResponseEntity.badRequest().body(Map.of("error",
+                            "Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)"));
+                }
                 if (shipperRepository.existsByPhoneAndIdNot(phone, id)) {
-                    return ResponseEntity.badRequest().body(Map.of("error", "Số điện thoại này đã tồn tại cho một người giao hàng khác"));
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error", "Số điện thoại này đã tồn tại cho một người giao hàng khác"));
                 }
                 shipper.setPhone(phone);
             }
@@ -115,7 +125,8 @@ public class ShipperController {
                 shipperRepository.delete(shipper);
                 shipperRepository.flush();
             } catch (org.springframework.dao.DataIntegrityViolationException e) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Không thể xóa người giao hàng này vì đang phụ trách hoặc đã từng giao đơn hàng trong hệ thống. Hãy chuyển trạng thái người giao hàng sang tạm nghỉ."));
+                return ResponseEntity.badRequest().body(Map.of("error",
+                        "Không thể xóa người giao hàng này vì đang phụ trách hoặc đã từng giao đơn hàng trong hệ thống. Hãy chuyển trạng thái người giao hàng sang tạm nghỉ."));
             }
             return ResponseEntity.ok(Map.of("message", "Đã xóa người giao hàng thành công"));
         } catch (Exception e) {
