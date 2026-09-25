@@ -250,9 +250,7 @@ const Home = () => {
                     </div>
                 </div>
             ) : (
-                // 1. Thêm import icon ở đầu file Home.jsx:
 
-                // 2. Trong JSX, thay thế phần Storefront Layout (dưới dòng `{/* 2. MAIN CATALOG / SEARCH VIEW */}`)[cite: 2]:
                 /* ================= STOREFRONT FAHASA-STYLE SECTIONS ================= */
                 <div className="home-storefront-layout">
                     {/* A. 4 BANNER KHUYẾN MÃI NHỎ */}
@@ -364,29 +362,53 @@ const Home = () => {
                     <div className="home-fahasa-section">
                         <div className="home-fahasa-section-header">
                             <h3 className="home-fahasa-title">
-                                <Award size={20} color="#0a422d" /> Danh mục sản
-                                phẩm
+                                <Award size={20} color="#0a422d" /> Danh mục sản phẩm
                             </h3>
                         </div>
                         <div className="home-quick-categories-grid">
-                            {categories.slice(0, 10).map((cat) => (
-                                <div
-                                    key={cat.id}
-                                    className="home-quick-cat-item"
-                                    onClick={() =>
-                                        navigate(
-                                            `/catalog?categoryId=${cat.id}`,
-                                        )
+                            {(() => {
+                                const subCategories = [];
+                                (categories || []).forEach((cat) => {
+                                    const children = cat.children || cat.subCategories;
+                                    if (Array.isArray(children) && children.length > 0) {
+                                        subCategories.push(...children);
+                                    } else if (cat.parentId || cat.parent_id || cat.parent) {
+                                        subCategories.push(cat);
                                     }
-                                >
-                                    <div className="home-quick-cat-icon">
-                                        📚
+                                });
+
+                                const displayCategories = subCategories.length > 0 ? subCategories : categories;
+
+                                return displayCategories.slice(0, 10).map((cat) => (
+                                    <div
+                                        key={cat.id}
+                                        className="home-quick-cat-item"
+                                        onClick={() =>
+                                            navigate(`/catalog?categoryId=${cat.id}`)
+                                        }
+                                    >
+                                        <div className="home-quick-cat-icon">
+                                            {cat.imageUrl ? (
+                                                <img
+                                                    src={cat.imageUrl}
+                                                    alt={cat.name}
+                                                    className="home-quick-cat-img"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src =
+                                                            "https://placehold.co/48x48?text=Book";
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Award size={24} color="#0a422d" />
+                                            )}
+                                        </div>
+                                        <span className="home-quick-cat-name">
+                                            {cat.name}
+                                        </span>
                                     </div>
-                                    <span className="home-quick-cat-name">
-                                        {cat.name}
-                                    </span>
-                                </div>
-                            ))}
+                                ));
+                            })()}
                         </div>
                     </div>
 
