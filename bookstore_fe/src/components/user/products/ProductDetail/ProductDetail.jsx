@@ -19,6 +19,7 @@ import {
     Building2,
     BookOpenText,
     Store,
+    BookOpen,
 } from "lucide-react";
 import { Breadcrumb, RecommendationSection } from "@/components/common";
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
@@ -570,34 +571,85 @@ const ProductDetail = () => {
             </div>
 
             {/* Sản phẩm tương tự */}
+            {/* Sản phẩm tương tự */}
             {similarProducts.length > 0 && (
                 <div className="product-detail-section-card">
                     <h3 className="product-detail-section-heading">
                         Sản phẩm tương tự
                     </h3>
                     <div className="product-detail-similar-grid">
-                        {similarProducts.map((simProd) => {
+                        {similarProducts.slice(0, 5).map((simProd) => {
                             const simImgs = getProductImagesList(simProd);
+                            const coverUrl = simImgs[0] || simProd.imageUrl;
+
                             return (
                                 <div
                                     key={simProd.id}
                                     className="product-detail-similar-item"
-                                    onClick={() =>
-                                        navigate(`/product/${simProd.id}`)
-                                    }
+                                    onClick={() => navigate(`/product/${simProd.id}`)}
                                 >
+                                    {/* Khung chứa ảnh có viền và nền xám */}
                                     <div className="similar-thumb-box">
-                                        <img
-                                            src={simImgs[0] || simProd.imageUrl}
-                                            alt={simProd.name}
-                                            className="similar-img"
-                                        />
+                                        {coverUrl ? (
+                                            <img
+                                                src={coverUrl}
+                                                alt={simProd.name}
+                                                className="similar-img"
+                                            />
+                                        ) : (
+                                            <BookOpen size={40} color="#0a422d" opacity={0.5} />
+                                        )}
                                     </div>
-                                    <h5 className="similar-name">
+
+                                    {/* Tên sách */}
+                                    <h5 className="similar-name" title={simProd.name}>
                                         {simProd.name}
                                     </h5>
-                                    <div className="similar-price">
-                                        {formatPrice(simProd.price)}
+
+                                    {/* Tác giả */}
+                                    <div className="similar-author">
+                                        Tác giả: {simProd.author || "Đang cập nhật"}
+                                    </div>
+
+                                    {/* Đánh giá sao */}
+                                    <div className="similar-rating-row">
+                                        <div className="similar-stars-list">
+                                            {[1, 2, 3, 4, 5].map((star) => {
+                                                const rating = simProd.averageRating || simProd.rating || 0;
+                                                const isFilled = rating >= star;
+
+                                                return (
+                                                    <Star
+                                                        key={star}
+                                                        size={13}
+                                                        fill={isFilled ? "#ecc94b" : "none"}
+                                                        stroke={isFilled ? "#ecc94b" : "#cbd5e1"}
+                                                        className={isFilled ? "star-filled" : "star-empty"}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                        <span className="similar-review-text">
+                                            ({simProd.reviewCount || 0})
+                                        </span>
+                                    </div>
+
+                                    {/* Giá tiền và nút giỏ hàng */}
+                                    <div className="similar-footer-row">
+                                        <span className="similar-price">
+                                            {formatPrice(simProd.price)}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="similar-btn-add-cart"
+                                            title="Thêm vào giỏ"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddToCart(simProd.id, 1);
+                                            }}
+                                        >
+                                            <ShoppingCart size={14} />
+                                        </button>
                                     </div>
                                 </div>
                             );

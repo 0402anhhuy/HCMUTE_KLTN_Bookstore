@@ -655,66 +655,181 @@ body {
     color: #64748b;
 }
 
-/* Similar Products */
+/* ================= SIMILAR PRODUCTS (ĐỒNG BỘ CARD TRANG CHỦ) ================= */
 .product-detail-similar-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr)); /* Cố định chuẩn 5 cột */
     gap: 16px;
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .product-detail-similar-item {
-    border: 1px solid #f1f5f9;
-    border-radius: 8px;
-    padding: 12px;
+    background-color: #ffffff;
+    border: 1px solid #e8e5df;
+    border-radius: 12px;
+    padding: 14px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+    height: 100%;
+    min-height: 400px;
+    text-align: left;
+    position: relative;
+    box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .product-detail-similar-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(10, 66, 45, 0.06);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(10, 66, 45, 0.08);
+    border-color: #a7f3d0;
 }
 
 .similar-thumb-box {
-    height: 160px;
-    background-color: #faf8f5;
-    border-radius: 6px;
-    overflow: hidden;
+    width: 100%;
+    height: 220px;
+    border-radius: 14px;            
+    background-color: transparent; 
+    overflow: hidden;             
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 6px;
+    margin-bottom: 12px;
+    position: relative;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border: none;               
 }
+
 
 .similar-img {
-    max-width: 85%;
-    max-height: 85%;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;            
+    border-radius: 14px;          
+    display: block;
+    transition: transform 0.25s ease;
 }
 
+.product-detail-similar-item:hover .similar-img {
+    transform: scale(1.03);
+}
+
+/* Tên sách */
 .similar-name {
-    font-size: 0.86rem;
+    font-size: 0.92rem;
     font-weight: 700;
-    color: #1f2937;
-    margin: 0;
+    color: #1c2e24;
+    margin: 0 0 4px 0;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.35;
-    height: 2.7em;
+    line-height: 1.4;
+    height: 2.6rem;
+}
+
+/* Tác giả */
+.similar-author {
+    color: #718096;
+    font-size: 0.78rem;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Đánh giá sao */
+.similar-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.similar-stars-list {
+    display: flex;
+    gap: 2px;
+    color: #ecc94b;
+}
+
+.similar-review-text {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* Hàng dưới cùng chứa giá và nút thêm giỏ */
+.similar-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto; /* Đẩy giá và nút xuống đáy card cho thẳng hàng */
+    padding-top: 6px;
 }
 
 .similar-price {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 800;
     color: #0a422d;
+}
+
+.similar-btn-add-cart {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #0a422d;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.similar-btn-add-cart:hover {
+    background-color: #072e20;
+}
+
+/* ================= RESPONSIVE MOBILE ================= */
+@media (max-width: 768px) {
+    .product-detail-similar-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    .product-detail-similar-item {
+        padding: 10px !important;
+        min-height: auto !important;
+        border-radius: 8px !important;
+    }
+
+    .similar-thumb-box {
+        height: 140px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .similar-name {
+        font-size: 0.78rem !important;
+        height: 2.1rem !important;
+        line-height: 1.3 !important;
+    }
+
+    .similar-author {
+        font-size: 0.7rem !important;
+        margin-bottom: 4px !important;
+    }
+
+    .similar-price {
+        font-size: 0.9rem !important;
+    }
+
+    .similar-btn-add-cart {
+        width: 26px !important;
+        height: 26px !important;
+    }
 }
 
 /* ================= LIGHTBOX FULLSCREEN PREVIEW ================= */
