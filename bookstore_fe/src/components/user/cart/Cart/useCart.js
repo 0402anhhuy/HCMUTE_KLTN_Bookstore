@@ -31,16 +31,19 @@ export const useCart = () => {
     const [selectedItemIds, setSelectedItemIds] = useState(new Set());
 
     useEffect(() => {
-        if (cart?.items) {
+        if (cart?.items && cart.items.length > 0) {
             setSelectedItemIds((prev) => {
-                const next = new Set(prev);
                 const currentIds = new Set(cart.items.map((item) => item.id));
+                if (prev.size === 0) {
+                    return currentIds;
+                }
+                const next = new Set(prev);
                 next.forEach((id) => {
                     if (!currentIds.has(id)) {
                         next.delete(id);
                     }
                 });
-                return next;
+                return next.size > 0 ? next : currentIds;
             });
         }
     }, [cart?.items]);
@@ -125,12 +128,10 @@ export const useCart = () => {
     };
 
     useEffect(() => {
-        if (user) {
-            fetchCoupons();
-            const refreshTimer = setInterval(() => fetchCoupons(true), 10000);
-            return () => clearInterval(refreshTimer);
-        }
-    }, [user]);
+        fetchCoupons();
+        const refreshTimer = setInterval(() => fetchCoupons(true), 10000);
+        return () => clearInterval(refreshTimer);
+    }, []);
 
     const calculateDiscount = (coupon, currentSubtotal, rawShipping = 30000) => {
         if (!coupon) return 0;
@@ -305,10 +306,10 @@ export const useCart = () => {
     const rawShippingFee = hasSelectedItems ? getShippingFee(defaultAddress, totalAmount) : 0;
     const couponDiscount = hasSelectedItems ? calculateDiscount(activeCouponObj, totalAmount, rawShippingFee) : 0;
     const isFreeshipCoupon = activeCouponObj?.discountType === "FREESHIP";
-    
+
     // For freeship coupons, discount is deducted from shipping fee
-    const shippingFee = isFreeshipCoupon 
-        ? Math.max(0, rawShippingFee - couponDiscount) 
+    const shippingFee = isFreeshipCoupon
+        ? Math.max(0, rawShippingFee - couponDiscount)
         : rawShippingFee;
     const finalCouponDiscount = isFreeshipCoupon ? 0 : couponDiscount;
 
