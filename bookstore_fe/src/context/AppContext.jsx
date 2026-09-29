@@ -12,7 +12,17 @@ const AppContext = createContext();
 const getGuestCart = () => {
     try {
         const local = localStorage.getItem("guestCart");
-        return local ? JSON.parse(local) : { items: [] };
+        if (!local) return { items: [] };
+        const parsed = JSON.parse(local);
+        if (!parsed || !Array.isArray(parsed.items)) return { items: [] };
+        const validItems = parsed.items
+            .filter((item) => item && item.product && typeof item.product === "object")
+            .map((item) => ({
+                id: item.id || `guest-${item.product.id || Date.now()}`,
+                product: item.product,
+                quantity: Number(item.quantity) || 1,
+            }));
+        return { items: validItems };
     } catch {
         return { items: [] };
     }
@@ -20,7 +30,10 @@ const getGuestCart = () => {
 
 const saveGuestCart = (guestCartObj) => {
     try {
-        localStorage.setItem("guestCart", JSON.stringify(guestCartObj));
+        const sanitizedItems = (guestCartObj?.items || []).filter(
+            (item) => item && item.product && typeof item.product === "object",
+        );
+        localStorage.setItem("guestCart", JSON.stringify({ items: sanitizedItems }));
     } catch (e) {
         console.error("Failed to save guest cart", e);
     }

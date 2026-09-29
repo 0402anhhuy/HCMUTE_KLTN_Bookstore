@@ -46,8 +46,11 @@ const Cart = () => {
     } = useCart();
 
     const [showMoreDiscounts, setShowMoreDiscounts] = useState(false);
+    const validItems = (cart?.items || []).filter(
+        (item) => item && item.product && typeof item.product === "object",
+    );
 
-    if (!cart?.items || cart.items.length === 0) {
+    if (validItems.length === 0) {
         return (
             <div className="page-container animate-fade-in cart-empty-container">
                 <div className="cart-empty-card">
@@ -223,7 +226,7 @@ const Cart = () => {
                                 className="cart-custom-checkbox"
                             />
                             <span className="cart-header-title">
-                                Chọn tất cả ({cart.items.length} sản phẩm)
+                                Chọn tất cả ({validItems.length} sản phẩm)
                             </span>
                         </label>
                         <span className="cart-header-col-qty">Số lượng</span>
@@ -233,18 +236,25 @@ const Cart = () => {
                     </div>
 
                     <div className="cart-card-box cart-items-list-card">
-                        {cart.items.map((item, idx) => {
+                        {validItems.map((item, idx) => {
                             const isSelected = selectedItemIds.has(item.id);
-                            const isOutOfStock =
-                                item.product.stockQuantity === 0;
-                            const originalPrice = Math.round(
-                                item.product.price * 1.25,
-                            );
+                            const prod = item.product || {};
+                            const stockQty = prod.stockQuantity ?? 100;
+                            const isOutOfStock = stockQty === 0;
+                            const price = Number(prod.price) || 0;
+                            const originalPrice =
+                                prod.originalPrice ||
+                                Math.round(price * 1.25);
+                            const imgUrl =
+                                prod.imageUrls?.[0] || prod.imageUrl;
+                            const prodId = prod.id;
+                            const prodName = prod.name || "Sách";
+                            const itemQty = Number(item.quantity) || 1;
 
                             return (
                                 <div
-                                    key={item.id}
-                                    className={`cart-product-row ${idx !== cart.items.length - 1 ? "has-divider" : ""}`}
+                                    key={item.id || `cart-item-${idx}`}
+                                    className={`cart-product-row ${idx !== validItems.length - 1 ? "has-divider" : ""}`}
                                 >
                                     <div className="cart-row-checkbox-col">
                                         <input
@@ -258,10 +268,10 @@ const Cart = () => {
                                     </div>
 
                                     <div className="cart-product-thumb-box">
-                                        {item.product.imageUrls?.[0] || item.product.imageUrl ? (
+                                        {imgUrl ? (
                                             <img
-                                                src={item.product.imageUrls?.[0] || item.product.imageUrl}
-                                                alt={item.product.name}
+                                                src={imgUrl}
+                                                alt={prodName}
                                                 className="cart-product-img"
                                             />
                                         ) : (
@@ -273,13 +283,11 @@ const Cart = () => {
 
                                     <div className="cart-product-info-col">
                                         <h4 className="cart-product-title">
-                                            {item.product.name}
+                                            {prodName}
                                         </h4>
                                         <div className="cart-product-price-sub">
                                             <span className="current-price">
-                                                {formatPrice(
-                                                    item.product.price,
-                                                )}
+                                                {formatPrice(price)}
                                             </span>
                                             <span className="old-price">
                                                 {formatPrice(originalPrice)}
@@ -299,8 +307,8 @@ const Cart = () => {
                                                 type="button"
                                                 onClick={() =>
                                                     updateCartQty(
-                                                        item.product.id,
-                                                        item.quantity - 1,
+                                                        prodId,
+                                                        itemQty - 1,
                                                     )
                                                 }
                                                 className="cart-qty-btn"
@@ -308,22 +316,20 @@ const Cart = () => {
                                                 <Minus size={12} />
                                             </button>
                                             <span className="cart-qty-number">
-                                                {item.quantity}
+                                                {itemQty}
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={() =>
                                                     updateCartQty(
-                                                        item.product.id,
-                                                        item.quantity + 1,
+                                                        prodId,
+                                                        itemQty + 1,
                                                     )
                                                 }
                                                 className="cart-qty-btn"
                                                 disabled={
                                                     isOutOfStock ||
-                                                    item.quantity >=
-                                                        item.product
-                                                            .stockQuantity
+                                                    itemQty >= stockQty
                                                 }
                                             >
                                                 <Plus size={12} />
@@ -332,15 +338,13 @@ const Cart = () => {
                                     </div>
 
                                     <div className="cart-product-subtotal-col">
-                                        {formatPrice(
-                                            item.product.price * item.quantity,
-                                        )}
+                                        {formatPrice(price * itemQty)}
                                     </div>
 
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            removeFromCart(item.product.id)
+                                            removeFromCart(prodId)
                                         }
                                         className="cart-btn-remove-item"
                                         title="Xóa sản phẩm"
