@@ -4,11 +4,22 @@ import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 
 export const useCart = () => {
-    const { cart, updateCartQty, removeFromCart, clearCart, user, showToast } =
-        useApp();
+    const {
+        cart,
+        updateCartQty,
+        removeFromCart,
+        clearCart,
+        user,
+        showToast,
+        fetchCart,
+    } = useApp();
     const navigate = useNavigate();
     const [couponCode, setCouponCodeState] = useState("");
     const isManualCouponRef = useRef(false);
+
+    useEffect(() => {
+        fetchCart?.();
+    }, []);
 
     const setCouponCode = (code, isManual = true) => {
         if (isManual) {

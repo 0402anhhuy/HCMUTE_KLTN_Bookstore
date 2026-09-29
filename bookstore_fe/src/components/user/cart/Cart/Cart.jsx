@@ -258,9 +258,9 @@ const Cart = () => {
                                     </div>
 
                                     <div className="cart-product-thumb-box">
-                                        {item.product.imageUrl ? (
+                                        {item.product.imageUrls?.[0] || item.product.imageUrl ? (
                                             <img
-                                                src={item.product.imageUrl}
+                                                src={item.product.imageUrls?.[0] || item.product.imageUrl}
                                                 alt={item.product.name}
                                                 className="cart-product-img"
                                             />
