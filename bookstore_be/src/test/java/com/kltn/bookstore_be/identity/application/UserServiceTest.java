@@ -261,6 +261,23 @@ class UserServiceTest {
             assertFalse(result);
             verify(passwordEncoder, never()).encode(any());
         }
+
+        @Test
+        @DisplayName("Đặt lại mật khẩu trùng với mật khẩu cũ - ném exception")
+        void resetPassword_samePasswordAsOld_throwsException() {
+            ResetPasswordRequest request = new ResetPasswordRequest();
+            request.setEmail("test@example.com");
+            request.setOtpCode("123456");
+            request.setNewPassword("oldPassword");
+
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(sampleUser));
+            when(otpService.verifyOtp(1L, "123456", OtpToken.OtpType.RESET_PASSWORD)).thenReturn(true);
+            when(passwordEncoder.matches("oldPassword", sampleUser.getPasswordHash())).thenReturn(true);
+
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> userService.resetPassword(request));
+            assertEquals("Mật khẩu mới không được trùng với mật khẩu cũ", ex.getMessage());
+            verify(userRepository, never()).save(any(User.class));
+        }
     }
 
     @Nested
@@ -343,6 +360,23 @@ class UserServiceTest {
 
             assertEquals("Mật khẩu cũ không chính xác", exception.getMessage());
             verify(passwordEncoder, never()).encode(any());
+        }
+
+        @Test
+        @DisplayName("Đổi mật khẩu với mật khẩu mới trùng mật khẩu cũ - ném exception")
+        void changePassword_samePasswordAsOld_throwsException() {
+            ChangePasswordRequest request = new ChangePasswordRequest();
+            request.setOldPassword("oldPassword");
+            request.setNewPassword("oldPassword");
+
+            when(passwordEncoder.matches("oldPassword", "hashedPassword")).thenReturn(true);
+
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+                userService.changePassword(sampleUser, request);
+            });
+
+            assertEquals("Mật khẩu mới không được trùng với mật khẩu cũ", exception.getMessage());
+            verify(userRepository, never()).save(any(User.class));
         }
     }
 
