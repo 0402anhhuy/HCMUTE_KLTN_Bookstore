@@ -40,18 +40,38 @@ const ManagerWarehouse = ({
     const handleAdjustStock = async (e) => {
         e.preventDefault();
         try {
-            const qty = parseInt(stockForm.quantity);
+            const rawQty = String(stockForm.quantity || "").trim();
+            if (!rawQty || !/^\d+$/.test(rawQty)) {
+                showToast("Số lượng điều chỉnh phải là số nguyên dương hợp lệ!", "error");
+                return;
+            }
+            const qty = parseInt(rawQty, 10);
             if (isNaN(qty) || qty <= 0) {
                 showToast("Số lượng điều chỉnh phải lớn hơn 0!", "error");
+                return;
+            }
+            if (qty > 1000000) {
+                showToast("Số lượng điều chỉnh tối đa là 1.000.000 cuốn mỗi lần!", "error");
                 return;
             }
             const selectedProd = products.find(
                 (p) => String(p.id) === String(stockForm.productId),
             );
-            const prodName = selectedProd ? selectedProd.name : "Sản phẩm";
+            if (!selectedProd) {
+                showToast("Vui lòng chọn sản phẩm sách!", "error");
+                return;
+            }
+            if (stockForm.movementType === "EXPORT" && qty > (selectedProd.stockQuantity || 0)) {
+                showToast(
+                    `Số lượng tồn kho hiện tại (${selectedProd.stockQuantity || 0}) không đủ để xuất ${qty} cuốn!`,
+                    "error",
+                );
+                return;
+            }
+            const prodName = selectedProd.name || "Sản phẩm";
 
             await api.post(
-                `/products/${stockForm.productId}/adjust-stock?quantity=${qty}&movementType=${stockForm.movementType}&note=${encodeURIComponent(stockForm.note)}`,
+                `/products/${stockForm.productId}/adjust-stock?quantity=${qty}&movementType=${stockForm.movementType}&note=${encodeURIComponent(stockForm.note || "")}`,
             );
             showToast("Điều chỉnh tồn kho thành công!", "success");
             setShowStockModal(false);
@@ -709,14 +729,19 @@ const ManagerWarehouse = ({
                                     type="number"
                                     required
                                     min="1"
-                                    placeholder="Nhập số lượng..."
+                                    max="1000000"
+                                    step="1"
+                                    placeholder="Nhập số lượng (1 - 1.000.000)..."
                                     value={stockForm.quantity}
-                                    onChange={(e) =>
-                                        setStockForm({
-                                            ...stockForm,
-                                            quantity: e.target.value,
-                                        })
-                                    }
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "" || (val.length <= 7 && /^\d+$/.test(val))) {
+                                            setStockForm({
+                                                ...stockForm,
+                                                quantity: val,
+                                            });
+                                        }
+                                    }}
                                     style={{
                                         width: "100%",
                                         padding: "10px 14px",

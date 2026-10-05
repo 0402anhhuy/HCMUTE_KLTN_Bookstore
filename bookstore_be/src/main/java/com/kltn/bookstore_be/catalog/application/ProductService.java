@@ -229,11 +229,21 @@ public class ProductService {
 
     @Transactional
     public void adjustStock(Long productId, Integer quantity, StockMovement.MovementType type, String note, User manager) {
+        if (quantity == null || quantity <= 0) {
+            throw new RuntimeException("Số lượng điều chỉnh phải lớn hơn 0");
+        }
+        if (quantity > 1_000_000) {
+            throw new RuntimeException("Số lượng điều chỉnh không được vượt quá 1.000.000");
+        }
+
         Product product = getProductById(productId);
         int currentStock = product.getStockQuantity();
         int newStock = currentStock;
 
         if (type == StockMovement.MovementType.IMPORT) {
+            if ((long) currentStock + quantity > 10_000_000L) {
+                throw new RuntimeException("Số lượng tồn kho sau khi nhập vượt quá giới hạn tối đa (10.000.000)");
+            }
             newStock += quantity;
         } else if (type == StockMovement.MovementType.EXPORT) {
             if (currentStock < quantity) {
