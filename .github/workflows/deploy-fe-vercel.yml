@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'bookstore_fe/**' # Chỉ kích hoạt khi có thay đổi trong thư mục bookstore_fe
-  workflow_dispatch: # Cho phép bấm nút chạy thủ công trên GitHub khi cần
+      - 'bookstore_fe/**' 
+  workflow_dispatch:
 
 jobs:
   deploy-production:
@@ -18,14 +18,18 @@ jobs:
       - name: 2. Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: 'bookstore_fe/package-lock.json'
 
-      - name: 3. Install Vercel CLI
+      - name: 3. Install Dependencies
+        working-directory: ./bookstore_fe
+        run: npm ci
+
+      - name: 4. Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: 4. Configure Vercel Project & Deploy
+      - name: 5. Configure Vercel Project & Deploy
         working-directory: ./bookstore_fe
         run: |
           ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
