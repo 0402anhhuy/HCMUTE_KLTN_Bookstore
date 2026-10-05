@@ -71,7 +71,7 @@ const BookCard = ({
                     onClick={(e) => {
                         e.stopPropagation();
                         if (!isOutOfStock) {
-                            addToCart(product.id, 1);
+                            addToCart(product.id, 1, product);
                         }
                     }}
                     className="book-card-cart-btn"
