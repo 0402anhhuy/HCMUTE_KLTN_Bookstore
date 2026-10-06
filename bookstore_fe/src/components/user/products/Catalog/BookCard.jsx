@@ -12,8 +12,16 @@ const BookCard = ({
 
     return (
         <div
-            className="book-card-container"
+            className="book-card-container group"
             onClick={() => openProductDetail(product)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openProductDetail(product);
+                }
+            }}
         >
             <div className="book-card-cover-wrapper">
                 {imageUrl ? (
@@ -21,6 +29,7 @@ const BookCard = ({
                         src={imageUrl}
                         alt={product.name}
                         className="book-card-img"
+                        loading="lazy"
                     />
                 ) : (
                     <BookOpen
@@ -35,15 +44,19 @@ const BookCard = ({
                 )}
             </div>
 
-            <div className="book-card-title">{product.name}</div>
+            <div className="book-card-title" style={{ textWrap: "balance" }}>
+                {product.name}
+            </div>
             <div className="book-card-author">
-                Tác giả: {product.author || "Chưa rõ"}
+                {product.author || "Đang cập nhật"}
             </div>
 
             <div className="book-card-rating-row">
                 <div className="book-card-stars">
                     {[1, 2, 3, 4, 5].map((starIdx) => {
-                        const isFilled = product.averageRating && product.averageRating >= starIdx;
+                        const isFilled =
+                            product.averageRating &&
+                            product.averageRating >= starIdx;
                         return (
                             <Star
                                 key={starIdx}
@@ -62,12 +75,18 @@ const BookCard = ({
             </div>
 
             <div className="book-card-bottom-row">
-                <span className="book-card-price">
+                <span className="book-card-price tabular-nums">
                     {formatPrice(product.price)}
                 </span>
                 <button
                     type="button"
                     disabled={isOutOfStock}
+                    title={
+                        isOutOfStock
+                            ? "Sản phẩm tạm hết hàng"
+                            : "Thêm vào giỏ hàng"
+                    }
+                    aria-label="Thêm vào giỏ hàng"
                     onClick={(e) => {
                         e.stopPropagation();
                         if (!isOutOfStock) {
@@ -76,7 +95,7 @@ const BookCard = ({
                     }}
                     className="book-card-cart-btn"
                 >
-                    <ShoppingCart size={14} />
+                    <ShoppingCart size={15} />
                 </button>
             </div>
         </div>

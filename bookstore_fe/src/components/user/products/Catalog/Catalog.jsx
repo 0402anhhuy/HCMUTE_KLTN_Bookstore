@@ -1,7 +1,19 @@
-import { Search, X, ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
+import {
+    X,
+    ChevronDown,
+    ChevronRight,
+    SlidersHorizontal,
+    SearchX,
+    RotateCcw,
+    Layers,
+    Tag,
+    Building2,
+    DollarSign,
+} from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useCatalog } from "./useCatalog";
 import BookCard from "./BookCard";
+import BookCardSkeleton from "./BookCardSkeleton";
 import { RecommendationSection, Breadcrumb } from "@/components/common";
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
 import "./Catalog.css";
@@ -43,6 +55,8 @@ const Catalog = () => {
 
     // State quản lý mở rộng Accordion từng nhánh danh mục
     const [expandedNodeIds, setExpandedNodeIds] = useState({});
+    // State đóng mở bộ lọc trên mobile
+    const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
     // Tự động mở rộng các danh mục cha khi chọn 1 danh mục con
     useEffect(() => {
@@ -51,7 +65,10 @@ const Catalog = () => {
             for (const n of nodes) {
                 if (String(n.id) === String(targetId)) return path;
                 if (n.children && n.children.length) {
-                    const res = findAncestors(n.children, targetId, [...path, String(n.id)]);
+                    const res = findAncestors(n.children, targetId, [
+                        ...path,
+                        String(n.id),
+                    ]);
                     if (res) return res;
                 }
             }
@@ -90,30 +107,77 @@ const Catalog = () => {
     const selectedPriceLabels = useMemo(() => {
         if (selectedPriceRanges.length > 0) {
             return selectedPriceRanges.map((r) => {
-                if (r.min === "0" && r.max === "150000") return { ...r, label: "0đ - 150.000đ" };
-                if (r.min === "150000" && r.max === "300000") return { ...r, label: "150.000đ - 300.000đ" };
-                if (r.min === "300000" && r.max === "500000") return { ...r, label: "300.000đ - 500.000đ" };
-                if (r.min === "500000" && !r.max) return { ...r, label: "Trên 500.000đ" };
-                return { ...r, label: `${Number(r.min).toLocaleString("vi-VN")}đ - ${r.max ? Number(r.max).toLocaleString("vi-VN") + "đ" : "trở lên"}` };
+                if (r.min === "0" && r.max === "150000")
+                    return { ...r, label: "0đ - 150.000đ" };
+                if (r.min === "150000" && r.max === "300000")
+                    return { ...r, label: "150.000đ - 300.000đ" };
+                if (r.min === "300000" && r.max === "500000")
+                    return { ...r, label: "300.000đ - 500.000đ" };
+                if (r.min === "500000" && !r.max)
+                    return { ...r, label: "Trên 500.000đ" };
+                return {
+                    ...r,
+                    label: `${Number(r.min).toLocaleString("vi-VN")}đ - ${
+                        r.max
+                            ? Number(r.max).toLocaleString("vi-VN") + "đ"
+                            : "trở lên"
+                    }`,
+                };
             });
         }
         if (!minPrice && !maxPrice) return [];
-        if (minPrice === "0" && maxPrice === "150000") return [{ min: minPrice, max: maxPrice, label: "0đ - 150.000đ" }];
-        if (minPrice === "150000" && maxPrice === "300000") return [{ min: minPrice, max: maxPrice, label: "150.000đ - 300.000đ" }];
-        if (minPrice === "300000" && maxPrice === "500000") return [{ min: minPrice, max: maxPrice, label: "300.000đ - 500.000đ" }];
-        if (minPrice === "500000" && !maxPrice) return [{ min: minPrice, max: maxPrice, label: "Trên 500.000đ" }];
-        return [{ min: minPrice, max: maxPrice, label: `${Number(minPrice).toLocaleString("vi-VN")}đ - ${maxPrice ? Number(maxPrice).toLocaleString("vi-VN") + "đ" : "trở lên"}` }];
+        if (minPrice === "0" && maxPrice === "150000")
+            return [{ min: minPrice, max: maxPrice, label: "0đ - 150.000đ" }];
+        if (minPrice === "150000" && maxPrice === "300000")
+            return [
+                { min: minPrice, max: maxPrice, label: "150.000đ - 300.000đ" },
+            ];
+        if (minPrice === "300000" && maxPrice === "500000")
+            return [
+                { min: minPrice, max: maxPrice, label: "300.000đ - 500.000đ" },
+            ];
+        if (minPrice === "500000" && !maxPrice)
+            return [{ min: minPrice, max: maxPrice, label: "Trên 500.000đ" }];
+        return [
+            {
+                min: minPrice,
+                max: maxPrice,
+                label: `${Number(minPrice).toLocaleString("vi-VN")}đ - ${
+                    maxPrice
+                        ? Number(maxPrice).toLocaleString("vi-VN") + "đ"
+                        : "trở lên"
+                }`,
+            },
+        ];
     }, [minPrice, maxPrice, selectedPriceRanges]);
 
     // Kiểm tra có filter nào đang áp dụng không
     const hasActiveFilters = Boolean(
         keyword ||
-        selectedCategory ||
-        minPrice ||
-        maxPrice ||
-        selectedPriceRanges.length > 0 ||
-        selectedPublishers.length > 0,
+            selectedCategory ||
+            minPrice ||
+            maxPrice ||
+            selectedPriceRanges.length > 0 ||
+            selectedPublishers.length > 0,
     );
+
+    // Đếm tổng số tiêu chí filter đang kích hoạt
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (keyword) count++;
+        if (selectedCategory) count++;
+        if (selectedPriceRanges.length > 0) count += selectedPriceRanges.length;
+        else if (minPrice || maxPrice) count++;
+        if (selectedPublishers.length > 0) count += selectedPublishers.length;
+        return count;
+    }, [
+        keyword,
+        selectedCategory,
+        selectedPriceRanges,
+        minPrice,
+        maxPrice,
+        selectedPublishers,
+    ]);
 
     // Tính toán dãy số trang rút gọn (tối đa 4 số trang theo block ví dụ: 1 2 3 4 -> 4 5 6 7)
     const visiblePageNumbers = useMemo(() => {
@@ -122,7 +186,6 @@ const Catalog = () => {
             return Array.from({ length: totalPages }, (_, i) => i + 1);
         }
 
-        // Tính trang bắt đầu block dựa trên vị trí trang hiện tại
         let start = Math.floor(page / 3) * 3 + 1;
         let end = Math.min(totalPages, start + maxVisible - 1);
 
@@ -168,7 +231,7 @@ const Catalog = () => {
                             setSelectedCategory(String(node.id));
                             setPage(0);
                         }}
-                        style={{ paddingLeft: `${depth * 10 + 6}px` }}
+                        style={{ paddingLeft: `${depth * 10 + 8}px` }}
                         className={`catalog-tree-item-row ${isSelected ? "selected" : ""} depth-${depth}`}
                     >
                         <span className="catalog-tree-item-name">
@@ -179,8 +242,11 @@ const Catalog = () => {
                             <button
                                 type="button"
                                 className="catalog-tree-chevron-btn"
-                                onClick={(e) => toggleNodeExpand(String(node.id), e)}
+                                onClick={(e) =>
+                                    toggleNodeExpand(String(node.id), e)
+                                }
                                 title={isExpanded ? "Thu gọn" : "Mở rộng"}
+                                aria-label={isExpanded ? "Thu gọn" : "Mở rộng"}
                             >
                                 {isExpanded ? (
                                     <ChevronDown size={14} />
@@ -207,16 +273,15 @@ const Catalog = () => {
             <div className="catalog-header">
                 <h1 className="catalog-title">Khám phá kho sách</h1>
                 <p className="catalog-subtitle">
-                    Tìm kiếm, lọc và khám phá hàng ngàn tựa sách phong phú của
-                    chúng tôi.
+                    Tìm kiếm, chọn lọc và khám phá hàng ngàn tựa sách giá trị tại Fahasa Bookstore.
                 </p>
             </div>
 
-            {/* ACTIVE FILTER CHIPS (Hiển thị các field đang lọc xếp hàng ngang) */}
+            {/* ACTIVE FILTER CHIPS BAR */}
             {hasActiveFilters && (
                 <div className="catalog-active-filters-bar">
                     <span className="catalog-filters-title">
-                        Đang lọc theo:
+                        Đang lọc:
                     </span>
                     <div className="catalog-chips-list">
                         {/* Chip Keyword */}
@@ -227,6 +292,8 @@ const Catalog = () => {
                                     type="button"
                                     onClick={removeKeywordFilter}
                                     className="chip-remove-btn"
+                                    title="Xóa từ khóa"
+                                    aria-label="Xóa từ khóa"
                                 >
                                     <X size={13} />
                                 </button>
@@ -241,6 +308,8 @@ const Catalog = () => {
                                     type="button"
                                     onClick={removeCategoryFilter}
                                     className="chip-remove-btn"
+                                    title="Xóa danh mục"
+                                    aria-label="Xóa danh mục"
                                 >
                                     <X size={13} />
                                 </button>
@@ -254,11 +323,17 @@ const Catalog = () => {
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        item.min !== undefined && item.max !== undefined
-                                            ? togglePriceRange(item.min, item.max)
+                                        item.min !== undefined &&
+                                        item.max !== undefined
+                                            ? togglePriceRange(
+                                                  item.min,
+                                                  item.max,
+                                              )
                                             : removePriceFilter()
                                     }
                                     className="chip-remove-btn"
+                                    title="Xóa khoảng giá"
+                                    aria-label="Xóa khoảng giá"
                                 >
                                     <X size={13} />
                                 </button>
@@ -273,6 +348,8 @@ const Catalog = () => {
                                     type="button"
                                     onClick={() => togglePublisher(pub)}
                                     className="chip-remove-btn"
+                                    title={`Xóa lọc NXB ${pub}`}
+                                    aria-label={`Xóa lọc NXB ${pub}`}
                                 >
                                     <X size={13} />
                                 </button>
@@ -285,7 +362,8 @@ const Catalog = () => {
                             onClick={handleClearFilters}
                             className="catalog-clear-all-chips-btn"
                         >
-                            Xóa tất cả
+                            <RotateCcw size={12} />
+                            <span>Xóa tất cả</span>
                         </button>
                     </div>
                 </div>
@@ -293,21 +371,42 @@ const Catalog = () => {
 
             <div className="catalog-main-layout">
                 {/* Sidebar Filters */}
-                <aside className="catalog-sidebar">
+                <aside
+                    className={`catalog-sidebar ${
+                        mobileFilterOpen ? "mobile-open" : "mobile-collapsed"
+                    }`}
+                >
+                    <div className="catalog-sidebar-header-mobile">
+                        <span className="catalog-sidebar-mobile-title">
+                            Bộ lọc tìm kiếm
+                        </span>
+                        <button
+                            type="button"
+                            className="catalog-sidebar-mobile-close"
+                            onClick={() => setMobileFilterOpen(false)}
+                            aria-label="Đóng bộ lọc"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
                     <div className="catalog-sidebar-scroll-wrapper">
                         {/* 1. NHÓM SẢN PHẨM */}
                         <div className="catalog-filter-block">
                             <div className="catalog-block-title">
-                                NHÓM SẢN PHẨM
+                                <Layers size={14} className="catalog-block-icon" />
+                                <span>Nhóm sản phẩm</span>
                             </div>
                             <div
                                 onClick={() => {
                                     setSelectedCategory("");
                                     setPage(0);
                                 }}
-                                className={`catalog-tree-item-row root-item ${selectedCategory === "" ? "selected" : ""}`}
+                                className={`catalog-tree-item-row root-item ${
+                                    selectedCategory === "" ? "selected" : ""
+                                }`}
                             >
-                                Tất Cả Nhóm Sản Phẩm
+                                Tất cả nhóm sản phẩm
                             </div>
 
                             <div className="catalog-tree-container">
@@ -315,34 +414,39 @@ const Catalog = () => {
                             </div>
                         </div>
 
-                        {/* 2. GIÁ */}
+                        {/* 2. KHOẢNG GIÁ */}
                         <div className="catalog-filter-block">
-                            <div className="catalog-block-title">GIÁ</div>
+                            <div className="catalog-block-title">
+                                <DollarSign size={14} className="catalog-block-icon" />
+                                <span>Khoảng giá</span>
+                            </div>
                             <div className="catalog-checkbox-list">
                                 {[
                                     {
-                                        label: "0đ - 150,000đ",
+                                        label: "0đ - 150.000đ",
                                         min: "0",
                                         max: "150000",
                                     },
                                     {
-                                        label: "150,000đ - 300,000đ",
+                                        label: "150.000đ - 300.000đ",
                                         min: "150000",
                                         max: "300000",
                                     },
                                     {
-                                        label: "300,000đ - 500,000đ",
+                                        label: "300.000đ - 500.000đ",
                                         min: "300000",
                                         max: "500000",
                                     },
                                     {
-                                        label: "500,000đ - Trở Lên",
+                                        label: "Trên 500.000đ",
                                         min: "500000",
                                         max: "",
                                     },
                                 ].map((item, idx) => {
                                     const isChecked = selectedPriceRanges.some(
-                                        (r) => r.min === item.min && r.max === item.max
+                                        (r) =>
+                                            r.min === item.min &&
+                                            r.max === item.max,
                                     );
                                     return (
                                         <label
@@ -353,7 +457,10 @@ const Catalog = () => {
                                                 type="checkbox"
                                                 checked={isChecked}
                                                 onChange={() =>
-                                                    togglePriceRange(item.min, item.max)
+                                                    togglePriceRange(
+                                                        item.min,
+                                                        item.max,
+                                                    )
                                                 }
                                                 className="catalog-filter-input-checkbox"
                                             />
@@ -364,11 +471,12 @@ const Catalog = () => {
                             </div>
                         </div>
 
-                        {/* 3. NHÀ CUNG CẤP / NXB TỪ BE */}
+                        {/* 3. NHÀ XUẤT BẢN TỪ DATABASE */}
                         {availablePublishers.length > 0 && (
                             <div className="catalog-filter-block">
                                 <div className="catalog-block-title">
-                                    NHÀ XUẤT BẢN
+                                    <Building2 size={14} className="catalog-block-icon" />
+                                    <span>Nhà xuất bản</span>
                                 </div>
                                 <div className="catalog-checkbox-list">
                                     {availablePublishers.map((pub, idx) => (
@@ -395,25 +503,71 @@ const Catalog = () => {
                     </div>
                 </aside>
 
-                {/* Main Content Grid */}
+                {/* Main Content Area */}
                 <div className="catalog-content-section">
-                    <div className="catalog-result-count-bar">
-                        <p className="catalog-result-count-text">
-                            {loading
-                                ? "Đang tải dữ liệu..."
-                                : `Hiển thị ${products.length} sản phẩm${
-                                      keyword ? ` cho "${keyword}"` : ""
-                                  }`}
-                        </p>
+                    <div className="catalog-toolbar-bar">
+                        <div className="catalog-result-count-box">
+                            <p className="catalog-result-count-text">
+                                {loading ? (
+                                    "Đang tìm kiếm sách..."
+                                ) : (
+                                    <>
+                                        Hiển thị <strong>{products.length}</strong> tựa sách
+                                        {keyword ? (
+                                            <span> cho "<em>{keyword}</em>"</span>
+                                        ) : null}
+                                    </>
+                                )}
+                            </p>
+                        </div>
+
+                        {/* Nút bấm mở bộ lọc trên Mobile */}
+                        <button
+                            type="button"
+                            className={`catalog-mobile-filter-trigger ${
+                                activeFilterCount > 0 ? "has-active" : ""
+                            }`}
+                            onClick={() => setMobileFilterOpen((prev) => !prev)}
+                        >
+                            <SlidersHorizontal size={15} />
+                            <span>Bộ lọc</span>
+                            {activeFilterCount > 0 && (
+                                <span className="catalog-mobile-filter-badge">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </button>
                     </div>
 
                     {loading ? (
-                        <div className="catalog-loading-box">
-                            Đang tải dữ liệu sách...
+                        <div className="catalog-grid">
+                            {Array.from({ length: 12 }).map((_, idx) => (
+                                <BookCardSkeleton key={idx} />
+                            ))}
                         </div>
                     ) : products.length === 0 ? (
-                        <div className="catalog-empty-box">
-                            Không tìm thấy đầu sách nào phù hợp với bộ lọc.
+                        <div className="catalog-empty-state">
+                            <div className="catalog-empty-icon-wrap">
+                                <SearchX size={44} strokeWidth={1.5} />
+                            </div>
+                            <h3 className="catalog-empty-title">
+                                Không tìm thấy tựa sách phù hợp
+                            </h3>
+                            <p className="catalog-empty-desc">
+                                {keyword
+                                    ? `Không có kết quả nào cho "${keyword}". Hãy thử tìm kiếm bằng từ khóa ngắn gọn hơn hoặc bỏ bớt các bộ lọc.`
+                                    : "Không có đầu sách nào khớp với các bộ lọc bạn đã chọn. Vui lòng thử chọn lại danh mục hoặc khoảng giá khác."}
+                            </p>
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={handleClearFilters}
+                                    className="catalog-empty-reset-btn"
+                                >
+                                    <RotateCcw size={15} />
+                                    <span>Xóa tất cả bộ lọc</span>
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="catalog-grid">
