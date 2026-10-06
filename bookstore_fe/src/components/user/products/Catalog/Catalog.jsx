@@ -12,9 +12,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useCatalog } from "./useCatalog";
-import BookCard from "./BookCard";
-import BookCardSkeleton from "./BookCardSkeleton";
-import { RecommendationSection, Breadcrumb } from "@/components/common";
+import {
+    RecommendationSection,
+    Breadcrumb,
+    BookCard,
+    BookCardSkeleton,
+    EmptyState,
+} from "@/components/common";
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
 import "./Catalog.css";
 
@@ -546,29 +550,18 @@ const Catalog = () => {
                             ))}
                         </div>
                     ) : products.length === 0 ? (
-                        <div className="catalog-empty-state">
-                            <div className="catalog-empty-icon-wrap">
-                                <SearchX size={44} strokeWidth={1.5} />
-                            </div>
-                            <h3 className="catalog-empty-title">
-                                Không tìm thấy tựa sách phù hợp
-                            </h3>
-                            <p className="catalog-empty-desc">
-                                {keyword
+                        <EmptyState
+                            icon={SearchX}
+                            title="Không tìm thấy tựa sách phù hợp"
+                            description={
+                                keyword
                                     ? `Không có kết quả nào cho "${keyword}". Hãy thử tìm kiếm bằng từ khóa ngắn gọn hơn hoặc bỏ bớt các bộ lọc.`
-                                    : "Không có đầu sách nào khớp với các bộ lọc bạn đã chọn. Vui lòng thử chọn lại danh mục hoặc khoảng giá khác."}
-                            </p>
-                            {hasActiveFilters && (
-                                <button
-                                    type="button"
-                                    onClick={handleClearFilters}
-                                    className="catalog-empty-reset-btn"
-                                >
-                                    <RotateCcw size={15} />
-                                    <span>Xóa tất cả bộ lọc</span>
-                                </button>
-                            )}
-                        </div>
+                                    : "Không có đầu sách nào khớp với các bộ lọc bạn đã chọn. Vui lòng thử chọn lại danh mục hoặc khoảng giá khác."
+                            }
+                            actionText={hasActiveFilters ? "Xóa tất cả bộ lọc" : null}
+                            onAction={hasActiveFilters ? handleClearFilters : null}
+                            actionIcon={RotateCcw}
+                        />
                     ) : (
                         <div className="catalog-grid">
                             {products.map((product) => (
