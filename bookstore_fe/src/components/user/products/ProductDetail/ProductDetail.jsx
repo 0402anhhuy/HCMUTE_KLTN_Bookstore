@@ -20,10 +20,17 @@ import {
     BookOpenText,
     Store,
     BookOpen,
+    ArrowLeft,
 } from "lucide-react";
-import { Breadcrumb, RecommendationSection } from "@/components/common";
+import {
+    Breadcrumb,
+    RecommendationSection,
+    BookCard,
+    EmptyState,
+} from "@/components/common";
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
 import { useProductDetail } from "./useProductDetail";
+import ProductDetailSkeleton from "./ProductDetailSkeleton";
 import "./ProductDetail.css";
 
 const ProductDetail = () => {
@@ -74,17 +81,21 @@ const ProductDetail = () => {
     } = useProductDetail();
 
     if (loading) {
-        return (
-            <div className="product-detail-loading-box">
-                Đang tải thông tin sách...
-            </div>
-        );
+        return <ProductDetailSkeleton />;
     }
 
     if (!product) {
         return (
-            <div className="product-detail-notfound-box">
-                Không tìm thấy sản phẩm yêu cầu
+            <div className="page-container product-detail-notfound-container">
+                <EmptyState
+                    icon={BookX}
+                    variant="danger"
+                    title="Không tìm thấy sản phẩm"
+                    description="Tựa sách bạn đang tìm kiếm có thể đã tạm thời ngừng kinh doanh hoặc liên kết không chính xác."
+                    actionText="Quay lại kho sách"
+                    onAction={() => navigate("/catalog")}
+                    actionIcon={ArrowLeft}
+                />
             </div>
         );
     }
@@ -111,10 +122,10 @@ const ProductDetail = () => {
 
             {/* Top Layout */}
             <div className="product-detail-main-layout">
-                {/* CỘT TRÁI - KHUNG HÌNH VÀ THUMBNAILS (STICKY) */}
+                {/* CỘT TRÁI - KHUNG HÌNH VÀ THUMBNAILS (STICKY TRÊN DESKTOP) */}
                 <div className="product-detail-left-card">
                     <div
-                        className="product-detail-main-cover-box"
+                        className="product-detail-main-cover-box group"
                         onClick={() => openLightbox(activeImageIdx)}
                         title="Nhấp để phóng to / Đọc thử nội dung sách"
                     >
@@ -127,7 +138,7 @@ const ProductDetail = () => {
                             className="product-detail-main-cover-img"
                         />
                         <div className="product-detail-cover-hover-hint">
-                            <Maximize2 size={18} /> Phóng to đọc thử
+                            <Maximize2 size={16} /> Phóng to đọc thử
                         </div>
                     </div>
 
@@ -174,10 +185,13 @@ const ProductDetail = () => {
                 {/* CỘT PHẢI - THÔNG TIN, VẬN CHUYỂN, CHI TIẾT & MÔ TẢ SẢN PHẨM */}
                 <div className="product-detail-right-col">
                     {/* Card 1: Thông tin chính, giá, nút mua */}
-                    <div className="product-detail-card-box">
+                    <div className="product-detail-card-box product-detail-main-info-card">
                         <div className="product-detail-header-block">
                             <div className="product-detail-title-row">
-                                <h1 className="product-detail-book-title">
+                                <h1
+                                    className="product-detail-book-title"
+                                    style={{ textWrap: "balance" }}
+                                >
                                     {product.name}
                                 </h1>
                                 <button
@@ -187,6 +201,9 @@ const ProductDetail = () => {
                                         isFavorite ? "active" : ""
                                     }`}
                                     title={
+                                        isFavorite ? "Bỏ thích" : "Yêu thích"
+                                    }
+                                    aria-label={
                                         isFavorite ? "Bỏ thích" : "Yêu thích"
                                     }
                                 >
@@ -280,7 +297,7 @@ const ProductDetail = () => {
                                 <div className="product-detail-flashsale-label">
                                     <Zap size={16} fill="#ffffff" /> FLASH SALE
                                 </div>
-                                <div className="product-detail-flashsale-timer">
+                                <div className="product-detail-flashsale-timer tabular-nums">
                                     <span>Kết thúc trong</span>
                                     <span className="timer-badge">
                                         {timeLeft.hours}
@@ -298,7 +315,7 @@ const ProductDetail = () => {
                         )}
 
                         {/* Giá tiền */}
-                        <div className="product-detail-pricing-box">
+                        <div className="product-detail-pricing-box tabular-nums">
                             <span className="product-detail-sale-price">
                                 {formatPrice(product.price)}
                             </span>
@@ -324,10 +341,13 @@ const ProductDetail = () => {
                                     type="button"
                                     onClick={() => setQty(Math.max(1, qty - 1))}
                                     className="qty-picker-btn"
+                                    aria-label="Giảm số lượng"
                                 >
                                     -
                                 </button>
-                                <span className="qty-picker-val">{qty}</span>
+                                <span className="qty-picker-val tabular-nums">
+                                    {qty}
+                                </span>
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -340,6 +360,7 @@ const ProductDetail = () => {
                                     }
                                     className="qty-picker-btn"
                                     disabled={qty >= product.stockQuantity}
+                                    aria-label="Tăng số lượng"
                                 >
                                     +
                                 </button>
@@ -362,45 +383,28 @@ const ProductDetail = () => {
                                 disabled={product.stockQuantity === 0}
                                 className="product-detail-btn-solid-buy"
                             >
-                                Mua ngay
+                                {product.stockQuantity === 0 ? "Hết hàng" : "Mua ngay"}
                             </button>
                         </div>
-                    </div>
 
-                    {/* Card 2: Thông tin vận chuyển */}
-                    <div className="product-detail-card-box">
-                        <h4 className="product-detail-card-heading">
-                            Thông tin vận chuyển
-                        </h4>
-                        <div className="product-detail-shipping-list">
-                            <div className="product-detail-shipping-item">
-                                <Truck size={18} className="shipping-icon" />
-                                <div className="shipping-text-box">
-                                    <p className="shipping-main-txt">
-                                        Giao hàng đến{" "}
-                                        <strong>Hồ Chí Minh</strong>
-                                    </p>
-                                    <p className="shipping-sub-txt">
-                                        Giao nhanh và uy tín trong ngày với các
-                                        đơn hàng tại TP.HCM và Hà Nội.
-                                    </p>
-                                </div>
+                        {/* Trust Badges Bar (Gắn liền với card mua hàng để tối ưu conversion) */}
+                        <div className="product-detail-trust-badges">
+                            <div className="trust-badge-item">
+                                <Truck size={16} className="trust-badge-icon" />
+                                <span>Giao nhanh toàn quốc</span>
                             </div>
-                            <div className="product-detail-shipping-item">
-                                <RotateCcw
-                                    size={18}
-                                    className="shipping-icon"
-                                />
-                                <div className="shipping-text-box">
-                                    <p className="shipping-main-txt">
-                                        Đổi trả miễn phí toàn quốc 30 ngày
-                                    </p>
-                                </div>
+                            <div className="trust-badge-item">
+                                <RotateCcw size={16} className="trust-badge-icon" />
+                                <span>Đổi trả 30 ngày</span>
+                            </div>
+                            <div className="trust-badge-item">
+                                <ShieldCheck size={16} className="trust-badge-icon" />
+                                <span>Sách chính hãng 100%</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Card 3: Thông số sách */}
+                    {/* Card 2: Thông tin chi tiết (Bảng thông số) */}
                     <div className="product-detail-card-box">
                         <h4 className="product-detail-card-heading">
                             Thông tin chi tiết
@@ -410,13 +414,13 @@ const ProductDetail = () => {
                                 <tr>
                                     <td className="spec-name">Nhà cung cấp</td>
                                     <td className="spec-value">
-                                        {product.supplierName}
+                                        {product.supplierName || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td className="spec-name">Tác giả</td>
                                     <td className="spec-value">
-                                        {product.author}
+                                        {product.author || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 {product.translator && (
@@ -453,7 +457,7 @@ const ProductDetail = () => {
                                         Trọng lượng (gr)
                                     </td>
                                     <td className="spec-value">
-                                        {product.weight}
+                                        {product.weight || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 <tr>
@@ -461,26 +465,26 @@ const ProductDetail = () => {
                                         Kích thước bao bì
                                     </td>
                                     <td className="spec-value">
-                                        {product.dimensions}
+                                        {product.dimensions || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td className="spec-name">Số trang</td>
                                     <td className="spec-value">
-                                        {product.page}
+                                        {product.page || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td className="spec-name">Hình thức</td>
                                     <td className="spec-value">
-                                        {product.format}
+                                        {product.format || "Chưa cập nhật"}
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    {/* Card 4: Mô tả sản phẩm (Đã đưa vào cột phải) */}
+                    {/* Card 3: Mô tả sản phẩm */}
                     <div className="product-detail-card-box">
                         <h4 className="product-detail-card-heading">
                             Mô tả sản phẩm
@@ -528,14 +532,14 @@ const ProductDetail = () => {
                 </div>
             </div>
 
-            {/* Đánh giá sản phẩm (Điểm dừng kết thúc của sticky cột trái) */}
+            {/* Đánh giá sản phẩm */}
             <div className="product-detail-section-card">
                 <h3 className="product-detail-section-heading">
                     Đánh giá sản phẩm
                 </h3>
                 <div className="product-detail-review-summary-row">
                     <div className="product-detail-score-box">
-                        <span className="big-score">
+                        <span className="big-score tabular-nums">
                             {averageRating > 0 ? averageRating.toFixed(1) : "0"}
                             <small>/5</small>
                         </span>
@@ -571,7 +575,6 @@ const ProductDetail = () => {
             </div>
 
             {/* Sản phẩm tương tự */}
-            {/* Sản phẩm tương tự */}
             {similarProducts.length > 0 && (
                 <div className="product-detail-section-card">
                     <h3 className="product-detail-section-heading">
@@ -580,78 +583,15 @@ const ProductDetail = () => {
                     <div className="product-detail-similar-grid">
                         {similarProducts.slice(0, 5).map((simProd) => {
                             const simImgs = getProductImagesList(simProd);
-                            const coverUrl = simImgs[0] || simProd.imageUrl;
-
                             return (
-                                <div
+                                <BookCard
                                     key={simProd.id}
-                                    className="product-detail-similar-item"
-                                    onClick={() => navigate(`/product/${simProd.id}`)}
-                                >
-                                    {/* Khung chứa ảnh có viền và nền xám */}
-                                    <div className="similar-thumb-box">
-                                        {coverUrl ? (
-                                            <img
-                                                src={coverUrl}
-                                                alt={simProd.name}
-                                                className="similar-img"
-                                            />
-                                        ) : (
-                                            <BookOpen size={40} color="#0a422d" opacity={0.5} />
-                                        )}
-                                    </div>
-
-                                    {/* Tên sách */}
-                                    <h5 className="similar-name" title={simProd.name}>
-                                        {simProd.name}
-                                    </h5>
-
-                                    {/* Tác giả */}
-                                    <div className="similar-author">
-                                        Tác giả: {simProd.author || "Đang cập nhật"}
-                                    </div>
-
-                                    {/* Đánh giá sao */}
-                                    <div className="similar-rating-row">
-                                        <div className="similar-stars-list">
-                                            {[1, 2, 3, 4, 5].map((star) => {
-                                                const rating = simProd.averageRating || simProd.rating || 0;
-                                                const isFilled = rating >= star;
-
-                                                return (
-                                                    <Star
-                                                        key={star}
-                                                        size={13}
-                                                        fill={isFilled ? "#ecc94b" : "none"}
-                                                        stroke={isFilled ? "#ecc94b" : "#cbd5e1"}
-                                                        className={isFilled ? "star-filled" : "star-empty"}
-                                                    />
-                                                );
-                                            })}
-                                        </div>
-                                        <span className="similar-review-text">
-                                            ({simProd.reviewCount || 0})
-                                        </span>
-                                    </div>
-
-                                    {/* Giá tiền và nút giỏ hàng */}
-                                    <div className="similar-footer-row">
-                                        <span className="similar-price">
-                                            {formatPrice(simProd.price)}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            className="similar-btn-add-cart"
-                                            title="Thêm vào giỏ"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleAddToCart(simProd.id, 1);
-                                            }}
-                                        >
-                                            <ShoppingCart size={14} />
-                                        </button>
-                                    </div>
-                                </div>
+                                    product={simProd}
+                                    openProductDetail={(p) => navigate(`/product/${p.id}`)}
+                                    addToCart={handleAddToCart}
+                                    formatPrice={formatPrice}
+                                    getProductImage={() => simImgs[0] || simProd.imageUrl}
+                                />
                             );
                         })}
                     </div>
@@ -660,7 +600,40 @@ const ProductDetail = () => {
 
             <RecommendationSection title="GỢI Ý CHO BẠN" limit={10} />
 
-            {/* LIGHTBOX PREVIEW FULLSCREEN MODAL */}
+            {/* MOBILE STICKY BOTTOM ACTION BAR (iPhone 14 Pro Max & Mobile devices) */}
+            <div className="product-detail-mobile-sticky-bar">
+                <div className="mobile-sticky-price-wrap tabular-nums">
+                    <span className="mobile-sticky-price">
+                        {formatPrice(product.price)}
+                    </span>
+                    {originalPrice && (
+                        <span className="mobile-sticky-old-price">
+                            {formatPrice(originalPrice)}
+                        </span>
+                    )}
+                </div>
+                <div className="mobile-sticky-cta-wrap">
+                    <button
+                        type="button"
+                        disabled={product.stockQuantity === 0}
+                        onClick={handleAddToCart}
+                        className="mobile-sticky-btn-cart"
+                        title="Thêm vào giỏ"
+                        aria-label="Thêm vào giỏ hàng"
+                    >
+                        <ShoppingCart size={18} />
+                    </button>
+                    <button
+                        type="button"
+                        disabled={product.stockQuantity === 0}
+                        onClick={handleBuyNow}
+                        className="mobile-sticky-btn-buy"
+                    >
+                        {product.stockQuantity === 0 ? "Hết hàng" : "Mua ngay"}
+                    </button>
+                </div>
+            </div>
+
             {/* LIGHTBOX PREVIEW FULLSCREEN MODAL */}
             {isLightboxOpen && createPortal(
                 <div
@@ -691,12 +664,13 @@ const ProductDetail = () => {
                                         disabled={zoomLevel <= 1.0}
                                         className="lightbox-zoom-btn"
                                         title="Thu nhỏ về 100%"
+                                        aria-label="Thu nhỏ"
                                     >
                                         <ZoomOut size={18} />
                                     </button>
                                     
                                     <span 
-                                        className="lightbox-zoom-label" 
+                                        className="lightbox-zoom-label tabular-nums" 
                                         onClick={resetZoom}
                                         title="Nhấp để đặt lại về 100%"
                                     >
@@ -709,6 +683,7 @@ const ProductDetail = () => {
                                         disabled={zoomLevel >= 3.0}
                                         className="lightbox-zoom-btn"
                                         title="Phóng to"
+                                        aria-label="Phóng to"
                                     >
                                         <ZoomIn size={18} />
                                     </button>
@@ -719,6 +694,7 @@ const ProductDetail = () => {
                                     onClick={closeLightbox}
                                     className="lightbox-close-btn"
                                     title="Đóng preview"
+                                    aria-label="Đóng preview"
                                 >
                                     <X size={22} />
                                 </button>
@@ -733,6 +709,7 @@ const ProductDetail = () => {
                                     onClick={prevLightboxImage}
                                     className="lightbox-arrow-btn prev"
                                     title="Trang trước"
+                                    aria-label="Trang trước"
                                 >
                                     <ChevronLeft size={36} />
                                 </button>
@@ -770,6 +747,7 @@ const ProductDetail = () => {
                                     onClick={nextLightboxImage}
                                     className="lightbox-arrow-btn next"
                                     title="Trang tiếp theo"
+                                    aria-label="Trang tiếp theo"
                                 >
                                     <ChevronRight size={36} />
                                 </button>
@@ -784,7 +762,7 @@ const ProductDetail = () => {
                                         key={idx}
                                         onClick={() => {
                                             setLightboxIdx(idx);
-                                            setZoomLevel(1);
+                                            resetZoom();
                                         }}
                                         className={`lightbox-mini-thumb ${
                                             lightboxIdx === idx ? "active" : ""

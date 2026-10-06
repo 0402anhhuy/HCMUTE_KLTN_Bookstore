@@ -1,0 +1,128 @@
+/* ==========================================================================
+   REUSABLE EMPTY STATE STYLES - COMMON COMPONENT
+   ========================================================================== */
+
+.common-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px dashed #cbd5e1;
+    margin: 12px 0 24px 0;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.common-empty-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background-color: #f0fdf4;
+    color: #0a422d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    border: 1px solid #dcfce7;
+}
+
+.common-empty-icon-wrap.danger {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border-color: #fee2e2;
+}
+
+.common-empty-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.common-empty-desc {
+    color: #64748b;
+    font-size: 0.92rem;
+    max-width: 480px;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+}
+
+.common-empty-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.common-empty-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background-color: #0a422d;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 12px rgba(10, 66, 45, 0.15);
+}
+
+.common-empty-btn-primary:hover {
+    background-color: #072e20;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(10, 66, 45, 0.2);
+}
+
+.common-empty-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.common-empty-btn-secondary:hover {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+    .common-empty-state {
+        padding: 40px 16px;
+    }
+
+    .common-empty-title {
+        font-size: 1.15rem;
+    }
+
+    .common-empty-desc {
+        font-size: 0.86rem;
+        margin-bottom: 18px;
+    }
+
+    .common-empty-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .common-empty-btn-primary,
+    .common-empty-btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
