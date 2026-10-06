@@ -788,38 +788,40 @@ const Home = () => {
                         </div>
                     </div>
 
-                    <div className="home-fahasa-section home-publishers-section">
-                        <div className="home-fahasa-section-header">
-                            <h3 className="home-fahasa-title">
-                                <Building2 size={20} color="#0a422d" /> Nhà xuất bản & Đối tác
-                            </h3>
-                        </div>
-                        <div className="home-publishers-slider">
-                            {publishers.map((pub) => (
-                                <div
-                                    key={pub.id}
-                                    className="home-publisher-item"
-                                    onClick={() =>
-                                        handlePublisherClick(pub.name)
-                                    }
-                                >
+                    {publishers && publishers.length > 0 && (
+                        <div className="home-fahasa-section home-publishers-section">
+                            <div className="home-fahasa-section-header">
+                                <h3 className="home-fahasa-title">
+                                    <Building2 size={20} color="#0a422d" /> Nhà xuất bản & Đối tác
+                                </h3>
+                            </div>
+                            <div className="home-publishers-slider">
+                                {publishers.map((pub) => (
                                     <div
-                                        className={`home-publisher-box ${pub.highlight ? "highlight" : ""}`}
+                                        key={pub.id}
+                                        className="home-publisher-item"
+                                        onClick={() =>
+                                            handlePublisherClick(pub.name)
+                                        }
                                     >
-                                        <div className="home-publisher-crest">
-                                            <Building2 size={16} />
+                                        <div
+                                            className={`home-publisher-box ${pub.highlight ? "highlight" : ""}`}
+                                        >
+                                            <div className="home-publisher-crest">
+                                                <Building2 size={16} />
+                                            </div>
+                                            <span className="home-publisher-brand-name">
+                                                {pub.shortName}
+                                            </span>
                                         </div>
-                                        <span className="home-publisher-brand-name">
-                                            {pub.shortName}
+                                        <span className="home-publisher-label">
+                                            {pub.name}
                                         </span>
                                     </div>
-                                    <span className="home-publisher-label">
-                                        {pub.name}
-                                    </span>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                     <RecommendationSection title="Gợi ý dành cho bạn" limit={10} />
                 </div>
             )}

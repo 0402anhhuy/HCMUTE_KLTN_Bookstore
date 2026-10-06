@@ -31,10 +31,8 @@ const Catalog = () => {
         showMoreCategory,
         setShowMoreCategory,
         availablePublishers,
-        availableLanguages,
         selectedPublishers,
         togglePublisher,
-        selectedLanguages,
         selectedPriceRanges = [],
         togglePriceRange,
         selectedCategoryName,
@@ -114,8 +112,7 @@ const Catalog = () => {
         minPrice ||
         maxPrice ||
         selectedPriceRanges.length > 0 ||
-        selectedPublishers.length > 0 ||
-        selectedLanguages.length > 0,
+        selectedPublishers.length > 0,
     );
 
     // Tính toán dãy số trang rút gọn (tối đa 4 số trang theo block ví dụ: 1 2 3 4 -> 4 5 6 7)
@@ -282,20 +279,6 @@ const Catalog = () => {
                             </div>
                         ))}
 
-                        {/* Chips Ngôn Ngữ */}
-                        {selectedLanguages.map((lang) => (
-                            <div key={lang} className="catalog-filter-chip">
-                                <span>{lang}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => toggleLanguage(lang)}
-                                    className="chip-remove-btn"
-                                >
-                                    <X size={13} />
-                                </button>
-                            </div>
-                        ))}
-
                         {/* Nút Xóa Tất Cả */}
                         <button
                             type="button"
@@ -404,35 +387,6 @@ const Catalog = () => {
                                                 className="catalog-filter-input-checkbox"
                                             />
                                             <span>{pub}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 4. NGÔN NGỮ TỪ BE */}
-                        {availableLanguages.length > 0 && (
-                            <div className="catalog-filter-block">
-                                <div className="catalog-block-title">
-                                    NGÔN NGỮ
-                                </div>
-                                <div className="catalog-checkbox-list">
-                                    {availableLanguages.map((lang, idx) => (
-                                        <label
-                                            key={idx}
-                                            className="catalog-checkbox-label"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedLanguages.includes(
-                                                    lang,
-                                                )}
-                                                onChange={() =>
-                                                    toggleLanguage(lang)
-                                                }
-                                                className="catalog-filter-input-checkbox"
-                                            />
-                                            <span>{lang}</span>
                                         </label>
                                     ))}
                                 </div>

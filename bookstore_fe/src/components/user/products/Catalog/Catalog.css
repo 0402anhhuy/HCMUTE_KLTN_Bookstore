@@ -608,11 +608,22 @@
     margin-top: 2px;
 }
 
-/* Checkbox & Radio Filter Items */
 .catalog-checkbox-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.catalog-checkbox-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.catalog-checkbox-list::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
 }
 
 .catalog-checkbox-label {
