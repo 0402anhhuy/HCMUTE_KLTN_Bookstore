@@ -63,6 +63,7 @@ export const useHome = () => {
     );
     const [timeLeft, setTimeLeft] = useState(getTimeLeft(flashSaleEndsAt));
     const [flashSalePage, setFlashSalePage] = useState(1);
+    const [rawPublishers, setRawPublishers] = useState([]);
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -70,6 +71,17 @@ export const useHome = () => {
             setCategories(response.data || []);
         } catch (e) {
             console.error("Failed to load categories:", e);
+        }
+    }, []);
+
+    const fetchPublishers = useCallback(async () => {
+        try {
+            const response = await api.get("/products/publishers");
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                setRawPublishers(response.data);
+            }
+        } catch (e) {
+            console.error("Failed to load publishers:", e);
         }
     }, []);
 
@@ -124,9 +136,10 @@ export const useHome = () => {
         const timer = window.setTimeout(() => {
             fetchCategories();
             fetchActivePromotions();
+            fetchPublishers();
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [fetchCategories, fetchActivePromotions]);
+    }, [fetchCategories, fetchActivePromotions, fetchPublishers]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -299,18 +312,25 @@ export const useHome = () => {
         [categories],
     );
 
-    // Danh sách nhà xuất bản / đối tác:
-    const publishers = [
-        { id: 'kim-dong', name: 'NXB Kim Đồng', shortName: 'KIM ĐỒNG', highlight: true },
-        { id: 'tre', name: 'NXB Trẻ', shortName: 'NXB TRẺ' },
-        { id: 'nha-nam', name: 'NXB Nhã Nam', shortName: 'NHÃ NAM' },
-        { id: 'phu-nu', name: 'NXB Phụ Nữ Việt Nam', shortName: 'PHỤ NỮ' },
-        { id: 'lao-dong', name: 'NXB Lao Động', shortName: 'LAO ĐỘNG' },
-        { id: 'the-gioi', name: 'NXB Thế Giới', shortName: 'THẾ GIỚI' },
-        { id: 'tri-thuc', name: 'NXB Tri Thức', shortName: 'TRI THỨC' },
-        { id: 'tai-chinh', name: 'NXB Tài Chính', shortName: 'TÀI CHÍNH' },
-        { id: 'chinh-tri', name: 'NXB Chính Trị Quốc Gia', shortName: 'CHÍNH TRỊ' },
-    ];
+    // Danh sách nhà xuất bản / đối tác tải động từ database:
+    const publishers = useMemo(() => {
+        const list = rawPublishers.length > 0
+            ? rawPublishers
+            : Array.from(new Set(products.map((p) => p.publisher).filter(Boolean)));
+
+        return list.map((name, index) => {
+            const cleanShort = name
+                .replace(/^(NXB|Nhà xuất bản)\s+/i, "")
+                .trim()
+                .toUpperCase();
+            return {
+                id: `pub-${index}`,
+                name: name.trim(),
+                shortName: cleanShort || name.trim().toUpperCase(),
+                highlight: index === 0,
+            };
+        });
+    }, [rawPublishers, products]);
 
     const handlePublisherClick = (publisherName) => {
         navigate(`/catalog?publisher=${encodeURIComponent(publisherName)}`);
