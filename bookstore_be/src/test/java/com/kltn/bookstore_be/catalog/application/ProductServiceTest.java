@@ -111,7 +111,7 @@ class ProductServiceTest {
             org.springframework.data.domain.Page<Product> page = new org.springframework.data.domain.PageImpl<>(
                     List.of(sampleProduct));
             when(categoryRepository.findByParentCategoryId(1L)).thenReturn(List.of());
-            when(productRepository.searchProducts(eq("Doraemon"), any(), eq("Tiếng Việt"), any(), any(), eq(pageable)))
+            when(productRepository.searchProducts(eq("Doraemon"), any(), isNull(), eq("Tiếng Việt"), any(), any(), eq(pageable)))
                     .thenReturn(page);
 
             org.springframework.data.domain.Page<Product> result = productService.searchProducts("Doraemon", 1L,
@@ -119,7 +119,26 @@ class ProductServiceTest {
 
             assertNotNull(result);
             assertEquals(1, result.getTotalElements());
-            verify(productRepository).searchProducts(eq("Doraemon"), any(), eq("Tiếng Việt"), any(), any(),
+            verify(productRepository).searchProducts(eq("Doraemon"), any(), isNull(), eq("Tiếng Việt"), any(), any(),
+                    eq(pageable));
+        }
+
+        @Test
+        @DisplayName("Tìm kiếm sản phẩm theo nhà xuất bản")
+        void searchProducts_withPublisherFilter_callsRepository() {
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+            org.springframework.data.domain.Page<Product> page = new org.springframework.data.domain.PageImpl<>(
+                    List.of(sampleProduct));
+            when(categoryRepository.findByParentCategoryId(1L)).thenReturn(List.of());
+            when(productRepository.searchProducts(eq("Doraemon"), any(), eq(List.of("Kim Đồng")), isNull(), any(), any(), eq(pageable)))
+                    .thenReturn(page);
+
+            org.springframework.data.domain.Page<Product> result = productService.searchProducts("Doraemon", 1L,
+                    List.of("Kim Đồng"), null, BigDecimal.ZERO, BigDecimal.valueOf(50000), pageable);
+
+            assertNotNull(result);
+            assertEquals(1, result.getTotalElements());
+            verify(productRepository).searchProducts(eq("Doraemon"), any(), eq(List.of("Kim Đồng")), isNull(), any(), any(),
                     eq(pageable));
         }
 

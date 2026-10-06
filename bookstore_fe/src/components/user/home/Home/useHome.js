@@ -299,21 +299,21 @@ export const useHome = () => {
         [categories],
     );
 
-    // Thêm danh sách nhà xuất bản / đối tác:
+    // Danh sách nhà xuất bản / đối tác:
     const publishers = [
-        { id: 'dinh-ti', name: 'Đinh Tị Books', shortName: 'ĐINH TỊ' },
-        { id: 'vinh-thinh', name: 'Vĩnh Thịnh', shortName: 'VĨNH THỊNH' },
-        { id: 'deli', name: 'Deli', shortName: 'deli', highlight: true },
-        { id: 'tan-viet', name: 'Tân Việt Books', shortName: 'TÂN VIỆT' },
-        { id: 'fbmn', name: 'Futurebook', shortName: 'FBMN' },
-        { id: 'dong-a', name: 'Đông A', shortName: 'ĐÔNG A' },
-        { id: 'sworld', name: 'SWorld', shortName: 'SWORLD' },
-        { id: 'huy-hoang', name: 'Huy Hoàng Bookstore', shortName: 'HUY HOÀNG' },
-        { id: 'thien-long', name: 'Thiên Long', shortName: 'THIÊN LONG' },
+        { id: 'kim-dong', name: 'NXB Kim Đồng', shortName: 'KIM ĐỒNG', highlight: true },
+        { id: 'tre', name: 'NXB Trẻ', shortName: 'NXB TRẺ' },
+        { id: 'nha-nam', name: 'NXB Nhã Nam', shortName: 'NHÃ NAM' },
+        { id: 'phu-nu', name: 'NXB Phụ Nữ Việt Nam', shortName: 'PHỤ NỮ' },
+        { id: 'lao-dong', name: 'NXB Lao Động', shortName: 'LAO ĐỘNG' },
+        { id: 'the-gioi', name: 'NXB Thế Giới', shortName: 'THẾ GIỚI' },
+        { id: 'tri-thuc', name: 'NXB Tri Thức', shortName: 'TRI THỨC' },
+        { id: 'tai-chinh', name: 'NXB Tài Chính', shortName: 'TÀI CHÍNH' },
+        { id: 'chinh-tri', name: 'NXB Chính Trị Quốc Gia', shortName: 'CHÍNH TRỊ' },
     ];
 
     const handlePublisherClick = (publisherName) => {
-        navigate(`/?keyword=${encodeURIComponent(publisherName)}`);
+        navigate(`/catalog?publisher=${encodeURIComponent(publisherName)}`);
     };
 
     return {
