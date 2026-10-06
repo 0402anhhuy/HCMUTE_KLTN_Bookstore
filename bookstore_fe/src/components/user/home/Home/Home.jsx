@@ -12,6 +12,10 @@ import {
     Building2,
     ChevronDown,
     ChevronUp,
+    GraduationCap,
+    BookMarked,
+    LineChart,
+    Sparkles,
 } from "lucide-react";
 import { formatCategoryLabel } from "@/utils/categoryTree";
 import heroBooks from "@/assets/hero_books.png";
@@ -100,7 +104,7 @@ const Home = () => {
             {!isSearchActive && (
                 <div className="home-hero-banner">
                     <div className="home-hero-content">
-                        <span className="home-hero-tag">BỘ SƯU TẬP MỚI</span>
+                        <span className="home-hero-tag">Bộ sưu tập sách mới 2026</span>
                         <h1 className="home-hero-title">
                             Nâng cao tri thức với bộ sưu tập sách mới 2026.
                         </h1>
@@ -255,53 +259,80 @@ const Home = () => {
                 <div className="home-storefront-layout">
                     {/* A. 4 BANNER KHUYẾN MÃI NHỎ */}
                     <div className="home-promo-banners-grid">
-                        <div className="home-promo-card">
+                        <div
+                            className="home-promo-card home-promo-card-edu"
+                            onClick={() => navigate("/catalog?keyword=học")}
+                        >
+                            <div className="home-promo-watermark">
+                                <GraduationCap size={58} />
+                            </div>
                             <div className="home-promo-content">
                                 <span className="home-promo-subtitle">
-                                    HÀNH TRANG ĐẾN TRƯỜNG
+                                    <GraduationCap size={13} /> Hành trang đến trường
                                 </span>
                                 <h4 className="home-promo-title">
                                     Giảm đến 50%
                                 </h4>
                                 <span className="home-promo-btn">
-                                    MUA NGAY →
+                                    Khám phá ngay →
                                 </span>
                             </div>
                         </div>
-                        <div className="home-promo-card">
+
+                        <div
+                            className="home-promo-card home-promo-card-lit"
+                            onClick={() => navigate("/catalog?keyword=văn học")}
+                        >
+                            <div className="home-promo-watermark">
+                                <BookMarked size={58} />
+                            </div>
                             <div className="home-promo-content">
                                 <span className="home-promo-subtitle">
-                                    TỦ SÁCH VĂN HỌC
+                                    <BookMarked size={13} /> Tủ sách văn học
                                 </span>
                                 <h4 className="home-promo-title">
                                     Giảm đến 40%
                                 </h4>
                                 <span className="home-promo-btn">
-                                    MUA NGAY →
+                                    Khám phá ngay →
                                 </span>
                             </div>
                         </div>
-                        <div className="home-promo-card">
+
+                        <div
+                            className="home-promo-card home-promo-card-biz"
+                            onClick={() => navigate("/catalog?keyword=kinh tế")}
+                        >
+                            <div className="home-promo-watermark">
+                                <LineChart size={58} />
+                            </div>
                             <div className="home-promo-content">
                                 <span className="home-promo-subtitle">
-                                    SÁCH KINH TẾ
+                                    <LineChart size={13} /> Sách kinh tế & quản trị
                                 </span>
                                 <h4 className="home-promo-title">
                                     Đồng giá 99K
                                 </h4>
                                 <span className="home-promo-btn">
-                                    MUA NGAY →
+                                    Khám phá ngay →
                                 </span>
                             </div>
                         </div>
-                        <div className="home-promo-card">
+
+                        <div
+                            className="home-promo-card home-promo-card-manga"
+                            onClick={() => navigate("/catalog?keyword=manga")}
+                        >
+                            <div className="home-promo-watermark">
+                                <Sparkles size={58} />
+                            </div>
                             <div className="home-promo-content">
                                 <span className="home-promo-subtitle">
-                                    MANGA - LIGHT NOVEL
+                                    <Sparkles size={13} /> Manga & Light novel
                                 </span>
                                 <h4 className="home-promo-title">Ưu đãi 35%</h4>
                                 <span className="home-promo-btn">
-                                    MUA NGAY →
+                                    Khám phá ngay →
                                 </span>
                             </div>
                         </div>
@@ -315,20 +346,21 @@ const Home = () => {
                                     <span className="flash-sale-badge">
                                         <Zap size={18} fill="#ffffff" /> FLASH SALE
                                     </span>
-                                    <div className="flash-sale-timer">
+                                    <div className="flash-sale-timer tabular-nums">
+                                        <span className="timer-pulse-dot" />
                                         <span className="timer-label">
                                             Kết thúc trong
                                         </span>
                                         <span className="timer-digit">
-                                            {timeLeft.hours}
-                                        </span>{" "}
-                                        :
+                                            {String(timeLeft.hours ?? 0).padStart(2, "0")}
+                                        </span>
+                                        <span className="timer-separator">:</span>
                                         <span className="timer-digit">
-                                            {timeLeft.minutes}
-                                        </span>{" "}
-                                        :
+                                            {String(timeLeft.minutes ?? 0).padStart(2, "0")}
+                                        </span>
+                                        <span className="timer-separator">:</span>
                                         <span className="timer-digit">
-                                            {timeLeft.seconds}
+                                            {String(timeLeft.seconds ?? 0).padStart(2, "0")}
                                         </span>
                                     </div>
                                 </div>
@@ -416,8 +448,7 @@ const Home = () => {
                     <div className="home-fahasa-section">
                         <div className="home-fahasa-section-header trend-header">
                             <h3 className="home-fahasa-title">
-                                <TrendingUp size={20} color="#0a422d" /> Xu
-                                Hướng Mua Sắm
+                                <TrendingUp size={20} color="#0a422d" /> Xu hướng mua sắm
                             </h3>
                         </div>
                         <div className="home-tabs-bar">
@@ -426,21 +457,21 @@ const Home = () => {
                                 className={`home-tab-btn ${activeTrendTab === "all" ? "active" : ""}`}
                                 onClick={() => setActiveTrendTab("all")}
                             >
-                                Xu Hướng Theo Ngày
+                                Xu hướng theo ngày
                             </button>
                             <button
                                 type="button"
                                 className={`home-tab-btn ${activeTrendTab === "hot" ? "active" : ""}`}
                                 onClick={() => setActiveTrendTab("hot")}
                             >
-                                Sách HOT - Giảm Sốc
+                                Sách Hot - Giảm sốc
                             </button>
                             <button
                                 type="button"
                                 className={`home-tab-btn ${activeTrendTab === "bestseller" ? "active" : ""}`}
                                 onClick={() => setActiveTrendTab("bestseller")}
                             >
-                                Bestseller Ngoại Văn
+                                Bestseller ngoại văn
                             </button>
                         </div>
 
@@ -453,7 +484,7 @@ const Home = () => {
                                     addToCart={addToCart}
                                     formatPrice={formatPrice}
                                     getProductImage={getProductImage}
-                                    showBadge="XU HƯỚNG"
+                                    showBadge="Xu hướng"
                                     originalPrice={getOriginalPrice(product)}
                                 />
                             ))}
@@ -468,7 +499,7 @@ const Home = () => {
                         {/* Header */}
                         <div className="home-fahasa-section-header">
                             <h3 className="home-fahasa-title">
-                                <Flame size={22} color="#0a422d" /> Best Sellers
+                                <Flame size={22} color="#0a422d" /> Bảng xếp hạng bán chạy
                             </h3>
                         </div>
 
@@ -758,6 +789,11 @@ const Home = () => {
                     </div>
 
                     <div className="home-fahasa-section home-publishers-section">
+                        <div className="home-fahasa-section-header">
+                            <h3 className="home-fahasa-title">
+                                <Building2 size={20} color="#0a422d" /> Nhà xuất bản & Đối tác
+                            </h3>
+                        </div>
                         <div className="home-publishers-slider">
                             {publishers.map((pub) => (
                                 <div
@@ -770,9 +806,9 @@ const Home = () => {
                                     <div
                                         className={`home-publisher-box ${pub.highlight ? "highlight" : ""}`}
                                     >
-                                        <span className="home-publisher-icon">
-                                            🏢
-                                        </span>
+                                        <div className="home-publisher-crest">
+                                            <Building2 size={16} />
+                                        </div>
                                         <span className="home-publisher-brand-name">
                                             {pub.shortName}
                                         </span>
@@ -784,7 +820,7 @@ const Home = () => {
                             ))}
                         </div>
                     </div>
-                    <RecommendationSection title="GỢI Ý CHO BẠN" limit={10} />
+                    <RecommendationSection title="Gợi ý dành cho bạn" limit={10} />
                 </div>
             )}
         </div>
@@ -832,13 +868,15 @@ const BookCard = ({
                 )}
             </div>
 
-            <div className="book-card-name">{product.name}</div>
+            <div className="book-card-name" style={{ textWrap: "balance" }}>
+                {product.name}
+            </div>
             <div className="book-card-author">
                 Tác giả: {product.author || "Đang cập nhật"}
             </div>
 
             {/* Giá hiện tại và giá gốc gạch ngang */}
-            <div className="book-card-price-group">
+            <div className="book-card-price-group tabular-nums">
                 <span className="book-card-price-val">
                     {formatPrice(product.price)}
                 </span>
