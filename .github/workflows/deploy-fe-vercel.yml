@@ -30,7 +30,6 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: 5. Configure Vercel Project & Deploy
-        working-directory: ./bookstore_fe
         run: |
           ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
           PROJECT_ID=$(echo "${{ secrets.VERCEL_PROJECT_ID }}" | tr -d '\r\n[:space:]')
