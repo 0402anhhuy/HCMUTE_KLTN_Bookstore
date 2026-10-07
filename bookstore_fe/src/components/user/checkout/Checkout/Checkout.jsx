@@ -15,6 +15,7 @@ import {
     ShieldCheck,
     ArrowLeft,
     CheckCircle2,
+    RotateCcw,
 } from "lucide-react";
 import { Breadcrumb, EmptyState } from "@/components/common";
 import { useCheckout } from "./useCheckout";
@@ -802,7 +803,7 @@ const Checkout = () => {
                             </span>
                             <span className="checkout-trust-divider">•</span>
                             <span className="checkout-trust-item">
-                                🔄 Đổi trả 7 ngày
+                                <RotateCcw size={14} /> Đổi trả 7 ngày
                             </span>
                         </div>
 
