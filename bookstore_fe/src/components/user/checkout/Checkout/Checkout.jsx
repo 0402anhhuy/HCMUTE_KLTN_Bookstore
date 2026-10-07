@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
     MapPin,
@@ -156,6 +157,21 @@ const Checkout = () => {
     const totalItemsCount = buyNowProduct
         ? qty
         : (checkoutItems || []).reduce((acc, item) => acc + (item.quantity || 1), 0);
+
+    // Tự động tính toán mã tốt nhất cho đơn hàng khi thanh toán
+    const computedBestCoupon = useMemo(() => {
+        if (!coupons || coupons.length === 0) return null;
+        let maxDisc = 0;
+        let best = null;
+        coupons.forEach((c) => {
+            const disc = calculateDiscount(c, subtotal);
+            if (disc > maxDisc) {
+                maxDisc = disc;
+                best = c;
+            }
+        });
+        return best || bestCoupon;
+    }, [coupons, subtotal, calculateDiscount, bestCoupon]);
 
     return (
         <div className="page-container animate-fade-in checkout-page-container">
@@ -646,11 +662,13 @@ const Checkout = () => {
                                     </div>
                                     <div className="checkout-voucher-scroll-list">
                                         {coupons.map((c) => {
-                                            const isBest =
-                                                bestCoupon &&
-                                                bestCoupon.id === c.id;
                                             const discountVal =
                                                 calculateDiscount(c, subtotal);
+                                            const isBest = Boolean(
+                                                computedBestCoupon &&
+                                                computedBestCoupon.id === c.id &&
+                                                discountVal > 0,
+                                            );
                                             const isEligible = discountVal > 0;
                                             const isSelected =
                                                 couponCode === c.code;
@@ -675,7 +693,7 @@ const Checkout = () => {
                                                             </span>
                                                             {isBest && (
                                                                 <span className="checkout-voucher-best-badge">
-                                                                    Tốt nhất
+                                                                    Mã tốt nhất
                                                                 </span>
                                                             )}
                                                         </div>
