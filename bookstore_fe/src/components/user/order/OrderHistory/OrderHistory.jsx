@@ -1,24 +1,28 @@
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     Calendar,
     MapPin,
     CreditCard,
     Truck,
     AlertTriangle,
-    RefreshCcw,
+    RotateCcw,
     Star,
     X,
     CheckCircle,
     Package,
     ShoppingBag,
     Clock,
+    Lock,
+    Loader2,
+    Eye,
 } from "lucide-react";
-import { Breadcrumb } from "@/components/common";
+import { Breadcrumb, EmptyState } from "@/components/common";
 import { useOrderHistory } from "./useOrderHistory";
 import "./OrderHistory.css";
 
 const OrderHistory = () => {
+    const navigate = useNavigate();
     const {
         user,
         loading,
@@ -72,16 +76,17 @@ const OrderHistory = () => {
 
     if (!user) {
         return (
-            <div className="page-container animate-fade-in order-history-unauth-container">
-                <h2 className="order-history-unauth-title">
-                    Vui lòng đăng nhập
-                </h2>
-                <p className="order-history-unauth-desc">
-                    Bạn cần đăng nhập để xem lịch sử mua hàng.
-                </p>
-                <Link to="/login" className="order-history-unauth-btn">
-                    Đăng nhập ngay
-                </Link>
+            <div className="page-container animate-fade-in order-history-page-container">
+                <div className="order-history-breadcrumb-wrapper">
+                    <Breadcrumb items={[{ label: "Đơn hàng của tôi" }]} />
+                </div>
+                <EmptyState
+                    icon={Lock}
+                    title="Vui lòng đăng nhập"
+                    description="Bạn cần đăng nhập tài khoản để xem lịch sử mua hàng và quản lý các đơn hàng của mình."
+                    actionText="Đăng nhập ngay"
+                    onAction={() => navigate("/login")}
+                />
             </div>
         );
     }
@@ -96,7 +101,7 @@ const OrderHistory = () => {
             <div className="order-history-header">
                 <h1 className="order-history-title">Đơn hàng của tôi</h1>
                 <p className="order-history-subtitle">
-                    Quản lý và theo dõi trạng thái các đơn hàng bạn đã đặt.
+                    Theo dõi tiến trình vận chuyển và quản lý trạng thái các đơn hàng đã đặt
                 </p>
             </div>
 
@@ -117,25 +122,20 @@ const OrderHistory = () => {
             </div>
 
             {loading ? (
-                <div className="order-history-loading-text">
-                    Đang tải lịch sử đơn hàng...
+                <div className="order-history-loading-box">
+                    <Loader2 size={36} className="order-history-loading-spinner" />
+                    <p className="order-history-loading-text">
+                        Đang tải lịch sử đơn hàng...
+                    </p>
                 </div>
             ) : filteredOrders.length === 0 ? (
-                <div className="order-history-empty-card">
-                    <ShoppingBag
-                        size={48}
-                        className="order-history-empty-icon"
-                    />
-                    <h3 className="order-history-empty-title">
-                        Chưa có đơn hàng nào
-                    </h3>
-                    <p className="order-history-empty-desc">
-                        Bạn chưa có đơn hàng nào trong trạng thái này.
-                    </p>
-                    <Link to="/catalog" className="order-history-btn-shop-link">
-                        Tiếp tục mua sắm
-                    </Link>
-                </div>
+                <EmptyState
+                    icon={ShoppingBag}
+                    title="Chưa có đơn hàng nào"
+                    description="Bạn chưa có đơn hàng nào trong trạng thái này. Tiếp tục khám phá những tựa sách hấp dẫn nhé!"
+                    actionText="Tiếp tục mua sắm"
+                    onAction={() => navigate("/catalog")}
+                />
             ) : (
                 <div className="order-history-list-stack">
                     {filteredOrders.map((order) => (
