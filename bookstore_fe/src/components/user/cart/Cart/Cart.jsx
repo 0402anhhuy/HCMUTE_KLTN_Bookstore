@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     Plus,
     Minus,
@@ -15,11 +15,16 @@ import {
     ChevronDown,
     ShoppingCart,
 } from "lucide-react";
-import { Breadcrumb } from "@/components/common";
+import {
+    Breadcrumb,
+    EmptyState,
+    RecommendationSection,
+} from "@/components/common";
 import { useCart } from "./useCart";
 import "./Cart.css";
 
 const Cart = () => {
+    const navigate = useNavigate();
     const {
         cart,
         updateCartQty,
@@ -63,21 +68,20 @@ const Cart = () => {
     if (validItems.length === 0) {
         return (
             <div className="page-container animate-fade-in cart-empty-container">
-                <div className="cart-empty-card">
-                    <ShoppingCart
-                        size={64}
-                        strokeWidth={1.5}
-                        color="#9ca3af"
-                        className="cart-empty-icon"
+                <Breadcrumb items={[{ label: "Giỏ hàng" }]} />
+                <EmptyState
+                    icon={ShoppingCart}
+                    title="Giỏ hàng của bạn đang trống"
+                    description="Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá ngay hàng ngàn tựa sách đặc sắc tại Bookstore!"
+                    actionText="Khám phá kho sách ngay"
+                    onAction={() => navigate("/catalog")}
+                    actionIcon={ArrowLeft}
+                />
+                <div className="cart-empty-recommendations">
+                    <RecommendationSection
+                        title="GỢI Ý DÀNH CHO BẠN"
+                        limit={10}
                     />
-                    <h2 className="cart-empty-title">Giỏ hàng trống</h2>
-                    <p className="cart-empty-desc">
-                        Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá
-                        ngay các tựa sách đặc sắc!
-                    </p>
-                    <Link to="/catalog" className="cart-empty-btn-shop">
-                        Khám phá kho sách
-                    </Link>
                 </div>
             </div>
         );
@@ -435,18 +439,78 @@ const Cart = () => {
                         </div>
                     </div>
 
-                    <div className="cart-shipping-notice-box">
-                        <Truck size={18} color="#0a422d" />
-                        <span>
-                            Miễn phí giao hàng cho đơn từ{" "}
-                            <strong>500.000đ</strong> trở lên!
-                        </span>
-                    </div>
+                    {/* KHỐI TIẾN ĐỘ FREESHIP TRỰC QUAN */}
+                    {(() => {
+                        const freeShipThreshold = 500000;
+                        const isFreeShipEligible = totalAmount >= freeShipThreshold;
+                        const freeShipRemaining = Math.max(
+                            0,
+                            freeShipThreshold - totalAmount,
+                        );
+                        const freeShipPercent = Math.min(
+                            100,
+                            Math.round(
+                                (totalAmount / freeShipThreshold) * 100,
+                            ),
+                        );
+
+                        return (
+                            <div className="cart-card-box cart-freeship-card">
+                                <div className="cart-freeship-header">
+                                    <Truck
+                                        size={18}
+                                        className="cart-freeship-icon"
+                                    />
+                                    <span className="cart-freeship-title">
+                                        {isFreeShipEligible
+                                            ? "Đơn hàng đủ điều kiện Freeship toàn quốc!"
+                                            : `Mua thêm ${formatPrice(freeShipRemaining)} để được Freeship`}
+                                    </span>
+                                </div>
+                                <div className="cart-freeship-progress-bar">
+                                    <div
+                                        className="cart-freeship-progress-fill"
+                                        style={{
+                                            width: `${freeShipPercent}%`,
+                                        }}
+                                    />
+                                </div>
+                                <div className="cart-freeship-subtext">
+                                    <span>Đơn từ 500.000đ</span>
+                                    <span>{freeShipPercent}%</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    {/* DÙNG ĐIỂM THƯỞNG */}
+                    {user && rewardPoints > 0 && (
+                        <div className="cart-card-box cart-points-card">
+                            <label className="cart-points-toggle-label">
+                                <input
+                                    type="checkbox"
+                                    checked={usePoints}
+                                    onChange={(e) =>
+                                        setUsePoints(e.target.checked)
+                                    }
+                                    className="cart-custom-checkbox"
+                                />
+                                <div className="cart-points-info">
+                                    <span className="cart-points-title">
+                                        Dùng điểm thưởng ({rewardPoints} điểm)
+                                    </span>
+                                    <span className="cart-points-sub">
+                                        Quy đổi giảm tối đa {formatPrice(maxPointsValue)}
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                    )}
 
                     <div className="cart-card-box cart-summary-card">
                         <div className="cart-summary-line">
                             <span>Thành tiền</span>
-                            <span className="val-text">
+                            <span className="val-text tabular-nums">
                                 {formatPrice(totalAmount)}
                             </span>
                         </div>
@@ -454,8 +518,10 @@ const Cart = () => {
                         {selectedItemIds.size > 0 && (
                             <div className="cart-summary-line">
                                 <span>Phí vận chuyển dự kiến</span>
-                                <span className="val-text">
-                                    {shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee)}
+                                <span className="val-text tabular-nums">
+                                    {shippingFee === 0
+                                        ? "Miễn phí"
+                                        : formatPrice(shippingFee)}
                                 </span>
                             </div>
                         )}
@@ -463,7 +529,7 @@ const Cart = () => {
                         {couponDiscount > 0 && (
                             <div className="cart-summary-line discount">
                                 <span>Giảm giá khuyến mãi</span>
-                                <span className="val-discount">
+                                <span className="val-discount tabular-nums">
                                     -{formatPrice(couponDiscount)}
                                 </span>
                             </div>
@@ -471,8 +537,10 @@ const Cart = () => {
 
                         {pointsDiscount > 0 && (
                             <div className="cart-summary-line discount">
-                                <span>Dùng điểm tích lũy ({pointsUsed} điểm)</span>
-                                <span className="val-discount">
+                                <span>
+                                    Dùng điểm tích lũy ({pointsUsed} điểm)
+                                </span>
+                                <span className="val-discount tabular-nums">
                                     -{formatPrice(pointsDiscount)}
                                 </span>
                             </div>
@@ -482,7 +550,7 @@ const Cart = () => {
                             <span className="total-label">
                                 Tổng Số Tiền (gồm VAT)
                             </span>
-                            <span className="total-val">
+                            <span className="total-val tabular-nums">
                                 {formatPrice(total)}
                             </span>
                         </div>
@@ -490,9 +558,10 @@ const Cart = () => {
                         <button
                             type="button"
                             onClick={handleCheckoutRedirect}
+                            disabled={selectedItemIds.size === 0}
                             className="cart-btn-submit-checkout"
                         >
-                            THANH TOÁN
+                            THANH TOÁN ({selectedItemIds.size})
                         </button>
                         <div className="cart-vat-note">
                             (Giá đã bao gồm VAT và ưu đãi áp dụng)
@@ -500,6 +569,39 @@ const Cart = () => {
                     </div>
                 </div>
             </div>
+
+            {/* GỢI Ý SẢN PHẨM PHÍA DƯỚI GIỎ HÀNG */}
+            <div className="cart-bottom-recommendations">
+                <RecommendationSection title="CÓ THỂ BẠN CŨNG THÍCH" limit={5} />
+            </div>
+
+            {/* MOBILE STICKY BOTTOM CHECKOUT BAR (iPhone 14 Pro Max & Mobile) */}
+            <div className="cart-mobile-sticky-bar">
+                <label className="cart-mobile-sticky-select-all">
+                    <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={toggleSelectAll}
+                        className="cart-custom-checkbox"
+                    />
+                    <span>Tất cả ({selectedItemIds.size})</span>
+                </label>
+                <div className="cart-mobile-sticky-total-box">
+                    <span className="sticky-total-label">Tổng thanh toán:</span>
+                    <span className="sticky-total-val tabular-nums">
+                        {formatPrice(total)}
+                    </span>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleCheckoutRedirect}
+                    disabled={selectedItemIds.size === 0}
+                    className="cart-mobile-sticky-btn-checkout"
+                >
+                    Mua hàng ({selectedItemIds.size})
+                </button>
+            </div>
+
 
             {/* MODAL MÃ KHUYẾN MÃI THEO PHÂN LOẠI */}
             {isCouponModalOpen &&
