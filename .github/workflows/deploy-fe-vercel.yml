@@ -5,12 +5,18 @@ on:
     branches:
       - main
     paths:
-      - 'bookstore_fe/**' 
+      - 'bookstore_fe/**'
+      - '.github/workflows/deploy-fe-vercel.yml'
   workflow_dispatch:
+
+concurrency:
+  group: deploy-vercel-production
+  cancel-in-progress: true
 
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: 1. Checkout repository code
         uses: actions/checkout@v4
@@ -30,6 +36,9 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: 5. Configure Vercel Project & Deploy
+        env:
+          CI: true
+          VERCEL_TELEMETRY_DISABLED: 1
         run: |
           ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
           PROJECT_ID=$(echo "${{ secrets.VERCEL_PROJECT_ID }}" | tr -d '\r\n[:space:]')
@@ -38,6 +47,6 @@ jobs:
           mkdir -p .vercel
           echo "{\"projectId\":\"$PROJECT_ID\",\"orgId\":\"$ORG_ID\"}" > .vercel/project.json
           
-          vercel pull --yes --environment=production --token=$TOKEN
-          vercel build --prod --token=$TOKEN
-          vercel deploy --prebuilt --prod --token=$TOKEN
+          vercel pull --yes --environment=production --token=$TOKEN --non-interactive
+          vercel build --prod --token=$TOKEN --yes
+          vercel deploy --prebuilt --prod --token=$TOKEN --yes --non-interactive
