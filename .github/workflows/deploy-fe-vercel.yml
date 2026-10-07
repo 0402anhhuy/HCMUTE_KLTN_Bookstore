@@ -8,9 +8,15 @@ on:
       - 'bookstore_fe/**' 
   workflow_dispatch:
 
+# Tự động hủy build cũ nếu có commit mới merge liên tiếp
+concurrency:
+  group: deploy-vercel-production
+  cancel-in-progress: true
+
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
+    timeout-minutes: 10 
     steps:
       - name: 1. Checkout repository code
         uses: actions/checkout@v4
@@ -31,6 +37,7 @@ jobs:
 
       - name: 5. Configure Vercel Project & Deploy
         run: |
+          export VERCEL_TELEMETRY_DISABLED=1
           ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
           PROJECT_ID=$(echo "${{ secrets.VERCEL_PROJECT_ID }}" | tr -d '\r\n[:space:]')
           TOKEN=$(echo "${{ secrets.VERCEL_TOKEN }}" | tr -d '\r\n[:space:]')
@@ -38,6 +45,6 @@ jobs:
           mkdir -p .vercel
           echo "{\"projectId\":\"$PROJECT_ID\",\"orgId\":\"$ORG_ID\"}" > .vercel/project.json
           
-          vercel pull --yes --environment=production --token=$TOKEN
-          vercel build --prod --token=$TOKEN
-          vercel deploy --prebuilt --prod --token=$TOKEN
+          vercel pull --yes --environment=production --token=$TOKEN --non-interactive
+          vercel build --prod --token=$TOKEN --non-interactive
+          vercel deploy --prebuilt --prod --token=$TOKEN --non-interactive
