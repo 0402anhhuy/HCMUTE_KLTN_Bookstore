@@ -1,9 +1,11 @@
+import { useNavigate, Link } from "react-router-dom";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { EmptyState } from "@/components/common";
 import { useFavoriteProducts } from "./useFavoriteProducts";
 import "./FavoriteProducts.css";
 
 const FavoriteProducts = ({ highlight = false }) => {
+    const navigate = useNavigate();
     const { favorites, formatPrice, handleAddToCart, handleRemoveFavorite } =
         useFavoriteProducts();
 
@@ -12,28 +14,28 @@ const FavoriteProducts = ({ highlight = false }) => {
             id="favorite-section"
             className={`favorite-section-container ${highlight ? "highlight" : ""}`}
         >
-            <h3 className="favorite-section-title">
-                <Heart
-                    size={18}
-                    className="favorite-header-icon"
-                    style={{ fill: favorites.length > 0 ? "#ef4444" : "none" }}
-                />
-                Sản phẩm yêu thích
+            <div className="favorite-section-header">
+                <h3 className="favorite-section-title">
+                    <Heart
+                        size={18}
+                        className="favorite-header-icon"
+                        style={{ fill: favorites.length > 0 ? "#ef4444" : "none" }}
+                    />
+                    Sản phẩm yêu thích
+                </h3>
                 <span className="favorite-header-badge">
-                    {favorites.length} món
+                    {favorites.length} sản phẩm
                 </span>
-            </h3>
+            </div>
 
             {favorites.length === 0 ? (
-                <div className="favorite-empty-card">
-                    <Heart size={28} className="favorite-empty-icon" />
-                    <div className="favorite-empty-text">
-                        Chưa có sản phẩm yêu thích.
-                    </div>
-                    <Link to="/" className="favorite-explore-link">
-                        Khám phá ngay
-                    </Link>
-                </div>
+                <EmptyState
+                    icon={Heart}
+                    title="Chưa có sản phẩm yêu thích"
+                    description="Bạn chưa lưu cuốn sách nào vào danh sách yêu thích. Hãy khám phá và thả tim cho những cuốn sách yêu thích nhé!"
+                    actionText="Khám phá ngay"
+                    onAction={() => navigate("/catalog")}
+                />
             ) : (
                 <div className="favorite-items-list">
                     {favorites.map((fav) => {
