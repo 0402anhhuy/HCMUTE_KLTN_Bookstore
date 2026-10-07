@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'bookstore_fe/**' 
+      - 'bookstore_fe/**'
+      - '.github/workflows/deploy-fe-vercel.yml'
   workflow_dispatch:
 
 # Tự động hủy build cũ nếu có commit mới merge liên tiếp
@@ -36,6 +37,9 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: 5. Configure Vercel Project & Deploy
+        env:
+          CI: true
+          VERCEL_TELEMETRY_DISABLED: 1
         run: |
           export VERCEL_TELEMETRY_DISABLED=1
           ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
