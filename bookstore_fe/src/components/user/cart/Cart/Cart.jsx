@@ -433,7 +433,11 @@ const Cart = () => {
                             onClick={openCouponModal}
                         >
                             <span>
-                                {eligibleCouponsCount} khuyến mãi đủ điều kiện
+                                {eligibleCouponsCount > 0
+                                    ? `${eligibleCouponsCount} khuyến mãi đủ điều kiện`
+                                    : totalAmount === 0
+                                      ? "Chọn sản phẩm để mở khóa voucher"
+                                      : "Xem danh sách mã giảm giá"}
                             </span>
                             <ChevronRight size={14} />
                         </div>
@@ -570,10 +574,6 @@ const Cart = () => {
                 </div>
             </div>
 
-            {/* GỢI Ý SẢN PHẨM PHÍA DƯỚI GIỎ HÀNG */}
-            <div className="cart-bottom-recommendations">
-                <RecommendationSection title="CÓ THỂ BẠN CŨNG THÍCH" limit={5} />
-            </div>
 
             {/* MOBILE STICKY BOTTOM CHECKOUT BAR (iPhone 14 Pro Max & Mobile) */}
             <div className="cart-mobile-sticky-bar">
@@ -664,7 +664,7 @@ const Cart = () => {
                                     <div className="cart-modal-section-title">
                                         <span>Mã giảm giá</span>
                                         <span className="sub-limit">
-                                            Áp dụng tối đa: 1
+                                            Quy định: Tối đa 1 mã/đơn
                                         </span>
                                     </div>
                                     <div className="modal-coupons-group">
@@ -709,7 +709,7 @@ const Cart = () => {
                                     <div className="cart-modal-section-title">
                                         <span>Mã vận chuyển</span>
                                         <span className="sub-limit">
-                                            Áp dụng tối đa: 1
+                                            Quy định: Tối đa 1 mã/đơn
                                         </span>
                                     </div>
                                     <div className="modal-coupons-group">

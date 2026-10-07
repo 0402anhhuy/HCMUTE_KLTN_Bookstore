@@ -108,11 +108,7 @@
     color: #b45309;
 }
 
-/* Bottom Recommendations */
-.cart-bottom-recommendations {
-    margin-top: 36px;
-    width: 100%;
-}
+
 
 /* Mobile Sticky Bottom Checkout Bar (Hidden on desktop) */
 .cart-mobile-sticky-bar {
