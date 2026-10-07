@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     MapPin,
     CreditCard,
@@ -10,13 +10,19 @@ import {
     Coins,
     AlertTriangle,
     Check,
+    Lock,
+    Loader2,
+    ShieldCheck,
+    ArrowLeft,
+    CheckCircle2,
 } from "lucide-react";
-import { Breadcrumb } from "@/components/common";
+import { Breadcrumb, EmptyState } from "@/components/common";
 import { useCheckout } from "./useCheckout";
 import { parseAddress } from "@/components/user/profile/AddressList/useAddressList";
 import "./Checkout.css";
 
 const Checkout = () => {
+    const navigate = useNavigate();
     const {
         user,
         cart,
@@ -64,66 +70,91 @@ const Checkout = () => {
 
     if (!user) {
         return (
-            <div className="page-container checkout-unauth-box">
-                <p className="checkout-empty-text">
-                    Vui lòng{" "}
-                    <Link
-                        to="/login"
-                        style={{ color: "#0056C6", fontWeight: 600 }}
-                    >
-                        đăng nhập
-                    </Link>{" "}
-                    để tiếp tục thanh toán.
-                </p>
+            <div className="page-container animate-fade-in checkout-page-container">
+                <div className="checkout-breadcrumb-wrapper">
+                    <Breadcrumb
+                        items={[
+                            { label: "Giỏ hàng", path: "/cart" },
+                            { label: "Thanh toán & Đặt hàng" },
+                        ]}
+                    />
+                </div>
+                <EmptyState
+                    icon={Lock}
+                    title="Vui lòng đăng nhập để thanh toán"
+                    description="Bạn cần đăng nhập tài khoản để hoàn tất thông tin nhận hàng và hưởng các ưu đãi thành viên."
+                    actionText="Đăng nhập ngay"
+                    onAction={() => navigate("/login")}
+                    secondaryText="Quay lại giỏ hàng"
+                    onSecondary={() => navigate("/cart")}
+                />
             </div>
         );
     }
 
     if (fetchingProduct) {
         return (
-            <div className="page-container checkout-loading-box">
-                <p className="checkout-empty-text">
-                    Đang tải thông tin sản phẩm...
-                </p>
+            <div className="page-container animate-fade-in checkout-page-container">
+                <div className="checkout-loading-box">
+                    <Loader2 size={36} className="checkout-loading-spinner" />
+                    <p className="checkout-empty-text">
+                        Đang tải thông tin sản phẩm đặt mua...
+                    </p>
+                </div>
             </div>
         );
     }
 
     if (!productId && (!cart?.items || cart.items.length === 0)) {
         return (
-            <div className="page-container checkout-empty-box">
-                <ShoppingBag size={48} className="checkout-empty-icon" />
-                <p className="checkout-empty-text">
-                    Giỏ hàng của bạn đang trống.
-                </p>
-                <Link to="/" className="checkout-btn-home-return">
-                    Quay lại trang chủ
-                </Link>
+            <div className="page-container animate-fade-in checkout-page-container">
+                <div className="checkout-breadcrumb-wrapper">
+                    <Breadcrumb
+                        items={[
+                            { label: "Giỏ hàng", path: "/cart" },
+                            { label: "Thanh toán & Đặt hàng" },
+                        ]}
+                    />
+                </div>
+                <EmptyState
+                    icon={ShoppingBag}
+                    title="Giỏ hàng của bạn đang trống"
+                    description="Chưa có sản phẩm nào được chọn để thanh toán. Khám phá các tác phẩm đặc sắc ngay!"
+                    actionText="Khám phá sách hay"
+                    onAction={() => navigate("/")}
+                />
             </div>
         );
     }
 
-    // Giữ nguyên các phương thức thanh toán
+    // Các phương thức thanh toán hỗ trợ
     const paymentOptions = [
         {
             value: "COD",
-            label: "COD",
-            desc: "Thanh toán khi nhận hàng",
-            icon: <Banknote size={24} style={{ color: "#0a422d" }} />,
+            label: "Thanh toán khi nhận hàng (COD)",
+            desc: "Nhận sách kiểm tra rồi mới thanh toán tiền mặt",
+            badge: "Tiện lợi",
+            icon: <Banknote size={22} className="checkout-payment-icon" />,
         },
         {
             value: "VNPAY",
-            label: "VNPay",
-            desc: "Thanh toán qua VNPay",
-            icon: <CreditCard size={24} style={{ color: "#0a422d" }} />,
+            label: "VNPAY (QR Pay / Thẻ ATM / Visa)",
+            desc: "Thanh toán qua cổng ngân hàng hoặc ví VNPAY",
+            badge: "Khuyên dùng",
+            icon: <CreditCard size={22} className="checkout-payment-icon" />,
         },
         {
             value: "WALLET",
-            label: "Ví điện tử",
-            desc: `Số dư: ${formatPrice(user?.walletBalance || 0)}`,
-            icon: <Wallet size={24} style={{ color: "#0a422d" }} />,
+            label: "Ví BookStore",
+            desc: `Số dư ví hiện tại: ${formatPrice(user?.walletBalance || 0)}`,
+            badge: (user?.walletBalance || 0) >= total ? "Đủ số dư" : "Số dư thấp",
+            icon: <Wallet size={22} className="checkout-payment-icon" />,
         },
     ];
+
+    const totalItemsCount = buyNowProduct
+        ? qty
+        : (checkoutItems || []).reduce((acc, item) => acc + (item.quantity || 1), 0);
 
     return (
         <div className="page-container animate-fade-in checkout-page-container">
@@ -132,349 +163,400 @@ const Checkout = () => {
                 <Breadcrumb
                     items={[
                         { label: "Giỏ hàng", path: "/cart" },
-                        { label: "Thanh toán" },
+                        { label: "Thanh toán & Đặt hàng" },
                     ]}
                 />
             </div>
 
-            {/* Stepper */}
+            {/* Stepper Funnel */}
             <div className="checkout-stepper-container">
-                <div className="checkout-step-item">
-                    <div className="checkout-step-circle active">1</div>
+                <Link to="/cart" className="checkout-step-item completed">
+                    <div className="checkout-step-circle completed">
+                        <Check size={16} strokeWidth={2.5} />
+                    </div>
+                    <span className="checkout-step-label completed">
+                        Giỏ hàng
+                    </span>
+                </Link>
+                <div className="checkout-step-divider completed" />
+                <div className="checkout-step-item active">
+                    <div className="checkout-step-circle active">2</div>
                     <span className="checkout-step-label active">
-                        Giao hàng
+                        Thanh toán & Đặt hàng
                     </span>
                 </div>
                 <div className="checkout-step-divider" />
-                <div className="checkout-step-item">
-                    <div className="checkout-step-circle inactive">2</div>
+                <div className="checkout-step-item inactive">
+                    <div className="checkout-step-circle inactive">3</div>
                     <span className="checkout-step-label inactive">
-                        Thanh toán
+                        Hoàn tất đơn
                     </span>
                 </div>
             </div>
 
-            {error && <div className="checkout-error-banner">{error}</div>}
+            {error && (
+                <div className="checkout-error-banner">
+                    <AlertTriangle size={18} />
+                    <span>{error}</span>
+                </div>
+            )}
 
             <form onSubmit={handlePlaceOrder} className="checkout-form-grid">
-                {/* LEFT: Form */}
+                {/* LEFT: Delivery & Payment Details */}
                 <div className="checkout-form-left-col">
                     {/* Section 1: Thông tin giao hàng */}
                     <div className="checkout-section-card">
                         <div className="checkout-section-header">
-                            <Truck
-                                size={20}
-                                className="checkout-section-icon"
-                            />
-                            <h3 className="checkout-section-title">
-                                Thông tin giao hàng
-                            </h3>
-                        </div>
-
-                        <div className="checkout-form-group">
-                            <label className="checkout-form-label">
-                                Họ và tên
-                            </label>
-                            <input
-                                type="text"
-                                value={recipientName}
-                                onChange={(e) => setRecipientName(e.target.value)}
-                                placeholder="Nhập họ tên người nhận..."
-                                required
-                                className="checkout-input-text"
-                            />
-                        </div>
-
-                        <div className="checkout-form-group">
-                            <label className="checkout-form-label">
-                                Số điện thoại nhận hàng
-                            </label>
-                            <input
-                                type="text"
-                                value={recipientPhone}
-                                onChange={(e) =>
-                                    setRecipientPhone(e.target.value)
-                                }
-                                placeholder="Nhập số điện thoại nhận hàng..."
-                                required
-                                className="checkout-input-text"
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                className="checkout-form-label"
-                                style={{ marginBottom: "10px" }}
+                            <div className="checkout-section-header-left">
+                                <div className="checkout-section-icon-wrap">
+                                    <Truck size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="checkout-section-title">
+                                        1. Thông tin giao hàng
+                                    </h3>
+                                    <p className="checkout-section-subtitle">
+                                        Địa chỉ nhận sách và thông tin liên hệ
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                to="/profile"
+                                className="checkout-manage-addr-link"
                             >
+                                Sổ địa chỉ
+                            </Link>
+                        </div>
+
+                        {/* Recipient info inputs */}
+                        <div className="checkout-recipient-grid">
+                            <div className="checkout-form-group">
+                                <label className="checkout-form-label">
+                                    Họ và tên người nhận <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={recipientName}
+                                    onChange={(e) =>
+                                        setRecipientName(e.target.value)
+                                    }
+                                    placeholder="Nhập họ tên người nhận..."
+                                    required
+                                    className="checkout-input-text"
+                                />
+                            </div>
+
+                            <div className="checkout-form-group">
+                                <label className="checkout-form-label">
+                                    Số điện thoại nhận hàng <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={recipientPhone}
+                                    onChange={(e) =>
+                                        setRecipientPhone(e.target.value)
+                                    }
+                                    placeholder="Nhập số điện thoại nhận hàng..."
+                                    required
+                                    className="checkout-input-text"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Saved addresses / Custom address */}
+                        <div className="checkout-address-block">
+                            <label className="checkout-form-label">
                                 <MapPin
-                                    size={13}
+                                    size={14}
                                     style={{
                                         display: "inline",
                                         marginRight: "4px",
                                     }}
                                 />
-                                Địa chỉ nhận hàng
+                                Địa chỉ nhận sách <span className="text-danger">*</span>
                             </label>
-                            {savedAddresses.map((addr, idx) => {
-                                const parsed = parseAddress(addr, user?.fullName, user?.phone);
-                                return (
-                                    <div
-                                        key={idx}
-                                        onClick={() => {
-                                            setSelectedAddressIdx(idx);
-                                            setUseCustomAddress(false);
-                                        }}
-                                        className={`checkout-address-item-card ${
+
+                            {savedAddresses.length > 0 ? (
+                                <div className="checkout-address-list">
+                                    {savedAddresses.map((addr, idx) => {
+                                        const parsed = parseAddress(
+                                            addr,
+                                            user?.fullName,
+                                            user?.phone,
+                                        );
+                                        const isSelected =
                                             !useCustomAddress &&
-                                            selectedAddressIdx === idx
-                                                ? "selected"
-                                                : ""
+                                            selectedAddressIdx === idx;
+
+                                        return (
+                                            <div
+                                                key={idx}
+                                                onClick={() => {
+                                                    setSelectedAddressIdx(idx);
+                                                    setUseCustomAddress(false);
+                                                }}
+                                                className={`checkout-address-item-card ${
+                                                    isSelected ? "selected" : ""
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="addressSelection"
+                                                    checked={isSelected}
+                                                    onChange={() => {
+                                                        setSelectedAddressIdx(
+                                                            idx,
+                                                        );
+                                                        setUseCustomAddress(
+                                                            false,
+                                                        );
+                                                    }}
+                                                    className="checkout-address-radio"
+                                                />
+                                                <div className="checkout-address-info-wrap">
+                                                    <div className="checkout-address-top-row">
+                                                        <span className="checkout-address-badge-name">
+                                                            {idx === 0
+                                                                ? "Địa chỉ mặc định"
+                                                                : `Địa chỉ ${idx + 1}`}
+                                                        </span>
+                                                        {isSelected && (
+                                                            <span className="checkout-address-selected-badge">
+                                                                <Check size={12} /> Đang chọn
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="checkout-address-recipient">
+                                                        <strong>{parsed.name}</strong> • {parsed.phone}
+                                                    </div>
+                                                    <div className="checkout-address-detail-text">
+                                                        {parsed.address}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Option to use different address */}
+                                    <div
+                                        onClick={() =>
+                                            setUseCustomAddress(true)
+                                        }
+                                        className={`checkout-address-item-card ${
+                                            useCustomAddress ? "selected" : ""
                                         }`}
                                     >
                                         <input
                                             type="radio"
                                             name="addressSelection"
-                                            checked={
-                                                !useCustomAddress &&
-                                                selectedAddressIdx === idx
+                                            checked={useCustomAddress}
+                                            onChange={() =>
+                                                setUseCustomAddress(true)
                                             }
-                                            onChange={() => {
-                                                setSelectedAddressIdx(idx);
-                                                setUseCustomAddress(false);
-                                            }}
                                             className="checkout-address-radio"
                                         />
-                                        <div>
-                                            <div className="checkout-address-badge-name">
-                                                {idx === 0
-                                                    ? "Địa chỉ mặc định"
-                                                    : `Địa chỉ ${idx + 1}`}
-                                            </div>
-                                            <div className="checkout-address-recipient" style={{ fontWeight: 600, fontSize: "0.95rem", color: "#334155", margin: "4px 0" }}>
-                                                {parsed.name} | {parsed.phone}
-                                            </div>
-                                            <div className="checkout-address-detail-text">
-                                                {parsed.address}
-                                            </div>
+                                        <div className="checkout-address-info-wrap">
+                                            <span className="checkout-address-badge-name">
+                                                Giao đến địa chỉ khác
+                                            </span>
+                                            <p className="checkout-address-detail-text">
+                                                Nhập địa chỉ giao hàng tùy chỉnh cho đơn này
+                                            </p>
                                         </div>
                                     </div>
-                                );
-                            })}
-                            <div
-                                onClick={() => setUseCustomAddress(true)}
-                                className={`checkout-address-item-card ${
-                                    useCustomAddress ? "selected" : ""
-                                }`}
-                            >
-                                <input
-                                    type="radio"
-                                    name="addressSelection"
-                                    checked={useCustomAddress}
-                                    onChange={() => setUseCustomAddress(true)}
-                                    className="checkout-address-radio"
-                                />
-                                <span className="checkout-address-badge-name">
-                                    Giao đến địa chỉ khác
-                                </span>
-                            </div>
+                                </div>
+                            ) : null}
 
-                            {useCustomAddress && (
-                                <input
-                                    type="text"
-                                    placeholder="Nhập địa chỉ giao hàng cụ thể..."
-                                    value={customAddress}
-                                    onChange={(e) =>
-                                        setCustomAddress(e.target.value)
-                                    }
-                                    required={useCustomAddress}
-                                    className="checkout-input-text"
-                                />
+                            {(useCustomAddress || savedAddresses.length === 0) && (
+                                <div className="checkout-custom-addr-input-wrap">
+                                    <textarea
+                                        rows={3}
+                                        placeholder="Nhập địa chỉ nhận hàng chi tiết (Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố)..."
+                                        value={customAddress}
+                                        onChange={(e) =>
+                                            setCustomAddress(e.target.value)
+                                        }
+                                        required={useCustomAddress}
+                                        className="checkout-input-textarea"
+                                    />
+                                </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Section 2: Phương thức thanh toán (Giữ nguyên) */}
+                    {/* Section 2: Phương thức thanh toán */}
                     <div className="checkout-section-card">
                         <div className="checkout-section-header">
-                            <CreditCard
-                                size={20}
-                                className="checkout-section-icon"
-                            />
-                            <h3 className="checkout-section-title">
-                                Phương thức thanh toán
-                            </h3>
+                            <div className="checkout-section-header-left">
+                                <div className="checkout-section-icon-wrap">
+                                    <CreditCard size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="checkout-section-title">
+                                        2. Phương thức thanh toán
+                                    </h3>
+                                    <p className="checkout-section-subtitle">
+                                        Lựa chọn hình thức thanh toán an toàn và bảo mật
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="checkout-payment-methods-grid">
-                            {paymentOptions.map((opt) => (
-                                <div
-                                    key={opt.value}
-                                    onClick={() => setPaymentMethod(opt.value)}
-                                    className={`checkout-payment-card ${
-                                        paymentMethod === opt.value
-                                            ? "selected"
-                                            : ""
-                                    }`}
-                                >
-                                    <div className="checkout-payment-icon-wrapper">
-                                        {opt.icon}
+                            {paymentOptions.map((opt) => {
+                                const isSelected = paymentMethod === opt.value;
+                                return (
+                                    <div
+                                        key={opt.value}
+                                        onClick={() =>
+                                            setPaymentMethod(opt.value)
+                                        }
+                                        className={`checkout-payment-card ${
+                                            isSelected ? "selected" : ""
+                                        }`}
+                                    >
+                                        <div className="checkout-payment-card-top">
+                                            <div className="checkout-payment-icon-wrapper">
+                                                {opt.icon}
+                                            </div>
+                                            {opt.badge && (
+                                                <span
+                                                    className={`checkout-payment-badge ${
+                                                        opt.value === "WALLET" &&
+                                                        (user?.walletBalance || 0) < total
+                                                            ? "danger"
+                                                            : ""
+                                                    }`}
+                                                >
+                                                    {opt.badge}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="checkout-payment-name">
+                                            {opt.label}
+                                        </div>
+                                        <div className="checkout-payment-subtext">
+                                            {opt.desc}
+                                        </div>
+
+                                        {isSelected && (
+                                            <div className="checkout-payment-check-corner">
+                                                <CheckCircle2 size={16} />
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="checkout-payment-name">
-                                        {opt.label}
-                                    </div>
-                                    <div className="checkout-payment-subtext">
-                                        {opt.desc}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {paymentMethod === "WALLET" &&
                             (user?.walletBalance || 0) < total && (
                                 <div className="checkout-wallet-alert">
                                     <AlertTriangle
-                                        size={16}
-                                        style={{
-                                            display: "inline",
-                                            marginRight: "6px",
-                                            verticalAlign: "middle",
-                                        }}
-                                    />{" "}
-                                    Số dư ví hiện tại (
-                                    {formatPrice(user?.walletBalance || 0)})
-                                    không đủ để thanh toán đơn hàng này (
-                                    {formatPrice(total)}). Vui lòng nạp thêm
-                                    tiền hoặc chọn phương thức thanh toán khác.
+                                        size={18}
+                                        className="checkout-wallet-alert-icon"
+                                    />
+                                    <div>
+                                        <strong>Số dư ví không đủ:</strong> Hiện bạn đang có{" "}
+                                        {formatPrice(user?.walletBalance || 0)}, đơn hàng cần{" "}
+                                        {formatPrice(total)}. Vui lòng nạp thêm tiền vào ví hoặc chọn phương thức COD / VNPay để tiếp tục.
+                                    </div>
                                 </div>
                             )}
                     </div>
                 </div>
 
-                {/* RIGHT: Order summary */}
+                {/* RIGHT: Order Summary */}
                 <div className="checkout-summary-col">
                     <div className="checkout-summary-card">
-                        <div>
+                        <div className="checkout-summary-header">
                             <h3 className="checkout-summary-title">
                                 Tóm tắt đơn hàng
                             </h3>
+                            <span className="checkout-summary-item-badge">
+                                {totalItemsCount} cuốn sách
+                            </span>
+                        </div>
 
-                            {/* Items List */}
-                            <div className="checkout-items-scroll-list">
-                                {buyNowProduct ? (
-                                    <div className="checkout-item-preview-row">
+                        {/* Items List */}
+                        <div className="checkout-items-scroll-list">
+                            {buyNowProduct ? (
+                                <div className="checkout-item-preview-row">
+                                    <div className="checkout-item-thumb-box">
+                                        {buyNowProduct.imageUrl ? (
+                                            <img
+                                                src={buyNowProduct.imageUrl}
+                                                alt={buyNowProduct.name}
+                                                className="checkout-item-thumb-img"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div className="checkout-item-thumb-fallback">
+                                                <ShoppingBag size={20} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="checkout-item-info-meta">
+                                        <div
+                                            className="checkout-item-name"
+                                            title={buyNowProduct.name}
+                                        >
+                                            {buyNowProduct.name}
+                                        </div>
+                                        <div className="checkout-item-qty">
+                                            Số lượng: {qty}
+                                        </div>
+                                    </div>
+                                    <div className="checkout-item-total-price">
+                                        {formatPrice(buyNowProduct.price * qty)}
+                                    </div>
+                                </div>
+                            ) : (
+                                checkoutItems.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="checkout-item-preview-row"
+                                    >
                                         <div className="checkout-item-thumb-box">
-                                            {buyNowProduct.imageUrl && (
+                                            {item.product?.imageUrl ? (
                                                 <img
-                                                    src={buyNowProduct.imageUrl}
-                                                    alt={buyNowProduct.name}
+                                                    src={item.product.imageUrl}
+                                                    alt={item.product.name}
                                                     className="checkout-item-thumb-img"
+                                                    loading="lazy"
                                                 />
+                                            ) : (
+                                                <div className="checkout-item-thumb-fallback">
+                                                    <ShoppingBag size={20} />
+                                                </div>
                                             )}
                                         </div>
                                         <div className="checkout-item-info-meta">
-                                            <div className="checkout-item-name">
-                                                {buyNowProduct.name}
+                                            <div
+                                                className="checkout-item-name"
+                                                title={item.product?.name}
+                                            >
+                                                {item.product?.name}
                                             </div>
                                             <div className="checkout-item-qty">
-                                                Số lượng: {qty}
+                                                Số lượng: {item.quantity}
                                             </div>
                                         </div>
                                         <div className="checkout-item-total-price">
                                             {formatPrice(
-                                                buyNowProduct.price * qty,
+                                                item.product?.price * item.quantity,
                                             )}
                                         </div>
                                     </div>
-                                ) : (
-                                    checkoutItems.map((item) => (
-                                        <div
-                                            key={item.id}
-                                            className="checkout-item-preview-row"
-                                        >
-                                            <div className="checkout-item-thumb-box">
-                                                {item.product.imageUrl && (
-                                                    <img
-                                                        src={
-                                                            item.product
-                                                                .imageUrl
-                                                        }
-                                                        alt={item.product.name}
-                                                        className="checkout-item-thumb-img"
-                                                    />
-                                                )}
-                                            </div>
-                                            <div className="checkout-item-info-meta">
-                                                <div className="checkout-item-name">
-                                                    {item.product.name}
-                                                </div>
-                                                <div className="checkout-item-qty">
-                                                    Số lượng: {item.quantity}
-                                                </div>
-                                            </div>
-                                            <div className="checkout-item-total-price">
-                                                {formatPrice(
-                                                    item.product.price *
-                                                        item.quantity,
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            {/* Totals */}
-                            <div className="checkout-totals-stack">
-                                <div className="checkout-totals-row">
-                                    <span>Tạm tính</span>
-                                    <span>{formatPrice(subtotal)}</span>
-                                </div>
-                                <div className="checkout-totals-row">
-                                    <span>Vận chuyển</span>
-                                    <span
-                                        style={{
-                                            color:
-                                                shippingFee === 0
-                                                    ? "#10b981"
-                                                    : "#111827",
-                                        }}
-                                    >
-                                        {shippingFee === 0
-                                            ? "Miễn phí"
-                                            : formatPrice(shippingFee)}
-                                    </span>
-                                </div>
-                                {couponDiscount > 0 && (
-                                    <div className="checkout-totals-row discount">
-                                        <span>Giảm giá (Voucher)</span>
-                                        <span>
-                                            -{formatPrice(couponDiscount)}
-                                        </span>
-                                    </div>
-                                )}
-                                {pointsDiscount > 0 && (
-                                    <div className="checkout-totals-row discount">
-                                        <span>
-                                            Dùng xu tích lũy ({pointsUsed} xu)
-                                        </span>
-                                        <span>
-                                            -{formatPrice(pointsDiscount)}
-                                        </span>
-                                    </div>
-                                )}
-                                <div className="checkout-totals-final-row">
-                                    <span>Tổng cộng</span>
-                                    <span>{formatPrice(total)}</span>
-                                </div>
-                            </div>
+                                ))
+                            )}
                         </div>
 
-                        {/* Divider */}
-                        <div className="checkout-divider" />
-
-                        {/* Reward Points */}
+                        {/* Reward Points Card */}
                         {rewardPoints > 0 && (
                             <div className="checkout-points-card">
-                                <div>
+                                <div className="checkout-points-left">
                                     <div className="checkout-points-title">
                                         <Coins
                                             size={16}
@@ -483,7 +565,7 @@ const Checkout = () => {
                                         Dùng xu tích lũy
                                     </div>
                                     <div className="checkout-points-sub">
-                                        Có {rewardPoints} xu (-
+                                        Có {rewardPoints.toLocaleString("vi-VN")} xu (Quy đổi tối đa{" "}
                                         {formatPrice(maxPointsValue)})
                                     </div>
                                 </div>
@@ -535,7 +617,9 @@ const Checkout = () => {
                                 />
                                 <button
                                     type="button"
-                                    onClick={() => handleApplyManualCoupon(couponInput)}
+                                    onClick={() =>
+                                        handleApplyManualCoupon(couponInput)
+                                    }
                                     className="checkout-voucher-apply-btn"
                                 >
                                     Áp dụng
@@ -555,9 +639,9 @@ const Checkout = () => {
                             </div>
 
                             {coupons.length > 0 ? (
-                                <div>
+                                <div className="checkout-coupons-wrap">
                                     <div className="checkout-voucher-list-label">
-                                        Chọn mã giảm giá khả dụng:
+                                        Voucher của cửa hàng:
                                     </div>
                                     <div className="checkout-voucher-scroll-list">
                                         {coupons.map((c) => {
@@ -612,15 +696,15 @@ const Checkout = () => {
                                                                         verticalAlign: "middle",
                                                                     }}
                                                                 />{" "}
-                                                                Chọn
+                                                                Đang dùng
                                                             </span>
                                                         ) : isEligible ? (
                                                             <span className="checkout-voucher-status-use">
-                                                                Dùng
+                                                                Chọn
                                                             </span>
                                                         ) : (
                                                             <span className="checkout-voucher-status-kdk">
-                                                                KĐK
+                                                                Chưa đủ ĐK
                                                             </span>
                                                         )}
                                                     </div>
@@ -629,28 +713,130 @@ const Checkout = () => {
                                         })}
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="checkout-voucher-empty-notice">
-                                    Mua sách tích điểm để nhận thêm nhiều ưu
-                                    đãi!
-                                </div>
-                            )}
+                            ) : null}
                         </div>
 
-                        <div className="checkout-divider" />
+                        {/* Price Totals Stack */}
+                        <div className="checkout-totals-stack">
+                            <div className="checkout-totals-row">
+                                <span>Tạm tính</span>
+                                <span className="checkout-totals-val">
+                                    {formatPrice(subtotal)}
+                                </span>
+                            </div>
 
-                        {/* Submit Action */}
+                            <div className="checkout-totals-row">
+                                <span>Phí vận chuyển</span>
+                                <span
+                                    className={`checkout-totals-val ${
+                                        shippingFee === 0 ? "free-ship" : ""
+                                    }`}
+                                >
+                                    {shippingFee === 0
+                                        ? "Miễn phí"
+                                        : formatPrice(shippingFee)}
+                                </span>
+                            </div>
+
+                            {couponDiscount > 0 && (
+                                <div className="checkout-totals-row discount">
+                                    <span>Giảm giá Voucher</span>
+                                    <span className="checkout-totals-val">
+                                        -{formatPrice(couponDiscount)}
+                                    </span>
+                                </div>
+                            )}
+
+                            {pointsDiscount > 0 && (
+                                <div className="checkout-totals-row discount">
+                                    <span>
+                                        Dùng xu ({pointsUsed} xu)
+                                    </span>
+                                    <span className="checkout-totals-val">
+                                        -{formatPrice(pointsDiscount)}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="checkout-totals-final-row">
+                                <div>
+                                    <div className="checkout-totals-final-label">
+                                        Tổng thanh toán
+                                    </div>
+                                    <div className="checkout-totals-final-note">
+                                        (Đã bao gồm thuế & phí)
+                                    </div>
+                                </div>
+                                <div className="checkout-totals-final-price">
+                                    {formatPrice(total)}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Desktop Submit Button */}
                         <button
                             type="submit"
                             disabled={loading}
                             className="checkout-btn-submit-order"
                         >
-                            {loading ? "Đang xử lý..." : "Đặt hàng ngay"}
+                            {loading ? (
+                                <>
+                                    <Loader2
+                                        size={18}
+                                        className="checkout-spinner-icon"
+                                    />
+                                    Đang xử lý đơn hàng...
+                                </>
+                            ) : (
+                                `Đặt hàng (${formatPrice(total)})`
+                            )}
                         </button>
 
+                        <div className="checkout-trust-badges">
+                            <span className="checkout-trust-item">
+                                <ShieldCheck size={14} /> Bảo mật 100%
+                            </span>
+                            <span className="checkout-trust-divider">•</span>
+                            <span className="checkout-trust-item">
+                                <Truck size={14} /> Giao toàn quốc
+                            </span>
+                            <span className="checkout-trust-divider">•</span>
+                            <span className="checkout-trust-item">
+                                🔄 Đổi trả 7 ngày
+                            </span>
+                        </div>
+
                         <Link to="/cart" className="checkout-return-cart-link">
-                            ← Quay lại giỏ hàng
+                            <ArrowLeft size={15} /> Quay lại giỏ hàng
                         </Link>
+                    </div>
+                </div>
+
+                {/* MOBILE STICKY BOTTOM CONFIRM BAR */}
+                <div className="checkout-mobile-sticky-bar">
+                    <div className="checkout-mobile-sticky-inner">
+                        <div className="checkout-mobile-sticky-info">
+                            <span className="checkout-mobile-sticky-label">
+                                Tổng thanh toán:
+                            </span>
+                            <span className="checkout-mobile-sticky-total">
+                                {formatPrice(total)}
+                            </span>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="checkout-mobile-sticky-btn"
+                        >
+                            {loading ? (
+                                <Loader2
+                                    size={18}
+                                    className="checkout-spinner-icon"
+                                />
+                            ) : (
+                                "Đặt hàng ngay"
+                            )}
+                        </button>
                     </div>
                 </div>
             </form>
