@@ -9,6 +9,7 @@ import {
     RotateCcw,
     Star,
     X,
+    XCircle,
     CheckCircle,
     Package,
     ShoppingBag,
@@ -164,6 +165,12 @@ const OrderHistory = () => {
                                         <CheckCircle size={16} />
                                     ) : order.status === "shipping" ? (
                                         <Truck size={16} />
+                                    ) : order.status === "cancelled" ? (
+                                        <XCircle size={16} />
+                                    ) : order.status === "refunded" || order.status === "cancel_requested" ? (
+                                        <RotateCcw size={16} />
+                                    ) : order.status === "pending" ? (
+                                        <Clock size={16} />
                                     ) : (
                                         <Package size={16} />
                                     )}
@@ -749,7 +756,7 @@ const OrderHistory = () => {
 
                         if (order.shippingAt) {
                             steps.push({
-                                label: "Đang giao hàng",
+                                label: "Đang giao",
                                 time: order.shippingAt,
                                 done: true,
                                 icon: Truck,
@@ -757,7 +764,7 @@ const OrderHistory = () => {
                             });
                         } else if (!isCancelled && !isRefunded) {
                             steps.push({
-                                label: "Đang giao hàng",
+                                label: "Đang giao",
                                 time: null,
                                 done: false,
                                 icon: Truck,
@@ -777,7 +784,7 @@ const OrderHistory = () => {
                         } else if (isRefunded) {
                             if (order.deliveredAt) {
                                 steps.push({
-                                    label: "Đã giao hàng",
+                                    label: "Hoàn thành",
                                     time: order.deliveredAt,
                                     done: true,
                                     icon: CheckCircle,
@@ -788,13 +795,13 @@ const OrderHistory = () => {
                                 label: "Đã hoàn tiền",
                                 time: order.refundedAt,
                                 done: true,
-                                icon: RefreshCcw,
+                                icon: RotateCcw,
                                 color: "#6366f1",
                                 isRefunded: true,
                             });
                         } else {
                             steps.push({
-                                label: "Đã giao hàng",
+                                label: "Hoàn thành",
                                 time: order.deliveredAt,
                                 done: !!order.deliveredAt,
                                 icon: CheckCircle,
