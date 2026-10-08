@@ -1,15 +1,35 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Eye, 
+  Truck, 
+  Search, 
+  Phone, 
+  RotateCcw, 
+  ChevronLeft, 
+  ChevronRight, 
+  X, 
+  Package, 
+  UserCheck, 
+  AlertTriangle,
+  Clock,
+  CheckCircle,
+  Truck as TruckIcon
+} from 'lucide-react';
 import api from '../../services/api';
 import { useApp } from '../../context/AppContext';
+import EmptyState from '../common/EmptyState/EmptyState';
 
-const ManagerShippers = ({ shippers, orders = [], loadData }) => {
+const ManagerShippers = ({ shippers = [], orders = [], loadData }) => {
   const { showToast } = useApp();
 
   // Filters and pagination state
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [shipperStatusFilter, setShipperStatusFilter] = useState('ALL');
   const [shipperPage, setShipperPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 6;
 
   // Selected shipper for viewing orders
   const [selectedShipperForOrders, setSelectedShipperForOrders] = useState(null);
@@ -19,6 +39,7 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
   const [showEditShipperModal, setShowEditShipperModal] = useState(false);
   const [editingShipper, setEditingShipper] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [submittingShipper, setSubmittingShipper] = useState(false);
 
   // Form states for Shippers
   const [shipperForm, setShipperForm] = useState({
@@ -46,18 +67,21 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
       showToast('Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)', 'error');
       return;
     }
+    setSubmittingShipper(true);
     try {
       await api.post('/shippers', {
         ...shipperForm,
         fullName: shipperForm.fullName.trim(),
         phone: trimmedPhone
       });
-      showToast('Thêm người giao hàng thành công!', 'success');
+      showToast('Thêm người giao hàng mới thành công!', 'success');
       setShowShipperModal(false);
       loadData();
     } catch (error) {
       console.error(error);
       showToast(error.response?.data?.error || 'Lỗi khi thêm người giao hàng!', 'error');
+    } finally {
+      setSubmittingShipper(false);
     }
   };
 
@@ -80,23 +104,27 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
       showToast('Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09 hoặc +84)', 'error');
       return;
     }
+    setSubmittingShipper(true);
     try {
       await api.put(`/shippers/${editingShipper.id}`, {
         ...shipperForm,
         fullName: shipperForm.fullName.trim(),
         phone: trimmedPhone
       });
-      showToast('Cập nhật người giao hàng thành công!', 'success');
+      showToast('Cập nhật thông tin người giao hàng thành công!', 'success');
       setShowEditShipperModal(false);
       loadData();
     } catch (error) {
       console.error(error);
       showToast(error.response?.data?.error || 'Lỗi khi cập nhật người giao hàng!', 'error');
+    } finally {
+      setSubmittingShipper(false);
     }
   };
 
   const handleDeleteShipper = async () => {
     if (!showDeleteConfirm) return;
+    setSubmittingShipper(true);
     try {
       await api.delete(`/shippers/${showDeleteConfirm}`);
       showToast('Đã xóa người giao hàng thành công!', 'success');
@@ -106,14 +134,40 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
       console.error(error);
       showToast(error.response?.data?.error || 'Lỗi khi xóa người giao hàng!', 'error');
       setShowDeleteConfirm(null);
+    } finally {
+      setSubmittingShipper(false);
     }
   };
 
+  // Helper: Count active delivery orders of shipper
+  const getActiveOrdersCount = (shipperId) => {
+    return orders.filter(o => o.shipper?.id === shipperId && ['preparing', 'shipping'].includes(o.status)).length;
+  };
+
+  // Statistics
+  const totalShippers = shippers.length;
+  const activeShippers = useMemo(() => {
+    return shippers.filter(s => s.status === 'ACTIVE').length;
+  }, [shippers]);
+  const inactiveShippers = useMemo(() => {
+    return shippers.filter(s => s.status === 'INACTIVE').length;
+  }, [shippers]);
+
   // Filtered and Paginated Shippers
-  const filteredShippers = shippers.filter(s => {
-    if (shipperStatusFilter === 'ALL') return true;
-    return s.status === shipperStatusFilter;
-  });
+  const filteredShippers = useMemo(() => {
+    return shippers.filter(s => {
+      const matchesStatus = shipperStatusFilter === 'ALL' || s.status === shipperStatusFilter;
+
+      const keyword = searchKeyword.toLowerCase().trim();
+      const matchesSearch = !keyword ||
+        (s.fullName && s.fullName.toLowerCase().includes(keyword)) ||
+        (s.phone && s.phone.toLowerCase().includes(keyword)) ||
+        (s.vehicle && s.vehicle.toLowerCase().includes(keyword)) ||
+        (String(s.id).includes(keyword));
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [shippers, shipperStatusFilter, searchKeyword]);
 
   const totalShipperPages = Math.ceil(filteredShippers.length / ITEMS_PER_PAGE) || 1;
   const paginatedShippers = filteredShippers.slice(
@@ -121,47 +175,85 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
     shipperPage * ITEMS_PER_PAGE
   );
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-          Quản lý người giao hàng
-        </h1>
+  const isFilterActive = searchKeyword !== '' || shipperStatusFilter !== 'ALL';
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <select
-            value={shipperStatusFilter}
-            onChange={(e) => { setShipperStatusFilter(e.target.value); setShipperPage(1); }}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              outline: 'none',
-              fontSize: '0.9rem',
-              minWidth: '160px',
-              backgroundColor: '#ffffff'
-            }}
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="ACTIVE">Đang hoạt động</option>
-            <option value="INACTIVE">Tạm nghỉ</option>
-          </select>
+  const handleClearFilters = () => {
+    setSearchKeyword('');
+    setShipperStatusFilter('ALL');
+    setShipperPage(1);
+  };
+
+  // Helper for order status badge in view orders modal
+  const renderOrderStatusBadge = (status) => {
+    switch (status) {
+      case 'pending':
+        return <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-warning-light)', color: 'var(--mgr-warning)', border: '1px solid var(--mgr-warning-border)' }}>Chờ xác nhận</span>;
+      case 'confirmed':
+        return <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-info-light)', color: 'var(--mgr-info)', border: '1px solid var(--mgr-info-border)' }}>Đã xác nhận</span>;
+      case 'preparing':
+        return <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-primary-light)', color: 'var(--mgr-primary)', border: '1px solid var(--mgr-primary-border)' }}>Đang chuẩn bị</span>;
+      case 'shipping':
+        return <span className="manager-badge" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', border: '1px solid #bae6fd' }}>Đang giao hàng</span>;
+      case 'delivered':
+        return <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-success-light)', color: 'var(--mgr-success)', border: '1px solid var(--mgr-success-border)' }}>Đã giao hàng</span>;
+      case 'cancelled':
+        return <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-danger-light)', color: 'var(--mgr-danger)', border: '1px solid var(--mgr-danger-border)' }}>Đã hủy</span>;
+      default:
+        return <span className="manager-badge" style={{ backgroundColor: '#f1f5f9', color: 'var(--mgr-text-muted)', border: '1px solid var(--mgr-border)' }}>{status}</span>;
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Header and Summary Badges */}
+      <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0, letterSpacing: '-0.02em' }}>
+            Quản lý người giao hàng
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: '0.875rem', color: 'var(--mgr-text-muted)' }}>
+            Quản lý đội ngũ giao vận, phân bổ đơn hàng và theo dõi trạng thái hoạt động
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Quick Summary Badges */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            borderRadius: 'var(--mgr-radius-md)',
+            backgroundColor: 'var(--mgr-bg-card)',
+            border: '1px solid var(--mgr-border)',
+            boxShadow: 'var(--mgr-shadow-xs)'
+          }}>
+            <Truck size={15} style={{ color: 'var(--mgr-primary)' }} />
+            <span style={{ fontSize: '0.8rem', color: 'var(--mgr-text-muted)', fontWeight: 600 }}>Tổng số:</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--mgr-text-dark)' }}>{totalShippers}</span>
+          </div>
+
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            borderRadius: 'var(--mgr-radius-md)',
+            backgroundColor: 'var(--mgr-success-light)',
+            border: '1px solid var(--mgr-success-border)',
+            color: 'var(--mgr-success)'
+          }}>
+            <UserCheck size={15} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Hoạt động:</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>{activeShippers}</span>
+          </div>
 
           <button
+            type="button"
             onClick={handleOpenShipperModal}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 18px',
-              borderRadius: '8px',
-              border: 'none',
-              backgroundColor: '#7c3aed',
-              color: '#ffffff',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
+            className="manager-btn-primary"
+            style={{ height: '42px' }}
           >
             <Plus size={16} />
             <span>Thêm người giao hàng</span>
@@ -169,394 +261,590 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
         </div>
       </div>
 
-      {/* Shippers Table (Desktop) */}
-      <div className="manager-desktop-table manager-table-responsive" style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-      }}>
-        <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'left' }}>
+      {/* Filter and Search Bar */}
+      <div className="manager-panel" style={{ padding: '16px' }}>
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '12px',
+          alignItems: 'center'
+        }}>
+          {/* Search box */}
+          <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mgr-text-light)' }} />
+            <input
+              type="text"
+              placeholder="Tìm theo họ tên, số điện thoại hoặc phương tiện..."
+              value={searchKeyword}
+              onChange={(e) => { setSearchKeyword(e.target.value); setShipperPage(1); }}
+              className="manager-search-input"
+              style={{
+                width: '100%',
+                paddingLeft: '38px',
+                paddingRight: searchKeyword ? '36px' : '14px',
+                height: '42px',
+                borderRadius: 'var(--mgr-radius-md)',
+                border: '1px solid var(--mgr-border)',
+                outline: 'none',
+                fontSize: '0.875rem',
+                backgroundColor: 'var(--mgr-bg-card)',
+                boxSizing: 'border-box'
+              }}
+            />
+            {searchKeyword && (
+              <button
+                type="button"
+                onClick={() => { setSearchKeyword(''); setShipperPage(1); }}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--mgr-text-light)',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+                aria-label="Xóa từ khóa tìm kiếm"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </div>
+
+          {/* Status filter */}
+          <div style={{ flex: '0 1 190px', minWidth: '160px' }}>
+            <select
+              className="manager-filter-select"
+              value={shipperStatusFilter}
+              onChange={(e) => { setShipperStatusFilter(e.target.value); setShipperPage(1); }}
+              style={{
+                height: '42px',
+                width: '100%',
+                padding: '0 12px',
+                borderRadius: 'var(--mgr-radius-md)',
+                border: '1px solid var(--mgr-border)',
+                outline: 'none',
+                fontSize: '0.875rem',
+                backgroundColor: 'var(--mgr-bg-card)',
+                color: 'var(--mgr-text-dark)',
+                cursor: 'pointer',
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="ACTIVE">Đang hoạt động</option>
+              <option value="INACTIVE">Tạm nghỉ</option>
+            </select>
+          </div>
+
+          {/* Reset button */}
+          {isFilterActive && (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="manager-btn-secondary"
+              style={{ height: '42px', padding: '0 14px', fontSize: '0.825rem' }}
+              title="Đặt lại bộ lọc về mặc định"
+            >
+              <RotateCcw size={14} />
+              <span>Đặt lại</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Shippers Desktop Table (Laptop 1366-1440px) */}
+      <div className="manager-table-responsive manager-desktop-table">
+        <table className="manager-table">
           <thead>
-            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>MÃ NGƯỜI GIAO HÀNG</th>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>HỌ VÀ TÊN</th>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>SỐ ĐIỆN THOẠI</th>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>PHƯƠNG TIỆN</th>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>TRẠNG THÁI</th>
-              <th style={{ padding: '16px 24px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textAlign: 'center' }}>HÀNH ĐỘNG</th>
+            <tr>
+              <th style={{ width: '12%' }}>MÃ SHIPPER</th>
+              <th style={{ width: '22%' }}>HỌ VÀ TÊN</th>
+              <th style={{ width: '18%' }}>SỐ ĐIỆN THOẠI</th>
+              <th style={{ width: '16%' }}>PHƯƠNG TIỆN</th>
+              <th style={{ width: '12%' }}>ĐƠN ĐANG GIAO</th>
+              <th style={{ width: '10%' }}>TRẠNG THÁI</th>
+              <th style={{ width: '10%', textAlign: 'center' }}>THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedShippers.map(s => (
-              <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '16px 24px', fontWeight: 700, color: '#475569' }}>
-                  #{s.id}
-                </td>
-                <td style={{ padding: '16px 24px', fontWeight: 600, color: '#0f172a', fontSize: '0.9rem' }}>
-                  {s.fullName}
-                </td>
-                <td style={{ padding: '16px 24px', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>
-                  {s.phone}
-                </td>
-                <td style={{ padding: '16px 24px', fontSize: '0.9rem', color: '#475569', fontWeight: 500 }}>
-                  {s.vehicle || 'Chưa cập nhật'}
-                </td>
-                <td style={{ padding: '16px 24px' }}>
-                  <span style={{
-                    display: 'inline-flex',
-                    padding: '4px 10px',
-                    borderRadius: '999px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    backgroundColor: s.status === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
-                    color: s.status === 'ACTIVE' ? '#10b981' : '#ef4444'
-                  }}>
-                    {s.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm nghỉ'}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                    <button
-                      onClick={() => setSelectedShipperForOrders(s)}
-                      title="Xem các đơn hàng của người giao hàng này"
-                      style={{
-                        padding: '6px',
-                        borderRadius: '6px',
-                        border: '1px solid #e2e8f0',
-                        backgroundColor: '#ffffff',
-                        color: '#10b981',
-                        cursor: 'pointer',
+            {paginatedShippers.map(s => {
+              const activeCount = getActiveOrdersCount(s.id);
+              const initials = s.fullName?.charAt(0).toUpperCase() || 'S';
+
+              return (
+                <tr key={s.id}>
+                  {/* MÃ SHIPPER */}
+                  <td>
+                    <span style={{ fontWeight: 700, color: 'var(--mgr-primary)' }}>
+                      #{s.id}
+                    </span>
+                  </td>
+
+                  {/* HỌ VÀ TÊN */}
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--mgr-primary-light)',
+                        color: 'var(--mgr-primary)',
+                        border: '1px solid var(--mgr-primary-border)',
                         display: 'flex',
                         alignItems: 'center',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <Eye size={15} />
-                    </button>
-                    <button
-                      onClick={() => handleOpenEditShipperModal(s)}
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        flexShrink: 0
+                      }}>
+                        {initials}
+                      </div>
+                      <div style={{ fontWeight: 700, color: 'var(--mgr-text-dark)', fontSize: '0.9rem' }}>
+                        {s.fullName}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* SỐ ĐIỆN THOẠI */}
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem', color: 'var(--mgr-text-main)', fontWeight: 500 }}>
+                      <Phone size={14} style={{ color: 'var(--mgr-text-muted)' }} />
+                      <span>{s.phone}</span>
+                    </div>
+                  </td>
+
+                  {/* PHƯƠNG TIỆN */}
+                  <td>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 10px',
+                      borderRadius: 'var(--mgr-radius-sm)',
+                      backgroundColor: '#f1f5f9',
+                      color: 'var(--mgr-text-main)',
+                      fontSize: '0.825rem',
+                      fontWeight: 600
+                    }}>
+                      <TruckIcon size={13} style={{ color: 'var(--mgr-text-muted)' }} />
+                      <span>{s.vehicle || 'Chưa cập nhật'}</span>
+                    </span>
+                  </td>
+
+                  {/* ĐƠN ĐANG GIAO */}
+                  <td>
+                    <span style={{
+                      fontWeight: 700,
+                      color: activeCount > 0 ? 'var(--mgr-primary)' : 'var(--mgr-text-muted)',
+                      fontSize: '0.875rem'
+                    }}>
+                      {activeCount} đơn hàng
+                    </span>
+                  </td>
+
+                  {/* TRẠNG THÁI */}
+                  <td>
+                    <span
+                      className="manager-badge"
                       style={{
-                        padding: '6px',
-                        borderRadius: '6px',
-                        border: '1px solid #e2e8f0',
-                        backgroundColor: '#ffffff',
-                        color: '#3b82f6',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        transition: 'all 0.2s'
+                        backgroundColor: s.status === 'ACTIVE' ? 'var(--mgr-success-light)' : 'var(--mgr-danger-light)',
+                        color: s.status === 'ACTIVE' ? 'var(--mgr-success)' : 'var(--mgr-danger)',
+                        border: `1px solid ${s.status === 'ACTIVE' ? 'var(--mgr-success-border)' : 'var(--mgr-danger-border)'}`
                       }}
                     >
-                      <Edit size={15} />
-                    </button>
-                    <button
-                      onClick={() => setShowDeleteConfirm(s.id)}
-                      style={{
-                        padding: '6px',
-                        borderRadius: '6px',
-                        border: '1px solid #fecaca',
-                        backgroundColor: '#fef2f2',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {s.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm nghỉ'}
+                    </span>
+                  </td>
+
+                  {/* THAO TÁC */}
+                  <td>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedShipperForOrders(s)}
+                        className="manager-btn-icon"
+                        style={{ color: 'var(--mgr-primary)' }}
+                        title="Xem các đơn hàng của người giao hàng này"
+                        aria-label={`Xem đơn của ${s.fullName}`}
+                      >
+                        <Eye size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditShipperModal(s)}
+                        className="manager-btn-icon"
+                        style={{ color: 'var(--mgr-info)' }}
+                        title="Chỉnh sửa thông tin shipper"
+                        aria-label={`Chỉnh sửa ${s.fullName}`}
+                      >
+                        <Edit size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(s.id)}
+                        className="manager-btn-icon"
+                        style={{ color: 'var(--mgr-danger)' }}
+                        title="Xóa người giao hàng này"
+                        aria-label={`Xóa ${s.fullName}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+
             {filteredShippers.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: '#94a3b8' }}>
-                  Không tìm thấy người giao hàng nào phù hợp
+                <td colSpan={7} style={{ padding: '48px 16px' }}>
+                  <EmptyState
+                    icon={Truck}
+                    title="Không tìm thấy người giao hàng nào"
+                    description={
+                      isFilterActive
+                        ? "Không có shipper nào phù hợp với bộ lọc trạng thái hoặc từ khóa tìm kiếm."
+                        : "Hệ thống hiện chưa có người giao hàng nào trong danh sách."
+                    }
+                    actionText={isFilterActive ? "Xóa bộ lọc" : "Thêm người giao hàng"}
+                    onAction={isFilterActive ? handleClearFilters : handleOpenShipperModal}
+                  />
                 </td>
               </tr>
             )}
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '12px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}>
-          <span style={{ fontSize: '0.78rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-            Hiển thị {paginatedShippers.length} trên tổng số {filteredShippers.length} người giao hàng
-          </span>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              disabled={shipperPage === 1}
-              onClick={() => setShipperPage(prev => Math.max(prev - 1, 1))}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: shipperPage === 1 ? '#f1f5f9' : '#ffffff',
-                color: shipperPage === 1 ? '#94a3b8' : '#475569',
-                fontSize: '0.85rem',
-                cursor: shipperPage === 1 ? 'not-allowed' : 'pointer'
-              }}
-            >
-              Trước
-            </button>
-            {[...Array(totalShipperPages)].map((_, i) => (
+        {/* Desktop Pagination Controls */}
+        {filteredShippers.length > 0 && (
+          <div className="manager-pagination-bar">
+            <span style={{ fontSize: '0.825rem', color: 'var(--mgr-text-muted)' }}>
+              Hiển thị {paginatedShippers.length} trên tổng số {filteredShippers.length} người giao hàng (Trang {shipperPage}/{totalShipperPages})
+            </span>
+            <div style={{ display: 'flex', gap: '6px' }}>
               <button
-                key={i}
-                onClick={() => setShipperPage(i + 1)}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: shipperPage === i + 1 ? '#7c3aed' : '#ffffff',
-                  color: shipperPage === i + 1 ? '#ffffff' : '#475569',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
+                type="button"
+                disabled={shipperPage === 1}
+                onClick={() => setShipperPage(prev => Math.max(prev - 1, 1))}
+                className="manager-page-btn"
+                aria-label="Trang trước"
               >
-                {i + 1}
+                <ChevronLeft size={16} />
               </button>
-            ))}
-            <button
-              disabled={shipperPage === totalShipperPages}
-              onClick={() => setShipperPage(prev => Math.min(prev + 1, totalShipperPages))}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                backgroundColor: shipperPage === totalShipperPages ? '#f1f5f9' : '#ffffff',
-                color: shipperPage === totalShipperPages ? '#94a3b8' : '#475569',
-                fontSize: '0.85rem',
-                cursor: shipperPage === totalShipperPages ? 'not-allowed' : 'pointer'
-              }}
-            >
-              Sau
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Shippers Cards (Mobile-first card view) */}
-      <div className="manager-mobile-card-list">
-        {paginatedShippers.map(s => (
-          <div key={s.id} className="manager-card-item">
-            <div className="manager-card-header">
-              <span className="manager-card-title">{s.fullName} (#{s.id})</span>
-              <span style={{
-                display: 'inline-flex',
-                padding: '4px 10px',
-                borderRadius: '999px',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                backgroundColor: s.status === 'ACTIVE' ? '#ecfdf5' : '#fef2f2',
-                color: s.status === 'ACTIVE' ? '#10b981' : '#ef4444'
-              }}>
-                {s.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm nghỉ'}
-              </span>
-            </div>
-
-            <div className="manager-card-body">
-              <div className="manager-card-row">
-                <span className="manager-card-label">Số điện thoại:</span>
-                <span className="manager-card-value">{s.phone}</span>
-              </div>
-              <div className="manager-card-row">
-                <span className="manager-card-label">Phương tiện:</span>
-                <span className="manager-card-value">{s.vehicle || 'Chưa cập nhật'}</span>
-              </div>
-            </div>
-
-            <div className="manager-card-footer">
+              {[...Array(totalShipperPages)].map((_, i) => (
+                <button
+                  type="button"
+                  key={i}
+                  onClick={() => setShipperPage(i + 1)}
+                  className={`manager-page-btn ${shipperPage === i + 1 ? 'active' : ''}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
               <button
-                onClick={() => setSelectedShipperForOrders(s)}
-                style={{
-                  flex: 1,
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  backgroundColor: '#ecfdf5',
-                  color: '#10b981',
-                  border: '1px solid #a7f3d0',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
+                type="button"
+                disabled={shipperPage === totalShipperPages}
+                onClick={() => setShipperPage(prev => Math.min(prev + 1, totalShipperPages))}
+                className="manager-page-btn"
+                aria-label="Trang sau"
               >
-                <Eye size={15} />
-                <span>Xem đơn</span>
-              </button>
-              <button
-                onClick={() => handleOpenEditShipperModal(s)}
-                style={{
-                  flex: 1,
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  backgroundColor: '#eff6ff',
-                  color: '#3b82f6',
-                  border: '1px solid #bfdbfe',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <Edit size={15} />
-                <span>Sửa</span>
-              </button>
-              <button
-                onClick={() => handleDeleteShipper(s.id)}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  backgroundColor: '#fef2f2',
-                  color: '#ef4444',
-                  border: '1px solid #fecaca',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                title="Xóa người giao hàng"
-              >
-                <Trash2 size={15} />
+                <ChevronRight size={16} />
               </button>
             </div>
-          </div>
-        ))}
-        {filteredShippers.length === 0 && (
-          <div style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            Không tìm thấy người giao hàng nào phù hợp
           </div>
         )}
       </div>
 
-      {/* ADD SHIPPER MODAL */}
+      {/* Shippers Mobile Cards (iPhone 14 Pro Max & screens <= 768px) */}
+      <div className="manager-mobile-card-list">
+        {paginatedShippers.map(s => {
+          const activeCount = getActiveOrdersCount(s.id);
+          const initials = s.fullName?.charAt(0).toUpperCase() || 'S';
+
+          return (
+            <div key={s.id} className="manager-card-item">
+              <div className="manager-card-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--mgr-primary-light)',
+                    color: 'var(--mgr-primary)',
+                    border: '1px solid var(--mgr-primary-border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '0.85rem'
+                  }}>
+                    {initials}
+                  </div>
+                  <div>
+                    <span className="manager-card-title">{s.fullName}</span>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--mgr-primary)', fontWeight: 600 }}>
+                      Mã: #{s.id}
+                    </div>
+                  </div>
+                </div>
+
+                <span
+                  className="manager-badge"
+                  style={{
+                    backgroundColor: s.status === 'ACTIVE' ? 'var(--mgr-success-light)' : 'var(--mgr-danger-light)',
+                    color: s.status === 'ACTIVE' ? 'var(--mgr-success)' : 'var(--mgr-danger)',
+                    border: `1px solid ${s.status === 'ACTIVE' ? 'var(--mgr-success-border)' : 'var(--mgr-danger-border)'}`
+                  }}
+                >
+                  {s.status === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm nghỉ'}
+                </span>
+              </div>
+
+              <div className="manager-card-body">
+                <div className="manager-card-row">
+                  <span className="manager-card-label">Số điện thoại:</span>
+                  <span className="manager-card-value" style={{ fontWeight: 600 }}>{s.phone}</span>
+                </div>
+                <div className="manager-card-row">
+                  <span className="manager-card-label">Phương tiện:</span>
+                  <span className="manager-card-value">{s.vehicle || 'Chưa cập nhật'}</span>
+                </div>
+                <div className="manager-card-row">
+                  <span className="manager-card-label">Đơn đang phụ trách:</span>
+                  <span className="manager-card-value" style={{ fontWeight: 700, color: 'var(--mgr-primary)' }}>
+                    {activeCount} đơn hàng
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons (Touch target >= 44px) */}
+              <div className="manager-card-footer" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShipperForOrders(s)}
+                  style={{
+                    flex: 1,
+                    minHeight: '44px',
+                    borderRadius: 'var(--mgr-radius-md)',
+                    border: '1px solid var(--mgr-primary-border)',
+                    backgroundColor: 'var(--mgr-primary-light)',
+                    color: 'var(--mgr-primary)',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Eye size={15} />
+                  <span>Xem đơn</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenEditShipperModal(s)}
+                  style={{
+                    flex: 1,
+                    minHeight: '44px',
+                    borderRadius: 'var(--mgr-radius-md)',
+                    border: '1px solid var(--mgr-info-border)',
+                    backgroundColor: 'var(--mgr-info-light)',
+                    color: 'var(--mgr-info)',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Edit size={15} />
+                  <span>Sửa</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(s.id)}
+                  style={{
+                    minHeight: '44px',
+                    padding: '0 14px',
+                    borderRadius: 'var(--mgr-radius-md)',
+                    border: '1px solid var(--mgr-danger-border)',
+                    backgroundColor: 'var(--mgr-danger-light)',
+                    color: 'var(--mgr-danger)',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Xóa người giao hàng"
+                  aria-label={`Xóa shipper ${s.fullName}`}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredShippers.length === 0 && (
+          <div className="manager-panel" style={{ padding: '32px 16px', textAlign: 'center' }}>
+            <EmptyState
+              icon={Truck}
+              title="Không tìm thấy người giao hàng nào"
+              description={
+                isFilterActive
+                  ? "Không có shipper nào phù hợp với bộ lọc."
+                  : "Chưa có người giao hàng nào trong danh mục."
+              }
+              actionText={isFilterActive ? "Xem tất cả" : undefined}
+              onAction={isFilterActive ? handleClearFilters : undefined}
+            />
+          </div>
+        )}
+
+        {/* Mobile Pagination */}
+        {filteredShippers.length > 0 && totalShipperPages > 1 && (
+          <div className="manager-pagination-bar" style={{ justifyContent: 'center' }}>
+            <button
+              type="button"
+              disabled={shipperPage === 1}
+              onClick={() => setShipperPage(prev => Math.max(prev - 1, 1))}
+              className="manager-page-btn"
+              aria-label="Trang trước"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, padding: '0 8px' }}>
+              {shipperPage} / {totalShipperPages}
+            </span>
+            <button
+              type="button"
+              disabled={shipperPage === totalShipperPages}
+              onClick={() => setShipperPage(prev => Math.min(prev + 1, totalShipperPages))}
+              className="manager-page-btn"
+              aria-label="Trang sau"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* =========================================================================
+          ADD SHIPPER MODAL
+          ========================================================================= */}
       {showShipperModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '450px',
-            padding: '32px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 24px' }}>
-              Thêm người giao hàng mới
-            </h2>
-
-            <form onSubmit={handleCreateShipper} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="manager-modal-overlay">
+          <div className="manager-modal-box" style={{ maxWidth: '480px' }}>
+            <div className="manager-modal-header">
               <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Họ và tên *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nhập họ tên người giao hàng..."
-                  value={shipperForm.fullName}
-                  onChange={(e) => setShipperForm({ ...shipperForm, fullName: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
-                />
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0 }}>
+                  Thêm người giao hàng mới
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--mgr-text-muted)' }}>
+                  Đăng ký thông tin shipper vào hệ thống phân bổ giao nhận
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShipperModal(false)}
+                className="manager-modal-close-btn"
+                aria-label="Đóng cửa sổ"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateShipper}>
+              <div className="manager-modal-body" style={{ gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Họ và tên người giao hàng <span style={{ color: 'var(--mgr-danger)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ví dụ: Nguyễn Văn Hùng..."
+                    value={shipperForm.fullName}
+                    onChange={(e) => setShipperForm({ ...shipperForm, fullName: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Số điện thoại liên lạc <span style={{ color: 'var(--mgr-danger)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ví dụ: 0987654321 hoặc +84987654321..."
+                    value={shipperForm.phone}
+                    onChange={(e) => setShipperForm({ ...shipperForm, phone: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Phương tiện di chuyển
+                  </label>
+                  <select
+                    value={shipperForm.vehicle}
+                    onChange={(e) => setShipperForm({ ...shipperForm, vehicle: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', backgroundColor: '#ffffff', boxSizing: 'border-box' }}
+                  >
+                    <option value="Xe máy">Xe máy</option>
+                    <option value="Xe tải">Xe tải</option>
+                    <option value="Xe đạp / Xe điện">Xe đạp / Xe điện</option>
+                    <option value="Ô tô">Ô tô</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Trạng thái làm việc
+                  </label>
+                  <select
+                    value={shipperForm.status}
+                    onChange={(e) => setShipperForm({ ...shipperForm, status: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', backgroundColor: '#ffffff', boxSizing: 'border-box' }}
+                  >
+                    <option value="ACTIVE">Đang hoạt động</option>
+                    <option value="INACTIVE">Tạm nghỉ</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Số điện thoại *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nhập số điện thoại liên lạc..."
-                  value={shipperForm.phone}
-                  onChange={(e) => setShipperForm({ ...shipperForm, phone: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Phương tiện di chuyển
-                </label>
-                <select
-                  value={shipperForm.vehicle}
-                  onChange={(e) => setShipperForm({ ...shipperForm, vehicle: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
-                >
-                  <option value="Xe máy">Xe máy</option>
-                  <option value="Xe tải">Xe tải</option>
-                  <option value="Xe đạp / Xe điện">Xe đạp / Xe điện</option>
-                  <option value="Ô tô">Ô tô</option>
-                  <option value="Khác">Khác</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Trạng thái làm việc
-                </label>
-                <select
-                  value={shipperForm.status}
-                  onChange={(e) => setShipperForm({ ...shipperForm, status: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
-                >
-                  <option value="ACTIVE">Đang hoạt động</option>
-                  <option value="INACTIVE">Tạm nghỉ</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+              <div className="manager-modal-footer">
                 <button
                   type="button"
                   onClick={() => setShowShipperModal(false)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#ffffff',
-                    color: '#475569',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  className="manager-btn-secondary"
+                  style={{ minHeight: '44px' }}
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  style={{
-                    padding: '10px 24px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#7c3aed',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  disabled={submittingShipper}
+                  className="manager-btn-primary"
+                  style={{ minHeight: '44px' }}
                 >
-                  Tạo mới
+                  <Plus size={16} />
+                  <span>{submittingShipper ? 'Đang thêm...' : 'Tạo mới'}</span>
                 </button>
               </div>
             </form>
@@ -564,313 +852,303 @@ const ManagerShippers = ({ shippers, orders = [], loadData }) => {
         </div>
       )}
 
-      {/* EDIT SHIPPER MODAL */}
+      {/* =========================================================================
+          EDIT SHIPPER MODAL
+          ========================================================================= */}
       {showEditShipperModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '450px',
-            padding: '32px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 24px' }}>
-              Chỉnh sửa thông tin người giao hàng
-            </h2>
-
-            <form onSubmit={handleUpdateShipper} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="manager-modal-overlay">
+          <div className="manager-modal-box" style={{ maxWidth: '480px' }}>
+            <div className="manager-modal-header">
               <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Họ và tên *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={shipperForm.fullName}
-                  onChange={(e) => setShipperForm({ ...shipperForm, fullName: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
-                />
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0 }}>
+                  Chỉnh sửa người giao hàng
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--mgr-text-muted)' }}>
+                  Cập nhật họ tên, số điện thoại hoặc trạng thái làm việc
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditShipperModal(false)}
+                className="manager-modal-close-btn"
+                aria-label="Đóng cửa sổ"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateShipper}>
+              <div className="manager-modal-body" style={{ gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Họ và tên người giao hàng <span style={{ color: 'var(--mgr-danger)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={shipperForm.fullName}
+                    onChange={(e) => setShipperForm({ ...shipperForm, fullName: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Số điện thoại liên lạc <span style={{ color: 'var(--mgr-danger)' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={shipperForm.phone}
+                    onChange={(e) => setShipperForm({ ...shipperForm, phone: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Phương tiện di chuyển
+                  </label>
+                  <select
+                    value={shipperForm.vehicle}
+                    onChange={(e) => setShipperForm({ ...shipperForm, vehicle: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', backgroundColor: '#ffffff', boxSizing: 'border-box' }}
+                  >
+                    <option value="Xe máy">Xe máy</option>
+                    <option value="Xe tải">Xe tải</option>
+                    <option value="Xe đạp / Xe điện">Xe đạp / Xe điện</option>
+                    <option value="Ô tô">Ô tô</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Trạng thái làm việc
+                  </label>
+                  <select
+                    value={shipperForm.status}
+                    onChange={(e) => setShipperForm({ ...shipperForm, status: e.target.value })}
+                    style={{ width: '100%', minHeight: '42px', padding: '10px 14px', borderRadius: 'var(--mgr-radius-sm)', border: '1px solid var(--mgr-border)', outline: 'none', backgroundColor: '#ffffff', boxSizing: 'border-box' }}
+                  >
+                    <option value="ACTIVE">Đang hoạt động</option>
+                    <option value="INACTIVE">Tạm nghỉ</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Số điện thoại *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={shipperForm.phone}
-                  onChange={(e) => setShipperForm({ ...shipperForm, phone: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Phương tiện di chuyển
-                </label>
-                <select
-                  value={shipperForm.vehicle}
-                  onChange={(e) => setShipperForm({ ...shipperForm, vehicle: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
-                >
-                  <option value="Xe máy">Xe máy</option>
-                  <option value="Xe tải">Xe tải</option>
-                  <option value="Xe đạp / Xe điện">Xe đạp / Xe điện</option>
-                  <option value="Ô tô">Ô tô</option>
-                  <option value="Khác">Khác</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Trạng thái làm việc
-                </label>
-                <select
-                  value={shipperForm.status}
-                  onChange={(e) => setShipperForm({ ...shipperForm, status: e.target.value })}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', backgroundColor: '#ffffff' }}
-                >
-                  <option value="ACTIVE">Đang hoạt động</option>
-                  <option value="INACTIVE">Tạm nghỉ</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+              <div className="manager-modal-footer">
                 <button
                   type="button"
                   onClick={() => setShowEditShipperModal(false)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#ffffff',
-                    color: '#475569',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  className="manager-btn-secondary"
+                  style={{ minHeight: '44px' }}
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  style={{
-                    padding: '10px 24px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#7c3aed',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  disabled={submittingShipper}
+                  className="manager-btn-primary"
+                  style={{ minHeight: '44px' }}
                 >
-                  Lưu thay đổi
+                  <Edit size={16} />
+                  <span>{submittingShipper ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* SHIPPER ORDERS MODAL */}
+
+      {/* =========================================================================
+          SHIPPER ORDERS MODAL
+          ========================================================================= */}
       {selectedShipperForOrders && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '800px',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            padding: '32px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-                Đơn hàng do người giao hàng {selectedShipperForOrders.fullName} phụ trách
-              </h2>
+        <div className="manager-modal-overlay">
+          <div className="manager-modal-box" style={{ maxWidth: '820px' }}>
+            <div className="manager-modal-header">
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0 }}>
+                  Đơn hàng do shipper {selectedShipperForOrders.fullName} phụ trách
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--mgr-text-muted)' }}>
+                  Mã shipper: #{selectedShipperForOrders.id} • SĐT: {selectedShipperForOrders.phone}
+                </p>
+              </div>
               <button
+                type="button"
                 onClick={() => setSelectedShipperForOrders(null)}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#f1f5f9',
-                  color: '#475569',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer'
-                }}
+                className="manager-modal-close-btn"
+                aria-label="Đóng cửa sổ"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="manager-modal-body" style={{ padding: '20px' }}>
+              {/* Desktop view */}
+              <div className="manager-table-responsive manager-desktop-table" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                <table className="manager-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '14%' }}>MÃ ĐH</th>
+                      <th style={{ width: '26%' }}>KHÁCH HÀNG</th>
+                      <th style={{ width: '28%' }}>ĐỊA CHỈ GIAO HÀNG</th>
+                      <th style={{ width: '16%' }}>TỔNG TIỀN</th>
+                      <th style={{ width: '16%', textAlign: 'center' }}>TRẠNG THÁI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.filter(o => o.shipper?.id === selectedShipperForOrders.id).map(order => (
+                      <tr key={order.id}>
+                        <td>
+                          <span style={{ fontWeight: 700, color: 'var(--mgr-primary)' }}>
+                            #{order.id}
+                          </span>
+                        </td>
+                        <td>
+                          <div>
+                            <div style={{ fontWeight: 700, color: 'var(--mgr-text-dark)' }}>{order.user?.fullName || 'Khách vãng lai'}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--mgr-text-muted)' }}>{order.shippingPhone || order.user?.phone}</div>
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.825rem', color: 'var(--mgr-text-main)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {order.shippingAddress || 'Chưa cung cấp'}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 800, color: 'var(--mgr-text-dark)', fontSize: '0.9rem' }}>
+                            {parseFloat(order.finalAmount || order.totalAmount || 0).toLocaleString('vi-VN')}đ
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          {renderOrderStatusBadge(order.status)}
+                        </td>
+                      </tr>
+                    ))}
+
+                    {orders.filter(o => o.shipper?.id === selectedShipperForOrders.id).length === 0 && (
+                      <tr>
+                        <td colSpan={5} style={{ padding: '36px 16px' }}>
+                          <EmptyState
+                            icon={Package}
+                            title="Chưa có đơn hàng nào"
+                            description={`Người giao hàng ${selectedShipperForOrders.fullName} hiện chưa được phân công đơn hàng nào.`}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile view */}
+              <div className="manager-mobile-card-list">
+                {orders.filter(o => o.shipper?.id === selectedShipperForOrders.id).map(order => (
+                  <div key={order.id} className="manager-card-item">
+                    <div className="manager-card-header">
+                      <span className="manager-card-title" style={{ color: 'var(--mgr-primary)' }}>
+                        Đơn hàng #{order.id}
+                      </span>
+                      {renderOrderStatusBadge(order.status)}
+                    </div>
+                    <div className="manager-card-body">
+                      <div className="manager-card-row">
+                        <span className="manager-card-label">Khách hàng:</span>
+                        <span className="manager-card-value">{order.user?.fullName || 'Khách vãng lai'}</span>
+                      </div>
+                      <div className="manager-card-row">
+                        <span className="manager-card-label">SĐT nhận:</span>
+                        <span className="manager-card-value">{order.shippingPhone || order.user?.phone}</span>
+                      </div>
+                      <div className="manager-card-row">
+                        <span className="manager-card-label">Địa chỉ:</span>
+                        <span className="manager-card-value" style={{ textAlign: 'right', maxWidth: '60%' }}>{order.shippingAddress}</span>
+                      </div>
+                      <div className="manager-card-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px dashed var(--mgr-border-light)' }}>
+                        <span className="manager-card-label" style={{ fontWeight: 700 }}>Tổng tiền:</span>
+                        <span className="manager-card-value" style={{ fontWeight: 800, color: 'var(--mgr-primary)' }}>
+                          {parseFloat(order.finalAmount || order.totalAmount || 0).toLocaleString('vi-VN')}đ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {orders.filter(o => o.shipper?.id === selectedShipperForOrders.id).length === 0 && (
+                  <div style={{ padding: '24px 12px' }}>
+                    <EmptyState
+                      icon={Package}
+                      title="Chưa có đơn hàng nào"
+                      description={`Người giao hàng ${selectedShipperForOrders.fullName} hiện chưa có đơn hàng nào.`}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="manager-modal-footer">
+              <button
+                type="button"
+                onClick={() => setSelectedShipperForOrders(null)}
+                className="manager-btn-secondary"
+                style={{ minHeight: '44px' }}
               >
                 Đóng
               </button>
             </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                    <th style={{ padding: '12px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>MÃ ĐH</th>
-                    <th style={{ padding: '12px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>KHÁCH HÀNG</th>
-                    <th style={{ padding: '12px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>ĐỊA CHỈ GIAO HÀNG</th>
-                    <th style={{ padding: '12px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>TỔNG TIỀN</th>
-                    <th style={{ padding: '12px 16px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b' }}>TRẠNG THÁI</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.filter(o => o.shipper?.id === selectedShipperForOrders.id).map(order => (
-                    <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#475569', fontSize: '0.875rem' }}>
-                        #{order.id}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: '0.875rem' }}>
-                        <div style={{ fontWeight: 600, color: '#0f172a' }}>{order.user?.fullName}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>{order.shippingPhone || order.user?.phone}</div>
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: '0.825rem', color: '#475569', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {order.shippingAddress}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 700, color: '#0f172a', fontSize: '0.875rem' }}>
-                        {parseFloat(order.finalAmount || order.totalAmount).toLocaleString('vi-VN')}đ
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          display: 'inline-flex',
-                          padding: '3px 8px',
-                          borderRadius: '999px',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          backgroundColor: order.status === 'delivered' ? '#ecfdf5' : order.status === 'cancelled' ? '#fef2f2' : '#f1f5f9',
-                          color: order.status === 'delivered' ? '#10b981' : order.status === 'cancelled' ? '#ef4444' : '#475569'
-                        }}>
-                          {order.status === 'pending' ? 'Chờ xác nhận' :
-                            order.status === 'confirmed' ? 'Đã xác nhận' :
-                              order.status === 'preparing' ? 'Đang chuẩn bị' :
-                                order.status === 'shipping' ? 'Đang giao' :
-                                  order.status === 'delivered' ? 'Đã giao hàng' :
-                                    order.status === 'cancelled' ? 'Đã hủy' : order.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {orders.filter(o => o.shipper?.id === selectedShipperForOrders.id).length === 0 && (
-                    <tr>
-                      <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>
-                        Người giao hàng này hiện chưa được giao đơn hàng nào.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       )}
 
-      {/* CUSTOM DELETE CONFIRMATION MODAL */}
+      {/* =========================================================================
+          DELETE CONFIRMATION MODAL
+          ========================================================================= */}
       {showDeleteConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '400px',
-            padding: '28px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-            textAlign: 'center'
-          }}>
+        <div className="manager-modal-overlay">
+          <div className="manager-modal-box" style={{ maxWidth: '420px', textAlign: 'center', padding: '28px' }}>
             <div style={{
               width: '56px',
               height: '56px',
               borderRadius: '50%',
-              backgroundColor: '#fef2f2',
+              backgroundColor: 'var(--mgr-danger-light)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 16px auto'
+              margin: '0 auto 16px auto',
+              border: '1px solid var(--mgr-danger-border)'
             }}>
-              <Trash2 size={28} style={{ color: '#ef4444' }} />
+              <Trash2 size={28} style={{ color: 'var(--mgr-danger)' }} />
             </div>
 
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: '0 0 8px 0' }}>
               Xác nhận xóa người giao hàng
             </h3>
 
-            <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 24px 0', lineHeight: '1.5' }}>
-              Bạn có chắc chắn muốn xóa người giao hàng này? Thao tác này không thể hoàn tác và thông tin người giao hàng sẽ bị gỡ bỏ vĩnh viễn khỏi hệ thống.
+            <p style={{ fontSize: '0.875rem', color: 'var(--mgr-text-muted)', margin: '0 0 24px 0', lineHeight: 1.5 }}>
+              Bạn có chắc chắn muốn xóa người giao hàng này? Thao tác này sẽ gỡ bỏ thông tin shipper khỏi hệ thống phân công đơn hàng.
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
+                type="button"
                 onClick={() => setShowDeleteConfirm(null)}
-                style={{
-                  flex: 1,
-                  padding: '10px 16px',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
-                  backgroundColor: '#ffffff',
-                  color: '#475569',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer'
-                }}
+                className="manager-btn-secondary"
+                style={{ flex: 1, minHeight: '44px', justifyContent: 'center' }}
               >
-                Hủy
+                Hủy bỏ
               </button>
               <button
+                type="button"
                 onClick={handleDeleteShipper}
-                style={{
-                  flex: 1,
-                  padding: '10px 16px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#ef4444',
-                  color: '#ffffff',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer'
-                }}
+                disabled={submittingShipper}
+                className="manager-btn-danger"
+                style={{ flex: 1, minHeight: '44px', justifyContent: 'center' }}
               >
-                Xác nhận xóa
+                <Trash2 size={16} />
+                <span>{submittingShipper ? 'Đang xóa...' : 'Xác nhận xóa'}</span>
               </button>
             </div>
           </div>
