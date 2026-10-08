@@ -95,9 +95,23 @@ const ManagerDashboard = () => {
 
       // 2. Fetch products
       try {
-        const prodRes = await api.get('/products');
-        const fetchedProducts = prodRes.data.content || prodRes.data || [];
-        setProducts(fetchedProducts);
+        const [activeRes, pendingRes, inactiveRes, rejectedRes] = await Promise.all([
+          api.get('/products', { params: { size: 1000 } }),
+          api.get('/products/status/PENDING').catch(() => ({ data: [] })),
+          api.get('/products/status/INACTIVE').catch(() => ({ data: [] })),
+          api.get('/products/status/REJECTED').catch(() => ({ data: [] }))
+        ]);
+
+        const activeList = activeRes.data?.content || (Array.isArray(activeRes.data) ? activeRes.data : []);
+        const pendingList = Array.isArray(pendingRes.data) ? pendingRes.data : [];
+        const inactiveList = Array.isArray(inactiveRes.data) ? inactiveRes.data : [];
+        const rejectedList = Array.isArray(rejectedRes.data) ? rejectedRes.data : [];
+
+        const productMap = new Map();
+        [...activeList, ...pendingList, ...inactiveList, ...rejectedList].forEach((p) => {
+          if (p && p.id) productMap.set(p.id, p);
+        });
+        setProducts(Array.from(productMap.values()));
       } catch (err) {
         console.error('Error fetching products', err);
       }
