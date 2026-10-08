@@ -210,7 +210,13 @@ const ManagerRevenue = ({ user, orders = [] }) => {
       <div className="revenue-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         
         {/* DOANH THU THỰC NHẬN */}
-        <div className="manager-metric-card">
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="metric-title">DOANH THU THỰC NHẬN</span>
             <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-primary-light)', color: 'var(--mgr-primary)' }}>
@@ -227,7 +233,13 @@ const ManagerRevenue = ({ user, orders = [] }) => {
         </div>
 
         {/* SỐ DƯ VÍ ĐỐI TÁC */}
-        <div className="manager-metric-card">
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="metric-title">SỐ DƯ VÍ HIỆN TẠI</span>
             <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-info-light)', color: 'var(--mgr-info)' }}>
@@ -243,7 +255,13 @@ const ManagerRevenue = ({ user, orders = [] }) => {
         </div>
 
         {/* GIÁ TRỊ TRUNG BÌNH ĐƠN */}
-        <div className="manager-metric-card">
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="metric-title">GIÁ TRỊ ĐƠN TB</span>
             <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-warning-light)', color: 'var(--mgr-warning)' }}>
@@ -259,7 +277,13 @@ const ManagerRevenue = ({ user, orders = [] }) => {
         </div>
 
         {/* TỔNG ĐƠN ĐÃ GIAO */}
-        <div className="manager-metric-card">
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="metric-title">ĐƠN GIAO THÀNH CÔNG</span>
             <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-success-light)', color: 'var(--mgr-success)' }}>
@@ -273,6 +297,7 @@ const ManagerRevenue = ({ user, orders = [] }) => {
             Đơn hoàn tất đối soát
           </div>
         </div>
+
 
       </div>
 

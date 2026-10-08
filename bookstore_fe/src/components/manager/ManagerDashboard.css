@@ -444,6 +444,47 @@
   padding: 24px;
 }
 
+.manager-metric-card {
+  background-color: var(--mgr-bg-card);
+  border-radius: var(--mgr-radius-lg);
+  border: 1px solid var(--mgr-border);
+  box-shadow: var(--mgr-shadow-xs);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.manager-metric-card:hover {
+  box-shadow: var(--mgr-shadow-sm);
+  transform: translateY(-2px);
+}
+
+.manager-metric-card .metric-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--mgr-text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.manager-metric-card .metric-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--mgr-text-dark);
+  line-height: 1.2;
+}
+
+.manager-metric-card .metric-icon-box {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--mgr-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .manager-flex-responsive-row {
   display: flex;
   justify-content: space-between;
