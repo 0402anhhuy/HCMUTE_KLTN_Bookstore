@@ -868,6 +868,25 @@
   gap: 12px;
 }
 
+.manager-modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.manager-form-section-title {
+  grid-column: span 2;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--mgr-primary);
+  margin-top: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--mgr-primary-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ==========================================================================
    Mobile Responsiveness (iPhone 14 Pro Max <= 768px)
    ========================================================================== */
@@ -982,5 +1001,13 @@
   .manager-modal-box {
     max-height: 85vh !important;
     border-radius: var(--mgr-radius-lg) !important;
+  }
+
+  .manager-modal-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .manager-form-section-title {
+    grid-column: span 1 !important;
   }
 }
