@@ -369,15 +369,27 @@ const AdminProducts = ({ products = [], categories = [], loadData }) => {
                                             <td className="admin-products-td-nowrap admin-products-td-center">
                                                 <button
                                                     type="button"
-                                                    className="admin-products-action-btn"
+                                                    className={`admin-products-action-btn ${
+                                                        p.status === "PENDING"
+                                                            ? "pending"
+                                                            : "view"
+                                                    }`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setSelectedProductId(p.id);
                                                     }}
-                                                    title="Kiểm duyệt & Chi tiết"
+                                                    title={
+                                                        p.status === "PENDING"
+                                                            ? "Kiểm duyệt sản phẩm"
+                                                            : "Xem chi tiết sản phẩm"
+                                                    }
                                                 >
                                                     <Eye size={15} />
-                                                    <span>Kiểm duyệt</span>
+                                                    <span>
+                                                        {p.status === "PENDING"
+                                                            ? "Kiểm duyệt"
+                                                            : "Chi tiết"}
+                                                    </span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -538,10 +550,18 @@ const AdminProducts = ({ products = [], categories = [], loadData }) => {
                                                 e.stopPropagation();
                                                 setSelectedProductId(p.id);
                                             }}
-                                            className="admin-card-btn-action"
+                                            className={`admin-card-btn-action ${
+                                                p.status === "PENDING"
+                                                    ? "pending"
+                                                    : "view"
+                                            }`}
                                         >
                                             <Eye size={16} />
-                                            <span>Xem chi tiết & Kiểm duyệt</span>
+                                            <span>
+                                                {p.status === "PENDING"
+                                                    ? "Kiểm duyệt ngay"
+                                                    : "Xem chi tiết"}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>

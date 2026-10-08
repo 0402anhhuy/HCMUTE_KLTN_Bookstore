@@ -529,16 +529,32 @@
     gap: 6px;
     padding: 6px 14px;
     border-radius: var(--adm-radius-md);
-    border: 1px solid var(--adm-primary-border);
-    background-color: var(--adm-primary-subtle);
-    color: var(--adm-primary);
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.admin-products-action-btn:hover {
+.admin-products-action-btn.view {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+}
+
+.admin-products-action-btn.view:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.admin-products-action-btn.pending {
+    border: 1px solid var(--adm-primary-border);
+    background-color: var(--adm-primary-subtle);
+    color: var(--adm-primary);
+    font-weight: 700;
+}
+
+.admin-products-action-btn.pending:hover {
     background-color: var(--adm-primary);
     color: #ffffff;
     border-color: var(--adm-primary);
@@ -781,16 +797,31 @@
     justify-content: center;
     gap: 8px;
     border-radius: var(--adm-radius-md);
-    border: 1px solid var(--adm-primary-border);
-    background-color: var(--adm-primary-subtle);
-    color: var(--adm-primary);
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.admin-card-btn-action:active {
+.admin-card-btn-action.view {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+}
+
+.admin-card-btn-action.view:active {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.admin-card-btn-action.pending {
+    border: 1px solid var(--adm-primary-border);
+    background-color: var(--adm-primary-subtle);
+    color: var(--adm-primary);
+    font-weight: 700;
+}
+
+.admin-card-btn-action.pending:active {
     background-color: var(--adm-primary);
     color: #ffffff;
 }

@@ -187,22 +187,45 @@ const AdminDetailProduct = ({ productId, onBack, loadMainData }) => {
 
                 {/* Footer Actions */}
                 <div className="admin-detail-product-footer">
-                    <button
-                        type="button"
-                        onClick={handleReject}
-                        className="admin-detail-product-btn-reject"
-                    >
-                        <X size={16} />
-                        <span>Từ chối sản phẩm</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleApprove}
-                        className="admin-detail-product-btn-approve"
-                    >
-                        <Check size={16} />
-                        <span>Phê duyệt sản phẩm</span>
-                    </button>
+                    {isPending ? (
+                        <>
+                            <button
+                                type="button"
+                                onClick={handleReject}
+                                className="admin-detail-product-btn-reject"
+                            >
+                                <X size={16} />
+                                <span>Từ chối sản phẩm</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleApprove}
+                                className="admin-detail-product-btn-approve"
+                            >
+                                <Check size={16} />
+                                <span>Phê duyệt sản phẩm</span>
+                            </button>
+                        </>
+                    ) : isActive ? (
+                        <button
+                            type="button"
+                            onClick={handleReject}
+                            className="admin-detail-product-btn-reject"
+                            title="Tạm ẩn sản phẩm khỏi sàn bán"
+                        >
+                            <X size={16} />
+                            <span>Tạm ẩn (Ngừng bán)</span>
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleApprove}
+                            className="admin-detail-product-btn-approve"
+                        >
+                            <Check size={16} />
+                            <span>Mở bán lại</span>
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
