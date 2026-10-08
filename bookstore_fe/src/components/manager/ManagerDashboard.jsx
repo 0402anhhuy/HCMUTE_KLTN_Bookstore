@@ -185,40 +185,33 @@ const ManagerDashboard = () => {
       {/* Sidebar container */}
       <aside className={`manager-sidebar ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
         {/* Brand/Logo header */}
-        <div style={{
-          padding: '20px',
-          borderBottom: '1px solid #e2e8f0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#7c3aed', letterSpacing: '-0.025em' }}>
-              Quản lý Bookstore
-            </span>
-            <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#64748b' }}>
-              Hệ Thống Quản Trị
-            </span>
+        <div className="manager-sidebar-brand">
+          <div className="manager-brand-group">
+            <div className="manager-brand-logo-icon">
+              <ShoppingBag size={20} />
+            </div>
+            <div>
+              <div className="manager-brand-title">
+                Bookstore
+                <span className="manager-brand-badge">Manager</span>
+              </div>
+              <div className="manager-brand-subtitle">
+                Hệ Thống Quản Trị
+              </div>
+            </div>
           </div>
 
           <button
             onClick={() => setIsMobileSidebarOpen(false)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#64748b',
-              cursor: 'pointer',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+            className="manager-sidebar-close-btn"
+            aria-label="Đóng thanh điều hướng"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* Navigation list */}
-        <nav style={{ padding: '16px 12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
+        <nav className="manager-nav-list">
           {[
             { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
             { id: 'products', label: 'Sản phẩm', icon: ShoppingBag },
@@ -237,36 +230,10 @@ const ManagerDashboard = () => {
                   setActiveTab(tab.id);
                   setIsMobileSidebarOpen(false);
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  width: '100%',
-                  padding: '12px 16px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: isActive ? '#f5f3ff' : 'transparent',
-                  color: isActive ? '#7c3aed' : '#475569',
-                  fontWeight: isActive ? 600 : 500,
-                  fontSize: '0.925rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.2s ease',
-                  position: 'relative'
-                }}
+                className={`manager-nav-item ${isActive ? 'active' : ''}`}
               >
-                {isActive && (
-                  <div style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: '12px',
-                    bottom: '12px',
-                    width: '4px',
-                    backgroundColor: '#7c3aed',
-                    borderRadius: '0 4px 4px 0'
-                  }} />
-                )}
-                <Icon size={18} style={{ color: isActive ? '#7c3aed' : '#64748b' }} />
+                {isActive && <div className="manager-nav-indicator" />}
+                <Icon size={18} style={{ color: isActive ? '#7c3aed' : '#64748b', flexShrink: 0 }} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -274,25 +241,10 @@ const ManagerDashboard = () => {
         </nav>
 
         {/* Footer actions */}
-        <div style={{ padding: '20px 16px', borderTop: '1px solid #e2e8f0' }}>
+        <div className="manager-sidebar-footer">
           <button
             onClick={handleLogout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              width: '100%',
-              padding: '10px',
-              borderRadius: '8px',
-              border: '1px solid #fee2e2',
-              backgroundColor: '#fef2f2',
-              color: '#ef4444',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
+            className="manager-logout-btn"
           >
             <LogOut size={16} />
             <span>Đăng xuất</span>
@@ -305,7 +257,7 @@ const ManagerDashboard = () => {
         
         {/* Top navbar header */}
         <header className="manager-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="manager-header-left">
             <button 
               className="manager-hamburger-btn"
               onClick={() => setIsMobileSidebarOpen(true)}
@@ -313,22 +265,16 @@ const ManagerDashboard = () => {
             >
               <Menu size={22} />
             </button>
-            <span style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>Kênh Quản Lý</span>
+            <span className="manager-header-title">Kênh Quản Lý</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div className="manager-header-right">
             {/* Direct Home Link */}
-            <Link to="/" style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              backgroundColor: '#f1f5f9',
-              color: '#475569',
-              transition: 'all 0.2s'
-            }}>
+            <Link 
+              to="/" 
+              className="manager-icon-circle-btn"
+              title="Về trang chủ Bookstore"
+            >
               <Home size={18} />
             </Link>
 
@@ -336,67 +282,30 @@ const ManagerDashboard = () => {
             <div style={{ position: 'relative' }}>
               <button 
                 onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#475569',
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '4px',
-                  borderRadius: '50%',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f1f5f9'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                className="manager-notif-btn"
+                aria-label="Thông báo"
               >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: '-2px',
-                    right: '-2px',
-                    width: '16px',
-                    height: '16px',
-                    backgroundColor: '#ef4444',
-                    color: '#ffffff',
-                    borderRadius: '50%',
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '1.5px solid #ffffff'
-                  }}>
-                    {unreadCount}
+                  <span className="manager-notif-badge">
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifDropdown && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '8px',
-                  width: '320px',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                  border: '1px solid #e2e8f0',
-                  zIndex: 200,
-                  overflow: 'hidden'
-                }}>
+                <div className="manager-notif-dropdown">
                   <div style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #e2e8f0',
+                    padding: '14px 18px',
+                    borderBottom: '1px solid var(--mgr-border)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     backgroundColor: '#f8fafc'
                   }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0f172a' }}>Thông báo mới</span>
+                    <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--mgr-text-dark)' }}>
+                      Thông báo mới
+                    </span>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       {unreadCount > 0 && (
                         <button 
@@ -407,16 +316,16 @@ const ManagerDashboard = () => {
                         </button>
                       )}
                       {unreadCount > 0 && (
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--mgr-text-muted)' }}>
                           ({unreadCount})
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {notifications.length === 0 ? (
-                      <div style={{ padding: '24px 16px', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
+                      <div style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--mgr-text-muted)', fontSize: '0.85rem' }}>
                         Không có thông báo nào
                       </div>
                     ) : (
@@ -425,8 +334,8 @@ const ManagerDashboard = () => {
                           key={n.id}
                           onClick={() => handleNotificationClick(n)}
                           style={{
-                            padding: '12px 16px',
-                            borderBottom: '1px solid #f1f5f9',
+                            padding: '12px 18px',
+                            borderBottom: '1px solid var(--mgr-border-light)',
                             backgroundColor: n.read ? '#ffffff' : '#f5f3ff',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s',
@@ -438,17 +347,17 @@ const ManagerDashboard = () => {
                           <div style={{ 
                             fontWeight: n.read ? 600 : 700, 
                             fontSize: '0.85rem', 
-                            color: n.read ? '#475569' : '#1e1b4b',
+                            color: n.read ? 'var(--mgr-text-main)' : 'var(--mgr-primary)',
                             marginBottom: '2px' 
                           }}>
                             {n.title}
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: '1.3' }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--mgr-text-muted)', lineHeight: '1.4' }}>
                             {n.message}
                           </div>
                           <div style={{ 
-                            fontSize: '0.65rem', 
-                            color: '#94a3b8', 
+                            fontSize: '0.68rem', 
+                            color: 'var(--mgr-text-light)', 
                             marginTop: '4px',
                             textAlign: 'right' 
                           }}>
@@ -463,22 +372,11 @@ const ManagerDashboard = () => {
             </div>
 
             {/* User display */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: '#7c3aed',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.875rem'
-              }}>
+            <div className="manager-user-pill">
+              <div className="manager-user-avatar">
                 {user ? user.fullName.charAt(0).toUpperCase() : 'M'}
               </div>
-              <span className="manager-user-name" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155' }}>
+              <span className="manager-user-name">
                 {user ? user.fullName : 'Manager'}
               </span>
             </div>

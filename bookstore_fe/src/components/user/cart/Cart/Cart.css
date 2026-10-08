@@ -1006,6 +1006,40 @@
     z-index: 2;
 }
 
+.coupon-best-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-bottom-left-radius: 8px;
+    z-index: 2;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.coupon-condition-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 4px 0 2px 0;
+}
+
+.coupon-best-tag {
+    font-size: 0.65rem;
+    color: #ffffff;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
 /* Cột Stub bên trái (Có rãnh khuyết xé vé) */
 .fahasa-coupon-stub {
     width: 88px;

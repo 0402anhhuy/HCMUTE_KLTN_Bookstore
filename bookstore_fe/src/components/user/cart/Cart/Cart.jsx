@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -130,11 +130,28 @@ const Cart = () => {
         (c) => calculateDiscount(c, totalAmount) > 0,
     ).length;
 
+    // Tự động tính toán mã tốt nhất cho đơn hàng khi xem voucher
+    const computedBestCoupon = useMemo(() => {
+        if (!coupons || coupons.length === 0) return null;
+        let maxDisc = 0;
+        let best = null;
+        coupons.forEach((c) => {
+            const disc = calculateDiscount(c, totalAmount);
+            if (disc > maxDisc) {
+                maxDisc = disc;
+                best = c;
+            }
+        });
+        return best || bestCoupon;
+    }, [coupons, totalAmount, calculateDiscount, bestCoupon]);
+
     // Component render từng Item thẻ khuyến mãi
     const renderCouponCard = (c, isShippingType = false) => {
         const discountVal = calculateDiscount(c, totalAmount);
         const isEligible = totalAmount >= (c.minOrderValue || 0);
         const isSelected = couponCode === c.code;
+        const isBest =
+            Boolean(computedBestCoupon && computedBestCoupon.id === c.id && discountVal > 0);
         const missingAmount = Math.max(0, (c.minOrderValue || 0) - totalAmount);
         const progressPercent = Math.min(
             100,
@@ -147,6 +164,7 @@ const Cart = () => {
                 className={`fahasa-coupon-card ${isSelected ? "selected" : ""} ${!isEligible ? "disabled" : ""}`}
             >
                 {c.isHot && <div className="coupon-hot-badge">Sắp hết</div>}
+                {isBest && <div className="coupon-best-badge">Mã tốt nhất</div>}
 
                 {/* Stub bên trái */}
                 <div className="fahasa-coupon-stub">
@@ -175,10 +193,17 @@ const Cart = () => {
                         <Info size={16} className="coupon-info-icon" />
                     </div>
 
-                    <p className="coupon-condition-txt">
-                        Đơn hàng từ {formatPrice(c.minOrderValue)} - Mã:{" "}
-                        <strong>{c.code}</strong>
-                    </p>
+                    <div className="coupon-condition-row">
+                        <p className="coupon-condition-txt">
+                            Đơn hàng từ {formatPrice(c.minOrderValue)} - Mã:{" "}
+                            <strong>{c.code}</strong>
+                        </p>
+                        {isBest && (
+                            <span className="coupon-best-tag">
+                                Mã tốt nhất
+                            </span>
+                        )}
+                    </div>
 
                     <div className="coupon-expiry-txt">
                         HSD: {new Date(c.endDate).toLocaleDateString("vi-VN")}

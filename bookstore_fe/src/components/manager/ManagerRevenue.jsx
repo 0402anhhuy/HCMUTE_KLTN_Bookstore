@@ -1,32 +1,53 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { 
+  TrendingUp, 
+  Wallet, 
+  CreditCard, 
+  CheckCircle, 
+  Calendar, 
+  Download, 
+  FileText, 
+  FileSpreadsheet, 
+  X, 
+  ChevronLeft, 
+  ChevronRight,
+  ArrowUpRight
+} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { exportToCSV } from '../../utils/exportUtils';
+import EmptyState from '../common/EmptyState/EmptyState';
 
-const ManagerRevenue = ({ user, orders }) => {
+const ManagerRevenue = ({ user, orders = [] }) => {
   const { showToast } = useApp();
-  const deliveredOrders = orders.filter(o => o.status === 'delivered');
-  const totalRevenue = deliveredOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
+
+  const deliveredOrders = useMemo(() => {
+    return (orders || [])
+      .filter(o => o.status === 'delivered')
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  }, [orders]);
+
+  const totalRevenue = useMemo(() => {
+    return deliveredOrders.reduce((sum, o) => sum + (o.finalAmount || 0), 0);
+  }, [deliveredOrders]);
+
   const walletBalance = user?.walletBalance || 0;
   const averageOrderValue = deliveredOrders.length > 0 ? (totalRevenue / deliveredOrders.length) : 0;
+  const deliveredCount = deliveredOrders.length;
 
   // Report Modal States
   const [showReportModal, setShowReportModal] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [fileType, setFileType] = useState('TXT');
-  const [activePeriod, setActivePeriod] = useState('30 ngày');
+  const [fileType, setFileType] = useState('XLSX');
   const [chartSubPeriod, setChartSubPeriod] = useState('Tuần');
 
-  const handlePeriodChange = (period) => {
-    setActivePeriod(period);
-    if (period === '7 ngày') {
-      setChartSubPeriod('Hàng ngày');
-    } else if (period === '30 ngày') {
-      setChartSubPeriod('Tuần');
-    } else if (period === '12 tháng') {
-      setChartSubPeriod('Tháng');
-    }
-  };
+  // Transactions Pagination State
+  const [txPage, setTxPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
+  const totalTxPages = Math.ceil(deliveredOrders.length / ITEMS_PER_PAGE) || 1;
+  const paginatedDeliveredOrders = deliveredOrders.slice(
+    (txPage - 1) * ITEMS_PER_PAGE,
+    txPage * ITEMS_PER_PAGE
+  );
 
   const handleExportReport = (e) => {
     e.preventDefault();
@@ -91,6 +112,7 @@ const ManagerRevenue = ({ user, orders }) => {
       showToast('Lỗi khi tải tệp báo cáo!', 'error');
     }
   };
+
   const getChartData = () => {
     const data = [];
     const now = new Date();
@@ -160,92 +182,160 @@ const ManagerRevenue = ({ user, orders }) => {
   const maxVal = Math.max(...chartData.map(d => d.value), 100000);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Header and Report Action */}
       <div className="manager-flex-responsive-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-            Thống kê & Tài chính
+          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0, letterSpacing: '-0.02em' }}>
+            Ví & Doanh thu
           </h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '4px 0 0' }}>
-            Quản lý hoạt động kinh doanh của bạn
+          <p style={{ margin: '4px 0 0', fontSize: '0.875rem', color: 'var(--mgr-text-muted)' }}>
+            Theo dõi dòng tiền, thống kê doanh thu thực nhận và xuất báo cáo tài chính
           </p>
         </div>
 
         <button 
+          type="button"
           onClick={() => setShowReportModal(true)}
-          style={{
-            padding: '10px 20px',
-            borderRadius: '8px',
-            backgroundColor: '#7c3aed',
-            color: '#ffffff',
-            border: 'none',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(124, 58, 237, 0.2)'
-          }}
+          className="manager-btn-primary"
+          title="Tạo và xuất báo cáo tài chính theo khoảng thời gian"
         >
-          Tạo báo cáo
+          <FileSpreadsheet size={16} />
+          <span>Tạo báo cáo</span>
         </button>
       </div>
 
-      {/* Financial Metrics Cards */}
-      <div className="revenue-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+      {/* Financial Metrics Cards (4 Cards Grid) */}
+      <div className="revenue-metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         
-        {/* DOANH THU */}
-        <div className="manager-metric-card" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          <span className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>DOANH THU</span>
-          <div className="metric-value" style={{ fontSize: '1.875rem', fontWeight: 800, color: '#0f172a', margin: '12px 0 8px' }}>
+        {/* DOANH THU THỰC NHẬN */}
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <span className="metric-title">DOANH THU THỰC NHẬN</span>
+            <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-primary-light)', color: 'var(--mgr-primary)' }}>
+              <TrendingUp size={18} />
+            </div>
+          </div>
+          <div className="metric-value" style={{ color: 'var(--mgr-primary)', margin: '10px 0 6px' }}>
             {totalRevenue.toLocaleString('vi-VN')}đ
           </div>
-          <span className="metric-badge" style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>+12.5% so với tháng trước</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', color: 'var(--mgr-success)', fontWeight: 600 }}>
+            <ArrowUpRight size={14} />
+            <span>Từ đơn giao thành công</span>
+          </div>
         </div>
 
-        {/* SỐ DƯ VÍ */}
-        <div className="manager-metric-card" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          <span className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>SỐ DƯ VÍ</span>
-          <div className="metric-value" style={{ fontSize: '1.875rem', fontWeight: 800, color: '#7c3aed', margin: '12px 0 8px' }}>
+        {/* SỐ DƯ VÍ ĐỐI TÁC */}
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <span className="metric-title">SỐ DƯ VÍ HIỆN TẠI</span>
+            <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-info-light)', color: 'var(--mgr-info)' }}>
+              <Wallet size={18} />
+            </div>
+          </div>
+          <div className="metric-value" style={{ color: 'var(--mgr-text-dark)', margin: '10px 0 6px' }}>
             {Math.round(walletBalance).toLocaleString('vi-VN')}đ
           </div>
-          <span className="metric-badge" style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>+8.2% so với tháng trước</span>
+          <div style={{ fontSize: '0.78rem', color: 'var(--mgr-text-muted)', fontWeight: 500 }}>
+            Số dư khả dụng trong ví
+          </div>
         </div>
 
-        {/* GIÁ TRỊ ĐƠN */}
-        <div className="manager-metric-card" style={{ padding: '24px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-          <span className="metric-title" style={{ fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>GIÁ TRỊ ĐƠN</span>
-          <div className="metric-value" style={{ fontSize: '1.875rem', fontWeight: 800, color: '#0f172a', margin: '12px 0 8px' }}>
+        {/* GIÁ TRỊ TRUNG BÌNH ĐƠN */}
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <span className="metric-title">GIÁ TRỊ ĐƠN TB</span>
+            <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-warning-light)', color: 'var(--mgr-warning)' }}>
+              <CreditCard size={18} />
+            </div>
+          </div>
+          <div className="metric-value" style={{ color: 'var(--mgr-text-dark)', margin: '10px 0 6px' }}>
             {Math.round(averageOrderValue).toLocaleString('vi-VN')}đ
           </div>
-          <span className="metric-badge" style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>({deliveredOrders.length || 0} Đơn hàng)</span>
+          <div style={{ fontSize: '0.78rem', color: 'var(--mgr-text-muted)', fontWeight: 500 }}>
+            Doanh thu / Đơn giao
+          </div>
         </div>
+
+        {/* TỔNG ĐƠN ĐÃ GIAO */}
+        <div className="manager-metric-card" style={{
+          padding: '24px',
+          backgroundColor: 'var(--mgr-bg-card)',
+          borderRadius: 'var(--mgr-radius-lg)',
+          border: '1px solid var(--mgr-border)',
+          boxShadow: 'var(--mgr-shadow-xs)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <span className="metric-title">ĐƠN GIAO THÀNH CÔNG</span>
+            <div className="metric-icon-box" style={{ backgroundColor: 'var(--mgr-success-light)', color: 'var(--mgr-success)' }}>
+              <CheckCircle size={18} />
+            </div>
+          </div>
+          <div className="metric-value" style={{ color: 'var(--mgr-text-dark)', margin: '10px 0 6px' }}>
+            {deliveredCount}
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--mgr-success)', fontWeight: 600 }}>
+            Đơn hoàn tất đối soát
+          </div>
+        </div>
+
 
       </div>
 
-      {/* Weekly bar chart */}
-      <div style={{
-        padding: '24px',
-        backgroundColor: '#ffffff',
-        borderRadius: '16px',
-        border: '1px solid #e2e8f0'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
-            Tổng quan doanh thu
-          </h2>
-          <div style={{ display: 'flex', gap: '8px' }}>
+      {/* Revenue Chart Section */}
+      <div className="manager-panel" style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0, letterSpacing: '-0.01em' }}>
+              Biểu đồ phân tích doanh thu
+            </h2>
+            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--mgr-text-muted)' }}>
+              Thống kê doanh thu theo mốc thời gian đã chọn
+            </p>
+          </div>
+
+          <div style={{ 
+            display: 'inline-flex', 
+            padding: '4px', 
+            borderRadius: 'var(--mgr-radius-md)', 
+            backgroundColor: '#f1f5f9', 
+            border: '1px solid var(--mgr-border)' 
+          }}>
             {['Hàng ngày', 'Tuần', 'Tháng'].map((sub) => (
               <button 
                 key={sub} 
+                type="button"
                 onClick={() => setChartSubPeriod(sub)}
                 style={{
-                  padding: '4px 12px',
+                  padding: '6px 14px',
                   fontSize: '0.8rem',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   border: 'none',
-                  borderRadius: '6px',
-                  backgroundColor: chartSubPeriod === sub ? '#f5f3ff' : 'transparent',
-                  color: chartSubPeriod === sub ? '#7c3aed' : '#64748b',
-                  cursor: 'pointer'
+                  borderRadius: 'var(--mgr-radius-sm)',
+                  backgroundColor: chartSubPeriod === sub ? '#ffffff' : 'transparent',
+                  color: chartSubPeriod === sub ? 'var(--mgr-primary)' : 'var(--mgr-text-muted)',
+                  cursor: 'pointer',
+                  boxShadow: chartSubPeriod === sub ? 'var(--mgr-shadow-xs)' : 'none',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {sub}
@@ -254,189 +344,414 @@ const ManagerRevenue = ({ user, orders }) => {
           </div>
         </div>
 
-        {/* Bar chart elements */}
-        <div style={{ height: '240px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '10px 20px 0' }}>
-          {chartData.map((item, index) => {
-            const pct = (item.value / maxVal) * 100;
-            const barHeight = Math.max((pct * 1.8), 10);
-            
-            let displayVal = "";
-            if (item.value >= 1000000) {
-              displayVal = `${(item.value / 1000000).toFixed(1)}M`;
-            } else if (item.value >= 1000) {
-              displayVal = `${Math.round(item.value / 1000)}k`;
-            } else {
-              displayVal = `${item.value}`;
-            }
+        {/* Bar chart canvas wrapper with smooth horizontal scroll for mobile */}
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '8px' }}>
+          <div style={{ minWidth: '460px', height: '240px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '24px 16px 8px' }}>
+            {chartData.map((item, index) => {
+              const pct = maxVal > 0 ? (item.value / maxVal) * 100 : 0;
+              const barHeight = Math.max((pct * 1.6), 12);
+              
+              let displayVal = "";
+              if (item.value >= 1000000) {
+                displayVal = `${(item.value / 1000000).toFixed(1)}M`;
+              } else if (item.value >= 1000) {
+                displayVal = `${Math.round(item.value / 1000)}k`;
+              } else {
+                displayVal = `${item.value}`;
+              }
 
-            return (
-              <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '8px' }}>
-                <div style={{
-                  width: '36px',
-                  height: `${barHeight}px`,
-                  background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
-                  borderRadius: '6px 6px 0 0',
-                  position: 'relative',
-                  transition: 'height 0.3s ease'
-                }}>
+              return (
+                <div key={index} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '8px' }}>
                   <div style={{
-                    position: 'absolute',
-                    top: '-24px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: '#0f172a',
-                    whiteSpace: 'nowrap'
+                    width: '38px',
+                    height: `${barHeight}px`,
+                    background: item.value > 0 
+                      ? 'linear-gradient(180deg, var(--mgr-primary) 0%, #a78bfa 100%)' 
+                      : '#e2e8f0',
+                    borderRadius: '6px 6px 0 0',
+                    position: 'relative',
+                    transition: 'all 0.3s ease',
+                    boxShadow: item.value > 0 ? '0 4px 10px rgba(124, 58, 237, 0.2)' : 'none'
                   }}>
-                    {displayVal}
+                    <div style={{
+                      position: 'absolute',
+                      top: '-24px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: item.value > 0 ? 'var(--mgr-text-dark)' : 'var(--mgr-text-light)',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {displayVal}
+                    </div>
                   </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--mgr-text-muted)', fontWeight: 600, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    {item.label}
+                  </span>
                 </div>
-                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, textAlign: 'center', whiteSpace: 'nowrap' }}>{item.label}</span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* REPORT GENERATOR MODAL */}
+      {/* Recent Completed Revenue Transactions Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0 }}>
+            Lịch sử đơn hàng ghi nhận doanh thu
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: '0.825rem', color: 'var(--mgr-text-muted)' }}>
+            Danh sách các đơn hàng đã giao thành công được tính vào tổng doanh thu cửa hàng
+          </p>
+        </div>
+
+        {/* Desktop Transactions Table */}
+        <div className="manager-table-responsive manager-desktop-table">
+          <table className="manager-table">
+            <thead>
+              <tr>
+                <th style={{ width: '12%' }}>MÃ ĐƠN</th>
+                <th style={{ width: '26%' }}>KHÁCH HÀNG</th>
+                <th style={{ width: '20%' }}>NGÀY HOÀN THÀNH</th>
+                <th style={{ width: '18%' }}>PHƯƠNG THỨC TT</th>
+                <th style={{ width: '14%' }}>DOANH THU</th>
+                <th style={{ width: '10%', textAlign: 'center' }}>TRẠNG THÁI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedDeliveredOrders.map(order => (
+                <tr key={order.id}>
+                  <td>
+                    <span style={{ fontWeight: 700, color: 'var(--mgr-primary)' }}>
+                      #{order.id}
+                    </span>
+                  </td>
+                  <td>
+                    <div>
+                      <div style={{ fontWeight: 700, color: 'var(--mgr-text-dark)' }}>
+                        {order.user?.fullName || 'Khách vãng lai'}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--mgr-text-muted)' }}>
+                        {order.shippingPhone || order.user?.phone || 'Chưa cập nhật SĐT'}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.825rem', color: 'var(--mgr-text-main)' }}>
+                      {order.createdAt ? new Date(order.createdAt).toLocaleString('vi-VN') : '—'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="manager-badge" style={{ backgroundColor: '#f1f5f9', color: 'var(--mgr-text-main)', border: '1px solid var(--mgr-border)' }}>
+                      {order.paymentMethod || 'COD'}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontWeight: 800, color: 'var(--mgr-text-dark)', fontSize: '0.925rem' }}>
+                      {(order.finalAmount || 0).toLocaleString('vi-VN')}đ
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-success-light)', color: 'var(--mgr-success)', border: '1px solid var(--mgr-success-border)' }}>
+                      Đã giao
+                    </span>
+                  </td>
+                </tr>
+              ))}
+
+              {deliveredOrders.length === 0 && (
+                <tr>
+                  <td colSpan={6} style={{ padding: '48px 16px' }}>
+                    <EmptyState
+                      icon={Wallet}
+                      title="Chưa có doanh thu được ghi nhận"
+                      description="Sau khi đơn hàng được giao thành công đến tay người mua, dòng tiền doanh thu sẽ được hiển thị chi tiết tại đây."
+                    />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* Desktop Pagination */}
+          {deliveredOrders.length > 0 && (
+            <div className="manager-pagination-bar">
+              <span style={{ fontSize: '0.825rem', color: 'var(--mgr-text-muted)' }}>
+                Hiển thị {paginatedDeliveredOrders.length} trên tổng số {deliveredOrders.length} đơn hoàn thành (Trang {txPage}/{totalTxPages})
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  disabled={txPage === 1}
+                  onClick={() => setTxPage(prev => Math.max(prev - 1, 1))}
+                  className="manager-page-btn"
+                  aria-label="Trang trước"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                {[...Array(totalTxPages)].map((_, i) => (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={() => setTxPage(i + 1)}
+                    className={`manager-page-btn ${txPage === i + 1 ? 'active' : ''}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={txPage === totalTxPages}
+                  onClick={() => setTxPage(prev => Math.min(prev + 1, totalTxPages))}
+                  className="manager-page-btn"
+                  aria-label="Trang sau"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Transactions Card View */}
+        <div className="manager-mobile-card-list">
+          {paginatedDeliveredOrders.map(order => (
+            <div key={order.id} className="manager-card-item">
+              <div className="manager-card-header">
+                <span className="manager-card-title" style={{ color: 'var(--mgr-primary)' }}>
+                  Đơn hàng #{order.id}
+                </span>
+                <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-success-light)', color: 'var(--mgr-success)', border: '1px solid var(--mgr-success-border)' }}>
+                  Đã giao
+                </span>
+              </div>
+
+              <div className="manager-card-body">
+                <div className="manager-card-row">
+                  <span className="manager-card-label">Khách hàng:</span>
+                  <span className="manager-card-value">
+                    {order.user?.fullName || 'Khách vãng lai'}
+                  </span>
+                </div>
+                <div className="manager-card-row">
+                  <span className="manager-card-label">Ngày hoàn thành:</span>
+                  <span className="manager-card-value">
+                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '—'}
+                  </span>
+                </div>
+                <div className="manager-card-row">
+                  <span className="manager-card-label">Hình thức TT:</span>
+                  <span className="manager-card-value">
+                    {order.paymentMethod || 'COD'}
+                  </span>
+                </div>
+                <div className="manager-card-row" style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px dashed var(--mgr-border-light)' }}>
+                  <span className="manager-card-label" style={{ fontWeight: 700, color: 'var(--mgr-text-dark)' }}>Thực thu:</span>
+                  <span className="manager-card-value" style={{ fontWeight: 800, color: 'var(--mgr-primary)', fontSize: '1.05rem' }}>
+                    {(order.finalAmount || 0).toLocaleString('vi-VN')}đ
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {deliveredOrders.length === 0 && (
+            <div className="manager-panel" style={{ padding: '32px 16px', textAlign: 'center' }}>
+              <EmptyState
+                icon={Wallet}
+                title="Chưa có doanh thu được ghi nhận"
+                description="Các đơn hàng được giao thành công sẽ hiển thị lịch sử đối soát tại đây."
+              />
+            </div>
+          )}
+
+          {/* Mobile Pagination */}
+          {deliveredOrders.length > 0 && totalTxPages > 1 && (
+            <div className="manager-pagination-bar" style={{ justifyContent: 'center' }}>
+              <button
+                type="button"
+                disabled={txPage === 1}
+                onClick={() => setTxPage(prev => Math.max(prev - 1, 1))}
+                className="manager-page-btn"
+                aria-label="Trang trước"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600, padding: '0 8px' }}>
+                {txPage} / {totalTxPages}
+              </span>
+              <button
+                type="button"
+                disabled={txPage === totalTxPages}
+                onClick={() => setTxPage(prev => Math.min(prev + 1, totalTxPages))}
+                className="manager-page-btn"
+                aria-label="Trang sau"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* =========================================================================
+          REPORT GENERATOR MODAL
+          ========================================================================= */}
       {showReportModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '450px',
-            padding: '32px',
-            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-            fontFamily: "'Outfit', sans-serif"
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 24px' }}>
-              Tạo báo cáo doanh thu
-            </h2>
-
-            <form onSubmit={handleExportReport} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="manager-modal-overlay">
+          <div className="manager-modal-box" style={{ maxWidth: '480px' }}>
+            <div className="manager-modal-header">
               <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Từ ngày *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px 14px', 
-                    borderRadius: '8px', 
-                    border: '1px solid #e2e8f0', 
-                    outline: 'none',
-                    fontSize: '0.9rem',
-                    fontFamily: 'inherit'
-                  }}
-                />
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--mgr-text-dark)', margin: 0 }}>
+                  Tạo báo cáo doanh thu
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--mgr-text-muted)' }}>
+                  Xuất dữ liệu đối soát doanh thu chi tiết theo khoảng thời gian
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="manager-modal-close-btn"
+                aria-label="Đóng cửa sổ"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Đến ngày *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  style={{ 
-                    width: '100%', 
-                    padding: '10px 14px', 
-                    borderRadius: '8px', 
-                    border: '1px solid #e2e8f0', 
-                    outline: 'none',
-                    fontSize: '0.9rem',
-                    fontFamily: 'inherit'
-                  }}
-                />
-              </div>
+            <form onSubmit={handleExportReport}>
+              <div className="manager-modal-body" style={{ gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Từ ngày <span style={{ color: 'var(--mgr-danger)' }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="date"
+                      required
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        minHeight: '42px',
+                        padding: '10px 14px', 
+                        borderRadius: 'var(--mgr-radius-sm)', 
+                        border: '1px solid var(--mgr-border)', 
+                        outline: 'none',
+                        fontSize: '0.875rem',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
-                  Định dạng tệp tin *
-                </label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  {['TXT', 'XLSX'].map((type) => (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Đến ngày <span style={{ color: 'var(--mgr-danger)' }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="date"
+                      required
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      style={{ 
+                        width: '100%', 
+                        minHeight: '42px',
+                        padding: '10px 14px', 
+                        borderRadius: 'var(--mgr-radius-sm)', 
+                        border: '1px solid var(--mgr-border)', 
+                        outline: 'none',
+                        fontSize: '0.875rem',
+                        fontFamily: 'inherit',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--mgr-text-main)', marginBottom: '6px' }}>
+                    Định dạng xuất tệp <span style={{ color: 'var(--mgr-danger)' }}>*</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
                     <button
-                      key={type}
                       type="button"
-                      onClick={() => setFileType(type)}
+                      onClick={() => setFileType('XLSX')}
                       style={{
                         flex: 1,
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: fileType === type ? '2px solid #7c3aed' : '1px solid #e2e8f0',
-                        backgroundColor: fileType === type ? '#f5f3ff' : '#ffffff',
-                        color: fileType === type ? '#7c3aed' : '#475569',
-                        fontWeight: 600,
+                        minHeight: '44px',
+                        borderRadius: 'var(--mgr-radius-md)',
+                        border: fileType === 'XLSX' ? '2px solid var(--mgr-primary)' : '1px solid var(--mgr-border)',
+                        backgroundColor: fileType === 'XLSX' ? 'var(--mgr-primary-light)' : '#ffffff',
+                        color: fileType === 'XLSX' ? 'var(--mgr-primary)' : 'var(--mgr-text-main)',
+                        fontWeight: 700,
                         fontSize: '0.875rem',
                         cursor: 'pointer',
-                        transition: 'all 0.2s'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      {type}
+                      <FileSpreadsheet size={18} />
+                      <span>Excel (.CSV)</span>
                     </button>
-                  ))}
+
+                    <button
+                      type="button"
+                      onClick={() => setFileType('TXT')}
+                      style={{
+                        flex: 1,
+                        minHeight: '44px',
+                        borderRadius: 'var(--mgr-radius-md)',
+                        border: fileType === 'TXT' ? '2px solid var(--mgr-primary)' : '1px solid var(--mgr-border)',
+                        backgroundColor: fileType === 'TXT' ? 'var(--mgr-primary-light)' : '#ffffff',
+                        color: fileType === 'TXT' ? 'var(--mgr-primary)' : 'var(--mgr-text-main)',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <FileText size={18} />
+                      <span>Văn bản (.TXT)</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
+              <div className="manager-modal-footer">
                 <button
                   type="button"
                   onClick={() => setShowReportModal(false)}
-                  style={{
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#ffffff',
-                    color: '#475569',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}
+                  className="manager-btn-secondary"
+                  style={{ minHeight: '44px' }}
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  style={{
-                    padding: '10px 24px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    backgroundColor: '#7c3aed',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}
+                  className="manager-btn-primary"
+                  style={{ minHeight: '44px' }}
                 >
-                  Xuất báo cáo
+                  <Download size={16} />
+                  <span>Tải báo cáo về máy</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 };
