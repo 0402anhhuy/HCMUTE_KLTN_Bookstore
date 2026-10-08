@@ -95,7 +95,7 @@ const ManagerDashboard = () => {
 
       // 2. Fetch products
       try {
-        const prodRes = await api.get('/products');
+        const prodRes = await api.get('/products', { params: { size: 1000 } });
         const fetchedProducts = prodRes.data.content || prodRes.data || [];
         setProducts(fetchedProducts);
       } catch (err) {

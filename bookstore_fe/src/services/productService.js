@@ -1,7 +1,8 @@
 import api from "./api";
 
 export const productService = {
-    getProducts: () => api.get("/products"),
+    getProducts: (params = {}) =>
+        api.get("/products", { params: { size: 1000, ...params } }),
     getProductsByStatus: (status) => api.get(`/products/status/${status}`),
     getPendingProducts: () => api.get("/products/status/PENDING"),
     getApprovedProducts: () => api.get("/products/status/ACTIVE"),
