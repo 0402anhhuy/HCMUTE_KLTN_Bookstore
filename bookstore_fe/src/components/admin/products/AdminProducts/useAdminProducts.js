@@ -93,6 +93,13 @@ export const useAdminProducts = ({ products = [], categories = [] }) => {
         );
     }, [filteredProducts, productPage]);
 
+    const handleResetFilters = () => {
+        setProductSearch("");
+        setCategoryFilter("");
+        setProductStatusFilter("ALL");
+        setProductPage(1);
+    };
+
     return {
         productSearch,
         setProductSearch,
@@ -112,5 +119,6 @@ export const useAdminProducts = ({ products = [], categories = [] }) => {
         totalProductPages,
         paginatedProducts,
         getImagesList,
+        handleResetFilters,
     };
 };

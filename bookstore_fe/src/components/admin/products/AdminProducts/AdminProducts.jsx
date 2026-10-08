@@ -1,11 +1,24 @@
-import { Search, Check, X, ClipboardList } from "lucide-react";
+import {
+    Search,
+    X,
+    Clock,
+    CheckCircle2,
+    AlertTriangle,
+    BookOpen,
+    RotateCcw,
+    ChevronLeft,
+    ChevronRight,
+    Eye,
+    Package,
+} from "lucide-react";
 import { useAdminProducts } from "./useAdminProducts";
 import AdminDetailProduct from "../AdminDetailProduct/AdminDetailProduct";
 import CategorySelector from "@/components/common/CategorySelector/CategorySelector";
-import { formatCategoryLabel, getCategoryPath } from "@/utils/categoryTree";
+import EmptyState from "@/components/common/EmptyState/EmptyState";
+import { getCategoryPath } from "@/utils/categoryTree";
 import "./AdminProducts.css";
 
-const AdminProducts = ({ products, categories, loadData }) => {
+const AdminProducts = ({ products = [], categories = [], loadData }) => {
     const {
         productSearch,
         setProductSearch,
@@ -20,11 +33,11 @@ const AdminProducts = ({ products, categories, loadData }) => {
         pendingCount,
         approvedCount,
         rejectedCount,
-        categoryOptions,
         filteredProducts,
         totalProductPages,
         paginatedProducts,
         getImagesList,
+        handleResetFilters,
     } = useAdminProducts({ products, categories });
 
     if (selectedProductId) {
@@ -37,6 +50,11 @@ const AdminProducts = ({ products, categories, loadData }) => {
         );
     }
 
+    const isFiltered =
+        productSearch !== "" ||
+        categoryFilter !== "" ||
+        productStatusFilter !== "ALL";
+
     return (
         <div className="admin-products-container">
             {/* Top Header */}
@@ -46,63 +64,87 @@ const AdminProducts = ({ products, categories, loadData }) => {
                         Kiểm duyệt sản phẩm
                     </h1>
                     <p className="admin-products-subtitle">
-                        Quản lý sản phẩm, kiểm duyệt và hàng chờ tuân thủ
+                        Quản lý danh mục sách, phê duyệt và theo dõi trạng thái kiểm duyệt hệ thống
                     </p>
                 </div>
             </div>
 
-            {/* 3 Stats Cards */}
+            {/* 4 Stats Cards */}
             <div className="admin-products-stats-grid">
-                {/* Card 1 */}
+                {/* Card 1: Total */}
+                <div className="admin-products-stat-card">
+                    <div className="admin-products-stat-top">
+                        <span className="admin-products-stat-label">
+                            TỔNG SẢN PHẨM
+                        </span>
+                        <div className="admin-products-stat-icon-wrap total">
+                            <Package size={20} />
+                        </div>
+                    </div>
+                    <div className="admin-products-stat-value">
+                        {products.length}
+                    </div>
+                    <div className="admin-products-stat-desc neutral">
+                        trong hệ thống
+                    </div>
+                </div>
+
+                {/* Card 2: Pending */}
                 <div className="admin-products-stat-card">
                     <div className="admin-products-stat-top">
                         <span className="admin-products-stat-label">
                             ĐANG CHỜ DUYỆT
                         </span>
-                        <ClipboardList size={20} color="#3b82f6" />
+                        <div className="admin-products-stat-icon-wrap pending">
+                            <Clock size={20} />
+                        </div>
                     </div>
                     <div className="admin-products-stat-value">
                         {pendingCount}
                     </div>
-                    <div className="admin-products-stat-desc success">
-                        theo thời gian thực
+                    <div className="admin-products-stat-desc warning">
+                        yêu cầu xử lý
                     </div>
                 </div>
 
-                {/* Card 2 */}
+                {/* Card 3: Approved */}
                 <div className="admin-products-stat-card">
                     <div className="admin-products-stat-top">
                         <span className="admin-products-stat-label">
-                            ĐÃ DUYỆT
+                            ĐÃ DUYỆT BÁN
                         </span>
-                        <Check size={20} color="#3b82f6" />
+                        <div className="admin-products-stat-icon-wrap approved">
+                            <CheckCircle2 size={20} />
+                        </div>
                     </div>
                     <div className="admin-products-stat-value">
                         {approvedCount}
                     </div>
                     <div className="admin-products-stat-desc success">
-                        đang bán
+                        sẵn sàng giao dịch
                     </div>
                 </div>
 
-                {/* Card 3 */}
+                {/* Card 4: Rejected */}
                 <div className="admin-products-stat-card">
                     <div className="admin-products-stat-top">
                         <span className="admin-products-stat-label">
                             BỊ TỪ CHỐI
                         </span>
-                        <X size={20} color="#ef4444" />
+                        <div className="admin-products-stat-icon-wrap rejected">
+                            <AlertTriangle size={20} />
+                        </div>
                     </div>
                     <div className="admin-products-stat-value">
                         {rejectedCount}
                     </div>
                     <div className="admin-products-stat-desc danger">
-                        cần rà soát
+                        cần rà soát lại
                     </div>
                 </div>
             </div>
 
-            {/* Table search & filter controls */}
+            {/* Filter bar */}
             <div className="admin-products-filter-bar">
                 <div className="admin-products-search-wrapper">
                     <Search size={18} className="admin-products-search-icon" />
@@ -116,17 +158,32 @@ const AdminProducts = ({ products, categories, loadData }) => {
                         }}
                         className="admin-products-search-input"
                     />
+                    {productSearch && (
+                        <button
+                            type="button"
+                            className="admin-products-search-clear"
+                            onClick={() => {
+                                setProductSearch("");
+                                setProductPage(1);
+                            }}
+                            title="Xóa tìm kiếm"
+                        >
+                            <X size={15} />
+                        </button>
+                    )}
                 </div>
 
-                <CategorySelector
-                    categories={categories}
-                    value={categoryFilter}
-                    onChange={(val) => {
-                        setCategoryFilter(val);
-                        setProductPage(1);
-                    }}
-                    placeholder="Tất cả danh mục"
-                />
+                <div className="admin-products-category-wrapper">
+                    <CategorySelector
+                        categories={categories}
+                        value={categoryFilter}
+                        onChange={(val) => {
+                            setCategoryFilter(val);
+                            setProductPage(1);
+                        }}
+                        placeholder="Tất cả danh mục"
+                    />
+                </div>
 
                 <select
                     value={productStatusFilter}
@@ -143,237 +200,389 @@ const AdminProducts = ({ products, categories, loadData }) => {
                     <option value="INACTIVE">Tạm ẩn</option>
                     <option value="OUT_OF_STOCK">Hết hàng</option>
                 </select>
+
+                {isFiltered && (
+                    <button
+                        type="button"
+                        className="admin-products-reset-btn"
+                        onClick={handleResetFilters}
+                        title="Đặt lại bộ lọc"
+                    >
+                        <RotateCcw size={15} />
+                        <span>Đặt lại</span>
+                    </button>
+                )}
             </div>
 
-            {/* Table grid wrapper (Desktop) */}
-            <div className="admin-desktop-table admin-products-table-wrapper">
-                <table className="admin-products-table">
-                    <thead>
-                        <tr className="admin-products-thead-row">
-                            <th className="admin-products-th">SẢN PHẨM</th>
-                            <th className="admin-products-th">DANH MỤC</th>
-                            <th className="admin-products-th">TÁC GIẢ</th>
-                            <th className="admin-products-th">ĐƠN GIÁ</th>
-                            <th className="admin-products-th">KHO HÀNG</th>
-                            <th className="admin-products-th-center">
-                                TRẠNG THÁI
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            {/* Content area: Table (Desktop) / Cards (Mobile) / EmptyState */}
+            {filteredProducts.length === 0 ? (
+                <div className="admin-products-empty-container">
+                    <EmptyState
+                        icon={BookOpen}
+                        title="Không tìm thấy sản phẩm nào"
+                        description={
+                            isFiltered
+                                ? "Không có sản phẩm nào khớp với bộ lọc hoặc từ khóa tìm kiếm. Vui lòng thử lại với tiêu chí khác."
+                                : "Chưa có sản phẩm nào trong hệ thống."
+                        }
+                        actionText={isFiltered ? "Đặt lại bộ lọc" : undefined}
+                        onAction={isFiltered ? handleResetFilters : undefined}
+                        actionIcon={isFiltered ? RotateCcw : undefined}
+                    />
+                </div>
+            ) : (
+                <>
+                    {/* Desktop Table */}
+                    <div className="admin-desktop-table admin-products-table-wrapper">
+                        <table className="admin-products-table">
+                            <thead>
+                                <tr className="admin-products-thead-row">
+                                    <th className="admin-products-th">SẢN PHẨM</th>
+                                    <th className="admin-products-th">DANH MỤC</th>
+                                    <th className="admin-products-th">TÁC GIẢ</th>
+                                    <th className="admin-products-th">ĐƠN GIÁ</th>
+                                    <th className="admin-products-th">KHO HÀNG</th>
+                                    <th className="admin-products-th-center">
+                                        TRẠNG THÁI
+                                    </th>
+                                    <th className="admin-products-th-center">
+                                        THAO TÁC
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paginatedProducts.map((p) => {
+                                    const isOutOfStock = p.stockQuantity === 0;
+                                    const isProductActive =
+                                        p.status === "ACTIVE" && p.stockQuantity > 0;
+                                    const thumbUrl =
+                                        getImagesList(p.imageUrl)[0] || "";
+
+                                    return (
+                                        <tr
+                                            key={p.id}
+                                            className="admin-products-row"
+                                            onClick={() => setSelectedProductId(p.id)}
+                                        >
+                                            <td className="admin-products-td">
+                                                <div className="admin-products-item-box">
+                                                    {thumbUrl ? (
+                                                        <img
+                                                            src={thumbUrl}
+                                                            alt={p.name}
+                                                            className="admin-products-item-thumb"
+                                                            onError={(e) => {
+                                                                e.target.style.display = "none";
+                                                                e.target.nextElementSibling?.style.setProperty("display", "flex");
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <div
+                                                        className="admin-products-item-placeholder"
+                                                        style={{ display: thumbUrl ? "none" : "flex" }}
+                                                    >
+                                                        <BookOpen size={20} color="#94a3b8" />
+                                                    </div>
+                                                    <div className="admin-products-item-info">
+                                                        <div
+                                                            className="admin-products-item-name"
+                                                            title={p.name}
+                                                        >
+                                                            {p.name}
+                                                        </div>
+                                                        <div className="admin-products-item-isbn">
+                                                            ISBN: {p.isbn || "N/A"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="admin-products-td-nowrap">
+                                                <span
+                                                    className="admin-products-category-badge"
+                                                    title={
+                                                        getCategoryPath(p.category) ||
+                                                        p.category?.name ||
+                                                        "N/A"
+                                                    }
+                                                >
+                                                    {getCategoryPath(p.category) ||
+                                                        p.category?.name ||
+                                                        "Chưa phân loại"}
+                                                </span>
+                                            </td>
+                                            <td className="admin-products-td-nowrap">
+                                                <span className="admin-products-author-text">
+                                                    {p.author || "Chưa rõ"}
+                                                </span>
+                                            </td>
+                                            <td className="admin-products-td-nowrap">
+                                                <span className="admin-products-price-text">
+                                                    {p.price?.toLocaleString("vi-VN")}₫
+                                                </span>
+                                            </td>
+                                            <td className="admin-products-td-nowrap">
+                                                <div className="admin-products-stock-box">
+                                                    <span
+                                                        className={`admin-products-stock-quantity ${
+                                                            isOutOfStock ? "out-of-stock" : ""
+                                                        }`}
+                                                    >
+                                                        {p.stockQuantity} cuốn
+                                                    </span>
+                                                    <span
+                                                        className={`admin-products-stock-badge ${
+                                                            isProductActive
+                                                                ? "in-stock"
+                                                                : isOutOfStock
+                                                                ? "out-of-stock"
+                                                                : "inactive"
+                                                        }`}
+                                                    >
+                                                        {isProductActive
+                                                            ? "Đang bán"
+                                                            : isOutOfStock
+                                                            ? "Hết hàng"
+                                                            : "Tạm ẩn"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="admin-products-td-nowrap">
+                                                <div className="admin-products-status-wrapper">
+                                                    <span
+                                                        className={`admin-products-status-badge ${
+                                                            p.status
+                                                                ? p.status.toLowerCase()
+                                                                : "pending"
+                                                        }`}
+                                                    >
+                                                        <span className="admin-status-dot" />
+                                                        {p.status === "ACTIVE"
+                                                            ? "Đã duyệt"
+                                                            : p.status === "REJECTED"
+                                                            ? "Bị từ chối"
+                                                            : p.status === "INACTIVE"
+                                                            ? "Tạm ẩn"
+                                                            : "Chờ duyệt"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="admin-products-td-nowrap admin-products-td-center">
+                                                <button
+                                                    type="button"
+                                                    className="admin-products-action-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedProductId(p.id);
+                                                    }}
+                                                    title="Kiểm duyệt & Chi tiết"
+                                                >
+                                                    <Eye size={15} />
+                                                    <span>Kiểm duyệt</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+
+                        {/* Pagination Controls */}
+                        <div className="admin-products-pagination">
+                            <span className="admin-products-pagination-info">
+                                Hiển thị <strong>{paginatedProducts.length}</strong> trên tổng số{" "}
+                                <strong>{filteredProducts.length}</strong> sản phẩm
+                            </span>
+                            <div className="admin-products-pagination-controls">
+                                <button
+                                    type="button"
+                                    disabled={productPage === 1}
+                                    onClick={() =>
+                                        setProductPage((prev) => Math.max(prev - 1, 1))
+                                    }
+                                    className="admin-products-page-btn arrow"
+                                    title="Trang trước"
+                                >
+                                    <ChevronLeft size={16} />
+                                    <span>Trước</span>
+                                </button>
+                                {[...Array(totalProductPages)].map((_, i) => (
+                                    <button
+                                        type="button"
+                                        key={i}
+                                        onClick={() => setProductPage(i + 1)}
+                                        className={`admin-products-page-btn ${
+                                            productPage === i + 1 ? "active" : ""
+                                        }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                                <button
+                                    type="button"
+                                    disabled={productPage === totalProductPages}
+                                    onClick={() =>
+                                        setProductPage((prev) =>
+                                            Math.min(prev + 1, totalProductPages)
+                                        )
+                                    }
+                                    className="admin-products-page-btn arrow"
+                                    title="Trang sau"
+                                >
+                                    <span>Sau</span>
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile Cards List View */}
+                    <div className="admin-mobile-card-list">
                         {paginatedProducts.map((p) => {
                             const isOutOfStock = p.stockQuantity === 0;
                             const isProductActive =
                                 p.status === "ACTIVE" && p.stockQuantity > 0;
+                            const thumbUrl = getImagesList(p.imageUrl)[0] || "";
 
                             return (
-                                <tr
+                                <div
                                     key={p.id}
-                                    className="admin-products-row"
+                                    className="admin-card-item"
                                     onClick={() => setSelectedProductId(p.id)}
                                 >
-                                    <td className="admin-products-td">
-                                        <div className="admin-products-item-box">
-                                            <img
-                                                src={
-                                                    getImagesList(
-                                                        p.imageUrl,
-                                                    )[0] ||
-                                                    "https://via.placeholder.com/40x60?text=Book"
-                                                }
-                                                alt={p.name}
-                                                className="admin-products-item-thumb"
-                                            />
-                                            <div className="admin-products-item-info">
-                                                <div
-                                                    className="admin-products-item-name"
-                                                    title={p.name}
-                                                >
+                                    <div className="admin-card-header">
+                                        <div className="admin-card-header-left">
+                                            {thumbUrl ? (
+                                                <img
+                                                    src={thumbUrl}
+                                                    alt={p.name}
+                                                    className="admin-card-thumb"
+                                                />
+                                            ) : (
+                                                <div className="admin-card-thumb-placeholder">
+                                                    <BookOpen size={18} color="#94a3b8" />
+                                                </div>
+                                            )}
+                                            <div className="admin-card-title-group">
+                                                <div className="admin-card-title">
                                                     {p.name}
                                                 </div>
-                                                <div className="admin-products-item-isbn">
+                                                <div className="admin-card-isbn">
                                                     ISBN: {p.isbn || "N/A"}
                                                 </div>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="admin-products-td-nowrap">
                                         <span
-                                            className="admin-products-category-badge"
-                                            title={
-                                                getCategoryPath(p.category) ||
-                                                p.category?.name ||
-                                                "N/A"
-                                            }
+                                            className={`admin-products-status-badge ${
+                                                p.status
+                                                    ? p.status.toLowerCase()
+                                                    : "pending"
+                                            }`}
                                         >
-                                            {getCategoryPath(p.category) ||
-                                                p.category?.name ||
-                                                "N/A"}
+                                            <span className="admin-status-dot" />
+                                            {p.status === "ACTIVE"
+                                                ? "Đã duyệt"
+                                                : p.status === "REJECTED"
+                                                ? "Bị từ chối"
+                                                : p.status === "INACTIVE"
+                                                ? "Tạm ẩn"
+                                                : "Chờ duyệt"}
                                         </span>
-                                    </td>
-                                    <td className="admin-products-td-nowrap">
-                                        <span className="admin-products-author-text">
-                                            {p.author || "Chưa rõ"}
-                                        </span>
-                                    </td>
-                                    <td className="admin-products-td">
-                                        <span className="admin-products-price-text">
-                                            {p.price?.toLocaleString("vi-VN")}đ
-                                        </span>
-                                    </td>
-                                    <td className="admin-products-td-nowrap">
-                                        <div className="admin-products-stock-box">
-                                            <span
-                                                className={`admin-products-stock-quantity ${isOutOfStock
-                                                        ? "out-of-stock"
-                                                        : ""
-                                                    }`}
-                                            >
-                                                {p.stockQuantity} cuốn
+                                    </div>
+
+                                    <div className="admin-card-body">
+                                        <div className="admin-card-row">
+                                            <span className="admin-card-label">Tác giả:</span>
+                                            <span className="admin-card-value">
+                                                {p.author || "Chưa rõ"}
                                             </span>
-                                            <span
-                                                className={`admin-products-stock-badge ${isProductActive
-                                                        ? "in-stock"
-                                                        : "out-of-stock"
+                                        </div>
+                                        <div className="admin-card-row">
+                                            <span className="admin-card-label">Danh mục:</span>
+                                            <span className="admin-card-category">
+                                                {getCategoryPath(p.category) ||
+                                                    p.category?.name ||
+                                                    "Chưa phân loại"}
+                                            </span>
+                                        </div>
+                                        <div className="admin-card-row">
+                                            <span className="admin-card-label">Đơn giá / Kho:</span>
+                                            <span className="admin-card-value">
+                                                <strong className="admin-card-price">
+                                                    {p.price?.toLocaleString("vi-VN")}₫
+                                                </strong>{" "}
+                                                ({p.stockQuantity} cuốn -{" "}
+                                                <span
+                                                    className={`admin-card-stock-status ${
+                                                        isProductActive
+                                                            ? "in-stock"
+                                                            : isOutOfStock
+                                                            ? "out-of-stock"
+                                                            : "inactive"
                                                     }`}
-                                            >
-                                                {isProductActive
-                                                    ? "Đang bán"
-                                                    : isOutOfStock
+                                                >
+                                                    {isProductActive
+                                                        ? "Đang bán"
+                                                        : isOutOfStock
                                                         ? "Hết hàng"
                                                         : "Tạm ẩn"}
+                                                </span>
+                                                )
                                             </span>
                                         </div>
-                                    </td>
-                                    <td className="admin-products-td-nowrap">
-                                        <div className="admin-products-action-box">
-                                            <span className={`admin-products-status-tag ${p.status ? p.status.toLowerCase() : 'pending'}`}>
-                                                {p.status === "ACTIVE" ? "Đã duyệt" : p.status === "REJECTED" ? "Bị từ chối" : p.status === "INACTIVE" ? "Tạm ẩn" : "Chờ duyệt"}
-                                            </span>
-                                        </div>
-                                    </td>
-                                </tr>
+                                    </div>
+
+                                    <div className="admin-card-footer">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedProductId(p.id);
+                                            }}
+                                            className="admin-card-btn-action"
+                                        >
+                                            <Eye size={16} />
+                                            <span>Xem chi tiết & Kiểm duyệt</span>
+                                        </button>
+                                    </div>
+                                </div>
                             );
                         })}
 
-                        {filteredProducts.length === 0 && (
-                            <tr>
-                                <td
-                                    colSpan={6}
-                                    className="admin-products-empty-cell"
-                                >
-                                    Không tìm thấy sản phẩm nào phù hợp
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-
-                {/* Pagination Controls */}
-                <div className="admin-products-pagination">
-                    <span className="admin-products-pagination-info">
-                        Hiển thị {paginatedProducts.length} trên tổng số{" "}
-                        {filteredProducts.length} sản phẩm
-                    </span>
-                    <div className="admin-products-pagination-controls">
-                        <button
-                            type="button"
-                            disabled={productPage === 1}
-                            onClick={() =>
-                                setProductPage((prev) => Math.max(prev - 1, 1))
-                            }
-                            className="admin-products-page-btn"
-                        >
-                            Trước
-                        </button>
-                        {[...Array(totalProductPages)].map((_, i) => (
-                            <button
-                                type="button"
-                                key={i}
-                                onClick={() => setProductPage(i + 1)}
-                                className={`admin-products-page-btn ${productPage === i + 1 ? "active" : ""
-                                    }`}
-                            >
-                                {i + 1}
-                            </button>
-                        ))}
-                        <button
-                            type="button"
-                            disabled={productPage === totalProductPages}
-                            onClick={() =>
-                                setProductPage((prev) =>
-                                    Math.min(prev + 1, totalProductPages),
-                                )
-                            }
-                            className="admin-products-page-btn"
-                        >
-                            Sau
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Cards List View */}
-            <div className="admin-mobile-card-list">
-                {paginatedProducts.map((p) => {
-                    const isOutOfStock = p.stockQuantity === 0;
-                    const isProductActive = p.status === "ACTIVE" && p.stockQuantity > 0;
-                    return (
-                        <div key={p.id} className="admin-card-item" onClick={() => setSelectedProductId(p.id)}>
-                            <div className="admin-card-header">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <img
-                                        src={getImagesList(p.imageUrl)[0] || "https://via.placeholder.com/40x60?text=Book"}
-                                        alt={p.name}
-                                        style={{ width: '40px', height: '52px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
-                                    />
-                                    <div>
-                                        <div className="admin-card-title">{p.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>ISBN: {p.isbn || "N/A"}</div>
-                                    </div>
-                                </div>
-                                <span className={`admin-products-stock-badge ${isProductActive ? "in-stock" : "out-of-stock"}`}>
-                                    {isProductActive ? "Đang bán" : isOutOfStock ? "Hết hàng" : "Tạm ẩn"}
-                                </span>
-                            </div>
-
-                            <div className="admin-card-body">
-                                <div className="admin-card-row">
-                                    <span className="admin-card-label">Tác giả:</span>
-                                    <span className="admin-card-value">{p.author || "Chưa rõ"}</span>
-                                </div>
-                                <div className="admin-card-row">
-                                    <span className="admin-card-label">Danh mục:</span>
-                                    <span style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: 600 }}>
-                                        {getCategoryPath(p.category) || p.category?.name || "N/A"}
-                                    </span>
-                                </div>
-                                <div className="admin-card-row">
-                                    <span className="admin-card-label">Đơn giá / Kho:</span>
-                                    <span className="admin-card-value">
-                                        <strong style={{ color: '#ef4444' }}>{p.price?.toLocaleString("vi-VN")}đ</strong> ({p.stockQuantity} cuốn)
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="admin-card-footer">
+                        {/* Mobile Pagination */}
+                        <div className="admin-products-mobile-pagination">
+                            <span className="admin-products-pagination-info">
+                                Trang {productPage} / {totalProductPages} ({filteredProducts.length} sản phẩm)
+                            </span>
+                            <div className="admin-products-pagination-controls">
                                 <button
                                     type="button"
-                                    onClick={(e) => { e.stopPropagation(); setSelectedProductId(p.id); }}
-                                    style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #3b82f6', backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                                    disabled={productPage === 1}
+                                    onClick={() =>
+                                        setProductPage((prev) => Math.max(prev - 1, 1))
+                                    }
+                                    className="admin-products-page-btn arrow"
                                 >
-                                    Xem chi tiết & Kiểm duyệt
+                                    <ChevronLeft size={16} />
+                                    <span>Trước</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={productPage === totalProductPages}
+                                    onClick={() =>
+                                        setProductPage((prev) =>
+                                            Math.min(prev + 1, totalProductPages)
+                                        )
+                                    }
+                                    className="admin-products-page-btn arrow"
+                                >
+                                    <span>Sau</span>
+                                    <ChevronRight size={16} />
                                 </button>
                             </div>
                         </div>
-                    );
-                })}
-                {filteredProducts.length === 0 && (
-                    <div style={{ padding: '32px', textAlign: 'center', color: '#64748b', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                        Không tìm thấy sản phẩm nào phù hợp
                     </div>
-                )}
-            </div>
+                </>
+            )}
         </div>
     );
 };
