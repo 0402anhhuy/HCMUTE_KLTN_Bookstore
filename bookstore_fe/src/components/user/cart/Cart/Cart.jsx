@@ -623,7 +623,7 @@ const Cart = () => {
                     disabled={selectedItemIds.size === 0}
                     className="cart-mobile-sticky-btn-checkout"
                 >
-                    Mua hàng ({selectedItemIds.size})
+                    Thanh toán ({selectedItemIds.size})
                 </button>
             </div>
 

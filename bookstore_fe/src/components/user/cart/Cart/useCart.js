@@ -360,6 +360,7 @@ export const useCart = () => {
         if (params.length > 0) {
             path += `?${params.join("&")}`;
         }
+        window.scrollTo(0, 0);
         navigate(path);
     };
 
