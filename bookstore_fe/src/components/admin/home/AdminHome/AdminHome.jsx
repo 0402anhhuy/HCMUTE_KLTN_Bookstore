@@ -633,7 +633,7 @@ export const AdminHome = ({
                     >
                         <CheckCircle2 size={18} color="#9333ea" />
                         <h3 className="admin-chart-title">
-                            Tỉ lệ trạng thái đơn hàng (Đường tròn)
+                            Tỉ lệ trạng thái đơn hàng
                         </h3>
                     </div>
 

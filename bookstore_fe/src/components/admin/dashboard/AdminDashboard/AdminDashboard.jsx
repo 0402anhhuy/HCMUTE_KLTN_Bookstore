@@ -159,14 +159,6 @@ const AdminDashboard = () => {
                                 </span>
                             </div>
                         </div>
-                        <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="admin-dashboard-logout-btn-header"
-                        >
-                            <LogOut size={15} />
-                            <span className="admin-dashboard-logout-text">Đăng xuất</span>
-                        </button>
                     </div>
                 </header>
 
