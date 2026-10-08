@@ -12,6 +12,7 @@ import {
     Download,
     Target,
 } from "lucide-react";
+import { exportToCSV } from "@/utils/exportUtils";
 import "./AdminHome.css";
 
 export const AdminHome = ({
@@ -22,6 +23,7 @@ export const AdminHome = ({
     orders = [],
     auditLogs = [],
     setActiveTab = () => {},
+    showToast,
 }) => {
     // 1. TỰ ĐỘNG TẠO DẢI NĂM TỪ 2023 ĐẾN NĂM HIỆN TẠI (TỰ TĂNG KHI SANG NĂM MỚI)
     const availableYears = useMemo(() => {
@@ -33,9 +35,14 @@ export const AdminHome = ({
             yearsSet.add(yr);
         }
 
-        orders.forEach((o) => {
+        (orders || []).forEach((o) => {
             const d =
-                o.createdAt || o.created_at || o.shippingAt || o.shipping_at;
+                o.deliveredAt ||
+                o.delivered_at ||
+                o.shippingAt ||
+                o.shipping_at ||
+                o.createdAt ||
+                o.created_at;
             if (d) {
                 const orderYr = new Date(d).getFullYear();
                 if (orderYr >= startYear) yearsSet.add(orderYr);
@@ -81,7 +88,7 @@ export const AdminHome = ({
         );
     };
 
-    // 2. THỐNG KÊ DOANH THU 12 THÁNG
+    // 2. THỐNG KÊ DOANH THU 12 THÁNG - HOÀN TOÀN TỪ DATA THẬT
     const yearlyData = useMemo(() => {
         const months = Array.from({ length: 12 }, (_, i) => ({
             month: i + 1,
@@ -91,12 +98,12 @@ export const AdminHome = ({
             totalOrders: 0,
         }));
 
-        orders.forEach((order) => {
+        (orders || []).forEach((order) => {
             const dStr =
-                order.shippingAt ||
-                order.shipping_at ||
                 order.deliveredAt ||
                 order.delivered_at ||
+                order.shippingAt ||
+                order.shipping_at ||
                 order.createdAt ||
                 order.created_at;
             if (!dStr) return;
@@ -104,17 +111,20 @@ export const AdminHome = ({
 
             if (d.getFullYear() === Number(selectedYear)) {
                 const m = d.getMonth();
-                months[m].totalOrders += 1;
-                if ((order.status || "").toLowerCase() === "delivered") {
-                    const amt = Number(
-                        order.finalAmount ??
-                            order.final_amount ??
-                            order.totalAmount ??
-                            order.total_amount ??
-                            0,
-                    );
-                    months[m].revenue += amt;
-                    months[m].deliveredOrders += 1;
+                if (m >= 0 && m < 12) {
+                    months[m].totalOrders += 1;
+                    const st = (order.status || "").toLowerCase();
+                    if (st === "delivered" || st === "completed") {
+                        const amt = Number(
+                            order.finalAmount ??
+                                order.final_amount ??
+                                order.totalAmount ??
+                                order.total_amount ??
+                                0,
+                        );
+                        months[m].revenue += amt;
+                        months[m].deliveredOrders += 1;
+                    }
                 }
             }
         });
@@ -125,7 +135,7 @@ export const AdminHome = ({
         return { months, maxRev: maxRev > 0 ? maxRev : 1, totalYearRevenue };
     }, [orders, selectedYear]);
 
-    // 3. THỐNG KÊ TUẦN TRONG THÁNG
+    // 3. THỐNG KÊ TUẦN TRONG THÁNG - HOÀN TOÀN TỪ DATA THẬT
     const weeklyData = useMemo(() => {
         const weeks = [
             { name: "Tuần 1 (1-7)", revenue: 0, count: 0 },
@@ -135,12 +145,12 @@ export const AdminHome = ({
             { name: "Tuần 5 (29-Cuối)", revenue: 0, count: 0 },
         ];
 
-        orders.forEach((order) => {
+        (orders || []).forEach((order) => {
             const dStr =
-                order.shippingAt ||
-                order.shipping_at ||
                 order.deliveredAt ||
                 order.delivered_at ||
+                order.shippingAt ||
+                order.shipping_at ||
                 order.createdAt ||
                 order.created_at;
             if (!dStr) return;
@@ -158,7 +168,8 @@ export const AdminHome = ({
                 else if (day <= 28) weekIdx = 3;
                 else weekIdx = 4;
 
-                if ((order.status || "").toLowerCase() === "delivered") {
+                const st = (order.status || "").toLowerCase();
+                if (st === "delivered" || st === "completed") {
                     const amt = Number(
                         order.finalAmount ??
                             order.final_amount ??
@@ -185,23 +196,32 @@ export const AdminHome = ({
         return { rev, target: monthlyTarget, pct, remaining };
     }, [weeklyData.totalMonthRevenue, monthlyTarget]);
 
-    // 5. XUẤT BÁO CÁO CSV
+    // 5. XUẤT BÁO CÁO CSV (UTF-8 BOM hỗ trợ tiếng Việt)
     const handleExportCSV = () => {
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent +=
-            "Tháng,Doanh Thu (VNĐ),Số Đơn Giao Thành Công,Tổng Đơn Phát Sinh\n";
-        yearlyData.months.forEach((m) => {
-            csvContent += `${m.name}/${selectedYear},${m.revenue},${m.deliveredOrders},${m.totalOrders}\n`;
-        });
-        csvContent += `Tổng Năm ${selectedYear},${yearlyData.totalYearRevenue},,\n`;
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `BaoCao_DoanhThu_${selectedYear}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const headers = [
+            "Tháng",
+            "Doanh Thu (VNĐ)",
+            "Số Đơn Giao Thành Công",
+            "Tổng Đơn Phát Sinh",
+        ];
+        const rows = yearlyData.months.map((m) => [
+            `${m.name}/${selectedYear}`,
+            m.revenue,
+            m.deliveredOrders,
+            m.totalOrders,
+        ]);
+        rows.push([
+            `Tổng Năm ${selectedYear}`,
+            yearlyData.totalYearRevenue,
+            "",
+            "",
+        ]);
+        exportToCSV(
+            `BaoCao_DoanhThu_${selectedYear}.csv`,
+            headers,
+            rows,
+            showToast,
+        );
     };
 
     // 6. PHÂN BỔ TRẠNG THÁI ĐƠN HÀNG (DONUT SVG)
@@ -486,12 +506,12 @@ export const AdminHome = ({
                 <div className="admin-chart-box">
                     <div className="admin-chart-header">
                         <div className="admin-chart-header-left">
-                            <TrendingUp size={18} color="#2563eb" />
+                            <TrendingUp size={18} color="#ef4444" />
                             <h3 className="admin-chart-title">
                                 Doanh thu 12 tháng - Năm {selectedYear}
                             </h3>
                         </div>
-                        <span className="admin-chart-header-tag blue">
+                        <span className="admin-chart-header-tag red">
                             Tổng:{" "}
                             {yearlyData.totalYearRevenue.toLocaleString(
                                 "vi-VN",
@@ -509,52 +529,34 @@ export const AdminHome = ({
                                       Math.round(
                                           (m.revenue / yearlyData.maxRev) * 100,
                                       ),
-                                      12,
+                                      14,
                                   )
                                 : 4;
 
                             return (
                                 <div
                                     key={m.name}
-                                    className="admin-bar-col"
+                                    className={`admin-bar-col ${isSelected ? "selected" : ""}`}
                                     onClick={() => setSelectedMonth(m.month)}
-                                    style={{ cursor: "pointer" }}
-                                    title={`Nhấp để xem chi tiết Tháng ${m.month}`}
+                                    title={`Tháng ${m.month}/${selectedYear}: ${m.revenue.toLocaleString("vi-VN")} đ (${m.deliveredOrders} đơn hoàn thành / ${m.totalOrders} tổng đơn) - Nhấp để xem tuần`}
                                 >
-                                    {hasRevenue && (
+                                    {hasRevenue ? (
                                         <span className="admin-bar-val">
                                             {m.revenue >= 1000000
                                                 ? `${(m.revenue / 1000000).toFixed(1)}M`
                                                 : `${Math.round(m.revenue / 1000)}k`}
                                         </span>
+                                    ) : (
+                                        <span className="admin-bar-val zero">0</span>
                                     )}
                                     <div
-                                        title={`${m.name}/${selectedYear}: ${m.revenue.toLocaleString("vi-VN")} đ (${m.deliveredOrders} đơn giao) - Click để xem tuần`}
-                                        className={`admin-bar-shape ${hasRevenue ? "has-revenue" : "zero-revenue"}`}
+                                        className={`admin-bar-shape ${hasRevenue ? "has-revenue" : "zero-revenue"} ${isSelected ? "active" : ""}`}
                                         style={{
                                             height: `${h}%`,
-                                            border: isSelected
-                                                ? "2px solid #ea580c"
-                                                : "none",
-                                            boxShadow: isSelected
-                                                ? "0 0 8px rgba(234, 88, 12, 0.4)"
-                                                : "none",
-                                            transform: isSelected
-                                                ? "scaleY(1.04)"
-                                                : "none",
-                                            transformOrigin: "bottom",
                                         }}
                                     />
                                     <span
-                                        className={`admin-bar-label ${hasRevenue ? "active" : "inactive"}`}
-                                        style={{
-                                            fontWeight: isSelected
-                                                ? "700"
-                                                : undefined,
-                                            color: isSelected
-                                                ? "#ea580c"
-                                                : undefined,
-                                        }}
+                                        className={`admin-bar-label ${hasRevenue ? "active" : "inactive"} ${isSelected ? "selected" : ""}`}
                                     >
                                         {m.name} {isSelected && "•"}
                                     </span>
@@ -562,10 +564,9 @@ export const AdminHome = ({
                             );
                         })}
                     </div>
-                    <div style={{ textAlign: "right", marginTop: "6px" }}>
-                        <span style={{ fontSize: "11px", color: "#94a3b8" }}>
-                            💡 Nhấp vào từng cột tháng để xem thống kê theo tuần
-                            bên cạnh
+                    <div className="admin-bar-chart-note">
+                        <span>
+                            💡 Nhấp vào từng cột tháng để xem thống kê theo tuần chi tiết bên cạnh (Dữ liệu từ đơn hàng thực tế)
                         </span>
                     </div>
                 </div>
