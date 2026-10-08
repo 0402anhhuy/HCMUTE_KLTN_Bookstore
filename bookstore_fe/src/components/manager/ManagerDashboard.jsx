@@ -233,7 +233,7 @@ const ManagerDashboard = () => {
                 className={`manager-nav-item ${isActive ? 'active' : ''}`}
               >
                 {isActive && <div className="manager-nav-indicator" />}
-                <Icon size={18} style={{ color: isActive ? '#059669' : '#64748b', flexShrink: 0 }} />
+                <Icon size={18} style={{ color: isActive ? '#7c3aed' : '#64748b', flexShrink: 0 }} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -310,7 +310,7 @@ const ManagerDashboard = () => {
                       {unreadCount > 0 && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); markAllNotificationsAsRead(); }}
-                          style={{ fontSize: '0.75rem', color: '#059669', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                          style={{ fontSize: '0.75rem', color: '#7c3aed', border: 'none', background: 'none', cursor: 'pointer', fontWeight: 600, padding: 0 }}
                         >
                           Đã đọc tất cả
                         </button>
@@ -336,13 +336,13 @@ const ManagerDashboard = () => {
                           style={{
                             padding: '12px 18px',
                             borderBottom: '1px solid var(--mgr-border-light)',
-                            backgroundColor: n.read ? '#ffffff' : '#f0fdf4',
+                            backgroundColor: n.read ? '#ffffff' : '#f5f3ff',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s',
                             textAlign: 'left'
                           }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = n.read ? '#f8fafc' : '#dcfce7'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = n.read ? '#ffffff' : '#f0fdf4'}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = n.read ? '#f8fafc' : '#ede9fe'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = n.read ? '#ffffff' : '#f5f3ff'}
                         >
                           <div style={{ 
                             fontWeight: n.read ? 600 : 700, 

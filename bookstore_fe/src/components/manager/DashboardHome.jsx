@@ -83,12 +83,12 @@ const DashboardHome = ({ user, products = [], orders = [] }) => {
               width: '42px',
               height: '42px',
               borderRadius: 'var(--mgr-radius-md)',
-              backgroundColor: 'var(--mgr-emerald-light)',
-              color: 'var(--mgr-emerald-dark)',
+              backgroundColor: 'var(--mgr-primary-light)',
+              color: 'var(--mgr-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid var(--mgr-emerald-border)'
+              border: '1px solid var(--mgr-primary-border)'
             }}>
               <Wallet size={20} />
             </div>
@@ -270,7 +270,7 @@ const DashboardHome = ({ user, products = [], orders = [] }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h2 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--mgr-text-dark)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <TrendingUp size={20} style={{ color: 'var(--mgr-emerald-dark)' }} />
+              <TrendingUp size={20} style={{ color: 'var(--mgr-primary)' }} />
               Biểu đồ doanh thu theo tuần
             </h2>
             <p style={{ fontSize: '0.8rem', color: 'var(--mgr-text-muted)', margin: '4px 0 0' }}>
@@ -280,7 +280,7 @@ const DashboardHome = ({ user, products = [], orders = [] }) => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
-              <div style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: 'var(--mgr-emerald)' }} />
+              <div style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: 'var(--mgr-primary)' }} />
               <span style={{ color: 'var(--mgr-text-main)', fontWeight: 600 }}>Đơn thành công</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
@@ -307,7 +307,7 @@ const DashboardHome = ({ user, products = [], orders = [] }) => {
                   style={{
                     height: `${(bar.success / 150) * 100}%`,
                     width: '28px',
-                    background: 'linear-gradient(to top, var(--mgr-primary) 0%, var(--mgr-emerald) 100%)',
+                    background: 'linear-gradient(to top, var(--mgr-primary-dark) 0%, var(--mgr-primary) 100%)',
                     borderRadius: '6px 6px 0 0',
                     transition: 'height 0.3s ease',
                     position: 'relative',
@@ -338,7 +338,7 @@ const DashboardHome = ({ user, products = [], orders = [] }) => {
 
         {/* Footer insight */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', flexWrap: 'wrap', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.825rem', color: 'var(--mgr-emerald-dark)', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.825rem', color: 'var(--mgr-primary)', fontWeight: 600 }}>
             <Sparkles size={16} />
             <span>Tỷ lệ hoàn thành đơn đạt đỉnh 88% vào Tuần 5</span>
           </div>

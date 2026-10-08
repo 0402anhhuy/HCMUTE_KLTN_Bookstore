@@ -1,27 +1,50 @@
 /* ==========================================================================
    Manager Dashboard Design System & Layout
-   Theme: Bookstore Emerald & Deep Forest Green
+   Theme: Role Manager Signature Violet / Purple (#7c3aed)
    Standard: Dual-Device (Laptop 1366-1440px & iPhone 14 Pro Max 430px)
    ========================================================================== */
 
 :root {
-  --mgr-primary: #0a422d;
-  --mgr-primary-hover: #072e20;
-  --mgr-emerald: #10b981;
-  --mgr-emerald-dark: #059669;
-  --mgr-emerald-light: #ecfdf5;
-  --mgr-emerald-border: #a7f3d0;
+  /* Manager Role Signature Color Palette (Violet / Purple) */
+  --mgr-primary: #7c3aed;
+  --mgr-primary-hover: #6d28d9;
+  --mgr-primary-dark: #5b21b6;
+  --mgr-primary-light: #f5f3ff;
+  --mgr-primary-border: #ddd6fe;
   
+  --mgr-accent: #8b5cf6;
+  --mgr-accent-light: #ede9fe;
+  
+  /* Status Colors */
+  --mgr-success: #10b981;
+  --mgr-success-light: #ecfdf5;
+  --mgr-success-border: #a7f3d0;
+  
+  --mgr-info: #3b82f6;
+  --mgr-info-light: #eff6ff;
+  --mgr-info-border: #bfdbfe;
+  
+  --mgr-warning: #f59e0b;
+  --mgr-warning-light: #fffbeb;
+  --mgr-warning-border: #fde68a;
+  
+  --mgr-danger: #ef4444;
+  --mgr-danger-light: #fef2f2;
+  --mgr-danger-border: #fecaca;
+  
+  /* Typography & Neutral Colors */
   --mgr-text-dark: #0f172a;
   --mgr-text-main: #334155;
   --mgr-text-muted: #64748b;
   --mgr-text-light: #94a3b8;
   
+  /* Backgrounds & Borders */
   --mgr-bg-app: #f8fafc;
   --mgr-bg-card: #ffffff;
   --mgr-border: #e2e8f0;
   --mgr-border-light: #f1f5f9;
   
+  /* Radii & Shadows */
   --mgr-radius-sm: 8px;
   --mgr-radius-md: 12px;
   --mgr-radius-lg: 16px;
@@ -82,12 +105,12 @@
   width: 38px;
   height: 38px;
   border-radius: var(--mgr-radius-md);
-  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-emerald) 100%);
+  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-accent) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.28);
 }
 
 .manager-brand-title {
@@ -105,11 +128,11 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background-color: var(--mgr-emerald-light);
-  color: var(--mgr-emerald-dark);
+  background-color: var(--mgr-primary-light);
+  color: var(--mgr-primary);
   padding: 2px 7px;
   border-radius: var(--mgr-radius-full);
-  border: 1px solid var(--mgr-emerald-border);
+  border: 1px solid var(--mgr-primary-border);
 }
 
 .manager-brand-subtitle {
@@ -168,10 +191,10 @@
 }
 
 .manager-nav-item.active {
-  background: linear-gradient(135deg, var(--mgr-emerald-light) 0%, #f0fdf4 100%);
-  color: var(--mgr-emerald-dark);
+  background: linear-gradient(135deg, var(--mgr-primary-light) 0%, #faf5ff 100%);
+  color: var(--mgr-primary);
   font-weight: 700;
-  border: 1px solid var(--mgr-emerald-border);
+  border: 1px solid var(--mgr-primary-border);
 }
 
 .manager-nav-item.active .manager-nav-indicator {
@@ -180,7 +203,7 @@
   top: 10px;
   bottom: 10px;
   width: 4px;
-  background: linear-gradient(to bottom, var(--mgr-emerald), var(--mgr-emerald-dark));
+  background: linear-gradient(to bottom, var(--mgr-primary), var(--mgr-primary-dark));
   border-radius: 0 4px 4px 0;
 }
 
@@ -305,9 +328,9 @@
 }
 
 .manager-icon-circle-btn:hover {
-  background-color: var(--mgr-emerald-light);
-  color: var(--mgr-emerald-dark);
-  border-color: var(--mgr-emerald-border);
+  background-color: var(--mgr-primary-light);
+  color: var(--mgr-primary);
+  border-color: var(--mgr-primary-border);
 }
 
 .manager-notif-btn {
@@ -387,14 +410,14 @@
   width: 32px;
   height: 32px;
   border-radius: var(--mgr-radius-full);
-  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-emerald) 100%);
+  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-accent) 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
-  box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 2px 5px rgba(124, 58, 237, 0.25);
 }
 
 .manager-user-name {
@@ -454,20 +477,20 @@
   padding: 10px 18px;
   border-radius: var(--mgr-radius-md);
   border: none;
-  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-emerald-dark) 100%);
+  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-primary-hover) 100%);
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(10, 66, 45, 0.15);
+  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.25);
   text-decoration: none;
 }
 
 .manager-btn-primary:hover {
   opacity: 0.95;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(10, 66, 45, 0.2);
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.35);
 }
 
 .manager-btn-secondary {
@@ -529,8 +552,8 @@
 
 .manager-input:focus,
 .manager-select:focus {
-  border-color: var(--mgr-emerald);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: var(--mgr-primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
 /* ==========================================================================
@@ -663,6 +686,12 @@
   line-height: 1.2;
 }
 
+.manager-badge-purple {
+  background-color: var(--mgr-primary-light);
+  color: var(--mgr-primary);
+  border: 1px solid var(--mgr-primary-border);
+}
+
 .manager-badge-emerald {
   background-color: #ecfdf5;
   color: #059669;
@@ -673,12 +702,6 @@
   background-color: #eff6ff;
   color: #2563eb;
   border: 1px solid #bfdbfe;
-}
-
-.manager-badge-purple {
-  background-color: #f5f3ff;
-  color: #7c3aed;
-  border: 1px solid #ddd6fe;
 }
 
 .manager-badge-indigo {
@@ -739,12 +762,12 @@
 }
 
 .manager-page-btn:hover:not(:disabled) {
-  border-color: var(--mgr-emerald);
-  color: var(--mgr-emerald-dark);
+  border-color: var(--mgr-primary);
+  color: var(--mgr-primary);
 }
 
 .manager-page-btn.active {
-  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-emerald-dark) 100%);
+  background: linear-gradient(135deg, var(--mgr-primary) 0%, var(--mgr-primary-hover) 100%);
   color: #ffffff;
   border-color: transparent;
 }
