@@ -11,6 +11,7 @@ import {
     AlertTriangle,
     Download,
     Target,
+    Info,
 } from "lucide-react";
 import { exportToCSV } from "@/utils/exportUtils";
 import "./AdminHome.css";
@@ -335,7 +336,7 @@ export const AdminHome = ({
             <div className="admin-home-topbar">
                 <div>
                     <h2 className="admin-home-title">
-                        Trung tâm kiểm soát dữ liệu 👋
+                        Trung tâm kiểm soát dữ liệu
                     </h2>
                     <p className="admin-home-desc">
                         Báo cáo phân tích doanh thu theo năm, tuần và trạng thái
@@ -428,7 +429,7 @@ export const AdminHome = ({
                     <span>
                         {kpiProgress.remaining > 0
                             ? `Còn thiếu ${kpiProgress.remaining.toLocaleString("vi-VN")} đ để đạt KPI`
-                            : "🎉 Đã hoàn thành chỉ tiêu tháng!"}
+                            : "Đã hoàn thành chỉ tiêu tháng!"}
                     </span>
                 </div>
             </div>
@@ -565,8 +566,9 @@ export const AdminHome = ({
                         })}
                     </div>
                     <div className="admin-bar-chart-note">
+                        <Info size={13} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "4px" }} />
                         <span>
-                            💡 Nhấp vào từng cột tháng để xem thống kê theo tuần chi tiết bên cạnh (Dữ liệu từ đơn hàng thực tế)
+                            Nhấp vào từng cột tháng để xem thống kê theo tuần chi tiết bên cạnh
                         </span>
                     </div>
                 </div>
