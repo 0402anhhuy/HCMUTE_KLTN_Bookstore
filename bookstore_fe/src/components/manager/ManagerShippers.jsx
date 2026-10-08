@@ -230,7 +230,7 @@ const ManagerShippers = ({ shippers = [], orders = [], loadData }) => {
             boxShadow: 'var(--mgr-shadow-xs)'
           }}>
             <Truck size={15} style={{ color: 'var(--mgr-primary)' }} />
-            <span style={{ fontSize: '0.8rem', color: 'var(--mgr-text-muted)', fontWeight: 600 }}>Tổng số:</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--mgr-text-muted)', fontWeight: 600 }}>Tổng shipper:</span>
             <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--mgr-text-dark)' }}>{totalShippers}</span>
           </div>
 
@@ -245,8 +245,23 @@ const ManagerShippers = ({ shippers = [], orders = [], loadData }) => {
             color: 'var(--mgr-success)'
           }}>
             <UserCheck size={15} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Hoạt động:</span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Đang hoạt động:</span>
             <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>{activeShippers}</span>
+          </div>
+
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '8px 12px',
+            borderRadius: 'var(--mgr-radius-md)',
+            backgroundColor: '#e0f2fe',
+            border: '1px solid #bae6fd',
+            color: '#0284c7'
+          }}>
+            <Package size={15} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Đơn đang giao:</span>
+            <span style={{ fontSize: '0.9rem', fontWeight: 800 }}>{orders.filter(o => o.status === 'shipping').length}</span>
           </div>
 
           <button
