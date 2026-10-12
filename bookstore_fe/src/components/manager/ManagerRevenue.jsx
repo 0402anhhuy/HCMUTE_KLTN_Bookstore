@@ -34,6 +34,18 @@ const ManagerRevenue = ({ user, orders }) => {
       showToast('Vui lòng chọn khoảng thời gian báo cáo!', 'error');
       return;
     }
+
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    if (startDate > todayStr) {
+      showToast('Ngày bắt đầu lớn hơn thời gian hiện tại', 'error');
+      return;
+    }
+    if (endDate > todayStr) {
+      showToast('Ngày kết thúc lớn hơn thời gian hiện tại', 'error');
+      return;
+    }
     if (new Date(startDate) > new Date(endDate)) {
       showToast('Ngày bắt đầu không được lớn hơn ngày kết thúc!', 'error');
       return;
