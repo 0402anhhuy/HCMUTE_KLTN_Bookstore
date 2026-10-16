@@ -813,6 +813,9 @@ public class OrderService {
             String shipperDesc = order.getShipper().getFullName() + (order.getShipper().getVehicle() != null ? " (" + order.getShipper().getVehicle() + ")" : "");
             throw new RuntimeException("Đơn hàng đang giao và đã được gán cho shipper \"" + shipperDesc + "\"");
         }
+        if (order.getStatus() == Order.OrderStatus.cancelled) {
+            throw new RuntimeException("Không được chọn thông tin shipper ở đơn hàng đã giao thành công");
+        }
         Shipper shipper = shipperRepository.findById(shipperId)
                 .orElseThrow(() -> new RuntimeException("Shipper không tồn tại"));
         order.setShipper(shipper);
