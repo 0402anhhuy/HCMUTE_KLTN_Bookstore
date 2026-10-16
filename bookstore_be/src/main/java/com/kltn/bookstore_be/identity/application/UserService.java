@@ -135,6 +135,10 @@ public class UserService {
             return false;
         }
 
+        if (user.getPasswordHash() != null && passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu mới không được trùng với mật khẩu cũ");
+        }
+
         // Update Password
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
@@ -219,6 +223,12 @@ public class UserService {
     public User createUserByAdmin(AdminCreateUserRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email đã tồn tại trong hệ thống");
+        }
+
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
+                throw new RuntimeException("Số điện thoại không hợp lệ");
+            }
         }
 
         User user = User.builder()

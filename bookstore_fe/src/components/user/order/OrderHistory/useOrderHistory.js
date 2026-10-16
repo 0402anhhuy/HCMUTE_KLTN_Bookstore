@@ -292,17 +292,41 @@ export const useOrderHistory = () => {
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "";
-        const date = new Date(dateStr);
+        const normalizedStr =
+            typeof dateStr === "string" &&
+            !dateStr.endsWith("Z") &&
+            !/[+-]\d{2}:\d{2}$/.test(dateStr)
+                ? `${dateStr}Z`
+                : dateStr;
+        const date = new Date(normalizedStr);
+        if (isNaN(date.getTime())) {
+            const fallbackDate = new Date(dateStr);
+            if (isNaN(fallbackDate.getTime())) return dateStr;
+            return (
+                fallbackDate.toLocaleDateString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                }) +
+                " " +
+                fallbackDate.toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                })
+            );
+        }
         return (
             date.toLocaleDateString("vi-VN", {
                 day: "2-digit",
                 month: "2-digit",
                 year: "numeric",
+                timeZone: "Asia/Ho_Chi_Minh",
             }) +
             " " +
             date.toLocaleTimeString("vi-VN", {
                 hour: "2-digit",
                 minute: "2-digit",
+                timeZone: "Asia/Ho_Chi_Minh",
             })
         );
     };
@@ -316,15 +340,15 @@ export const useOrderHistory = () => {
             case "preparing":
                 return "Đang đóng gói";
             case "shipping":
-                return "Đang vận chuyển";
+                return "Đang giao";
             case "delivered":
-                return "Giao hàng thành công";
+                return "Hoàn thành";
             case "cancelled":
                 return "Đã hủy";
             case "cancel_requested":
                 return "Yêu cầu đổi trả";
             case "refunded":
-                return "Đã hoàn tiền";
+                return "Trả hàng";
             default:
                 return status;
         }
@@ -361,20 +385,21 @@ export const useOrderHistory = () => {
     const tabs = [
         { id: "ALL", label: "Tất cả" },
         { id: "pending", label: "Chờ xác nhận" },
+        { id: "preparing", label: "Đang đóng gói" },
         { id: "shipping", label: "Đang giao" },
         { id: "delivered", label: "Hoàn thành" },
         { id: "cancelled", label: "Đã hủy" },
+        { id: "refunded", label: "Trả hàng" },
     ];
 
     const filteredOrders = orders.filter((o) => {
         if (activeTab === "ALL") return true;
-        if (
-            activeTab === "shipping" &&
-            (o.status === "confirmed" ||
-                o.status === "preparing" ||
-                o.status === "shipping")
-        )
-            return true;
+        if (activeTab === "preparing") {
+            return o.status === "confirmed" || o.status === "preparing";
+        }
+        if (activeTab === "refunded") {
+            return o.status === "refunded" || o.status === "cancel_requested";
+        }
         return o.status === activeTab;
     });
 

@@ -32,12 +32,14 @@ public class BookstoreBeApplication {
 	}
 
 	@Bean
+	@org.springframework.core.annotation.Order(1)
 	public CommandLineRunner schemaUpdater(JdbcTemplate jdbcTemplate) {
 		return args -> {
 			try {
-				System.out.println("Executing schema migration: updating payment_method columns to VARCHAR(50)...");
+				System.out.println("Executing schema migration: updating payment_method and discount_type columns to VARCHAR(50)...");
 				jdbcTemplate.execute("ALTER TABLE orders MODIFY COLUMN payment_method VARCHAR(50) NOT NULL;");
 				jdbcTemplate.execute("ALTER TABLE payments MODIFY COLUMN payment_method VARCHAR(50) NOT NULL;");
+				jdbcTemplate.execute("ALTER TABLE coupon_codes MODIFY COLUMN discount_type VARCHAR(50) NOT NULL;");
 				System.out.println("Schema migration executed successfully!");
 			} catch (Exception e) {
 				System.out.println("Schema migration skipped or failed (might already be applied): " + e.getMessage());

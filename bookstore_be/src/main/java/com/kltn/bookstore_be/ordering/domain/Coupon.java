@@ -30,7 +30,7 @@ public class Coupon {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "discount_type", nullable = false)
+    @Column(name = "discount_type", nullable = false, length = 50)
     private DiscountType discountType;
 
     @Column(name = "discount_value", nullable = false, precision = 12, scale = 2)
@@ -69,7 +69,7 @@ public class Coupon {
     }
 
     public enum DiscountType {
-        PERCENT, FIXED
+        PERCENT, FIXED, FREESHIP
     }
 
     public enum CouponStatus {

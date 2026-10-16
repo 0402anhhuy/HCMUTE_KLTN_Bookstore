@@ -63,6 +63,7 @@ export const useHome = () => {
     );
     const [timeLeft, setTimeLeft] = useState(getTimeLeft(flashSaleEndsAt));
     const [flashSalePage, setFlashSalePage] = useState(1);
+    const [rawPublishers, setRawPublishers] = useState([]);
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -70,6 +71,17 @@ export const useHome = () => {
             setCategories(response.data || []);
         } catch (e) {
             console.error("Failed to load categories:", e);
+        }
+    }, []);
+
+    const fetchPublishers = useCallback(async () => {
+        try {
+            const response = await api.get("/products/publishers");
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                setRawPublishers(response.data);
+            }
+        } catch (e) {
+            console.error("Failed to load publishers:", e);
         }
     }, []);
 
@@ -124,9 +136,10 @@ export const useHome = () => {
         const timer = window.setTimeout(() => {
             fetchCategories();
             fetchActivePromotions();
+            fetchPublishers();
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [fetchCategories, fetchActivePromotions]);
+    }, [fetchCategories, fetchActivePromotions, fetchPublishers]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -299,21 +312,28 @@ export const useHome = () => {
         [categories],
     );
 
-    // Thêm danh sách nhà xuất bản / đối tác:
-    const publishers = [
-        { id: 'dinh-ti', name: 'Đinh Tị Books', shortName: 'ĐINH TỊ' },
-        { id: 'vinh-thinh', name: 'Vĩnh Thịnh', shortName: 'VĨNH THỊNH' },
-        { id: 'deli', name: 'Deli', shortName: 'deli', highlight: true },
-        { id: 'tan-viet', name: 'Tân Việt Books', shortName: 'TÂN VIỆT' },
-        { id: 'fbmn', name: 'Futurebook', shortName: 'FBMN' },
-        { id: 'dong-a', name: 'Đông A', shortName: 'ĐÔNG A' },
-        { id: 'sworld', name: 'SWorld', shortName: 'SWORLD' },
-        { id: 'huy-hoang', name: 'Huy Hoàng Bookstore', shortName: 'HUY HOÀNG' },
-        { id: 'thien-long', name: 'Thiên Long', shortName: 'THIÊN LONG' },
-    ];
+    // Danh sách nhà xuất bản / đối tác tải động từ database:
+    const publishers = useMemo(() => {
+        const list = rawPublishers.length > 0
+            ? rawPublishers
+            : Array.from(new Set(products.map((p) => p.publisher).filter(Boolean)));
+
+        return list.map((name, index) => {
+            const cleanShort = name
+                .replace(/^(NXB|Nhà xuất bản)\s+/i, "")
+                .trim()
+                .toUpperCase();
+            return {
+                id: `pub-${index}`,
+                name: name.trim(),
+                shortName: cleanShort || name.trim().toUpperCase(),
+                highlight: index === 0,
+            };
+        });
+    }, [rawPublishers, products]);
 
     const handlePublisherClick = (publisherName) => {
-        navigate(`/?keyword=${encodeURIComponent(publisherName)}`);
+        navigate(`/catalog?publisher=${encodeURIComponent(publisherName)}`);
     };
 
     return {

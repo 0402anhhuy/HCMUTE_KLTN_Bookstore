@@ -1,0 +1,7 @@
+# AI Agent skills & context
+.agents/
+.aider-desk/
+skills-lock.json
+CONTEXT.md
+AGENTS.md
+scripts/

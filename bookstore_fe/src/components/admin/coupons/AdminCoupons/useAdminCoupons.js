@@ -139,6 +139,13 @@ export const useAdminCoupons = ({ coupons = [], loadData, showToast }) => {
         return matchSearch && matchStatus && matchType;
     });
 
+    const stats = {
+        total: coupons.length,
+        active: coupons.filter((c) => c.status === "ACTIVE").length,
+        inactive: coupons.filter((c) => c.status !== "ACTIVE").length,
+        totalUsed: coupons.reduce((sum, c) => sum + (c.usedCount || 0), 0),
+    };
+
     return {
         activeSubTab,
         setActiveSubTab,
@@ -162,5 +169,6 @@ export const useAdminCoupons = ({ coupons = [], loadData, showToast }) => {
         handleCreateCoupon,
         handleDeleteCoupon,
         handleResetFilter,
+        stats,
     };
 };

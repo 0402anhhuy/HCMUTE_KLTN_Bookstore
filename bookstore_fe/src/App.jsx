@@ -41,6 +41,11 @@ function AppContent() {
         }
     }, [user, appLoading, isAdminPage, isManagerPage, navigate]);
 
+    // Cuộn lên đầu trang mỗi khi chuyển route, khắc phục lỗi bị giữ scroll ở chân trang footer trên mobile
+    useEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }, [location.pathname]);
+
     return (
         <div
             style={{
