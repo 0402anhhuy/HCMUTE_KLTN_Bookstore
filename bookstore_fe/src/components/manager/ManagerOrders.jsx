@@ -69,13 +69,21 @@ const ManagerOrders = ({ orders, shippers, loadData }) => {
 
   const handleAssignShipper = async (orderId, shipperId) => {
     if (!shipperId) return;
+
+    const order = orders?.find(o => o.id === orderId) || (orderDetails?.order?.id === orderId ? orderDetails.order : null);
+    if (order && order.status === 'delivered') {
+      showToast('Không được chọn thông tin shipper ở đơn hàng đã giao thành công', 'error');
+      loadData();
+      return;
+    }
+
     try {
       await api.post(`/orders/${orderId}/assign-shipper?shipperId=${shipperId}`);
       showToast('Phân công shipper thành công!', 'success');
       loadData();
     } catch (error) {
       console.error(error);
-      showToast('Lỗi khi phân công shipper!', 'error');
+      showToast(error.response?.data?.error || 'Lỗi khi phân công shipper!', 'error');
     }
   };
 
