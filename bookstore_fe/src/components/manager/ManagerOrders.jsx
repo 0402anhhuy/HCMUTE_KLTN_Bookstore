@@ -105,6 +105,12 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
       return;
     }
 
+    if (order && order.status === 'cancelled') {
+      showToast('Không được chọn thông tin shipper ở đơn hàng đã giao thành công', 'error');
+      loadData();
+      return;
+    }
+
     try {
       await api.post(`/orders/${orderId}/assign-shipper?shipperId=${shipperId}`);
       showToast('Phân công shipper thành công!', 'success');
