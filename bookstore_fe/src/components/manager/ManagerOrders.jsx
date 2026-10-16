@@ -99,6 +99,12 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
       return;
     }
 
+    if (order && order.status === 'delivered') {
+      showToast('Không được chọn thông tin shipper ở đơn hàng đã giao thành công', 'error');
+      loadData();
+      return;
+    }
+
     if (order && order.status === 'cancelled') {
       showToast('Không được chọn thông tin shipper ở đơn hàng đã giao thành công', 'error');
       loadData();
