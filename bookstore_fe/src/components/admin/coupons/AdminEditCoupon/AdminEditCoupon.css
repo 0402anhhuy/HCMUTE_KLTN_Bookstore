@@ -1,32 +1,65 @@
+/* ==========================================================================
+   AdminEditCoupon.css - Red Crimson Admin Design System
+   ========================================================================== */
+
+:root {
+    --adm-primary: #ef4444;
+    --adm-primary-hover: #dc2626;
+    --adm-primary-subtle: #fef2f2;
+    --adm-primary-border: #fecaca;
+    --adm-text-main: #0f172a;
+    --adm-text-muted: #64748b;
+    --adm-border: #e2e8f0;
+    --adm-radius-lg: 16px;
+    --adm-radius-md: 10px;
+    --adm-radius-sm: 6px;
+    --adm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 .admin-edit-coupon-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(15, 23, 42, 0.4);
+    background-color: rgba(15, 23, 42, 0.45);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2000;
+    padding: 16px;
+    font-family: var(--adm-font);
 }
 
 .admin-edit-coupon-modal {
     background-color: #ffffff;
-    border-radius: 16px;
+    border-radius: var(--adm-radius-lg);
     width: 800px;
-    max-width: 95vw;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border: 1px solid var(--adm-border);
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 /* Header */
 .admin-edit-coupon-header {
     padding: 20px 24px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--adm-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -36,25 +69,26 @@
 .admin-edit-coupon-title {
     margin: 0;
     font-size: 1.25rem;
-    color: #0f172a;
-    font-weight: 700;
+    color: var(--adm-text-main);
+    font-weight: 800;
 }
 
 .admin-edit-coupon-close-btn {
     background: none;
-    border: none;
+    border: 1px solid var(--adm-border);
     padding: 6px;
     cursor: pointer;
-    border-radius: 50%;
+    border-radius: var(--adm-radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
-    transition: background-color 0.2s;
+    color: var(--adm-text-muted);
+    transition: all 0.15s ease;
 }
 
 .admin-edit-coupon-close-btn:hover {
-    background-color: #e2e8f0;
+    background-color: #f1f5f9;
+    color: var(--adm-text-main);
 }
 
 /* Form */
@@ -63,47 +97,86 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-height: calc(85vh - 120px);
+    overflow-y: auto;
 }
 
 .admin-edit-coupon-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
 }
 
 .admin-edit-coupon-label {
     display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 700;
     color: #475569;
     margin-bottom: 6px;
 }
 
 .admin-edit-coupon-input-code {
     width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    font-weight: 700;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: var(--adm-radius-md);
+    border: 1px solid var(--adm-border);
+    font-weight: 800;
     text-transform: uppercase;
+    font-family: monospace;
+    font-size: 0.95rem;
+    background-color: #f8fafc;
+    color: var(--adm-primary);
     box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.admin-edit-coupon-input-code:focus {
+    background-color: #ffffff;
+    border-color: var(--adm-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
 }
 
 .admin-edit-coupon-select {
     width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background-color: #fff;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: var(--adm-radius-md);
+    border: 1px solid var(--adm-border);
+    background-color: #f8fafc;
+    color: var(--adm-text-main);
+    font-size: 0.9rem;
     box-sizing: border-box;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-edit-coupon-select:focus {
+    background-color: #ffffff;
+    border-color: var(--adm-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
 }
 
 .admin-edit-coupon-input {
     width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: var(--adm-radius-md);
+    border: 1px solid var(--adm-border);
+    font-size: 0.9rem;
+    background-color: #f8fafc;
+    color: var(--adm-text-main);
     box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.admin-edit-coupon-input:focus {
+    background-color: #ffffff;
+    border-color: var(--adm-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
 }
 
 /* Footer / Actions */
@@ -111,27 +184,53 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 16px;
+    border-top: 1px solid var(--adm-border);
+    padding-top: 18px;
     margin-top: 8px;
 }
 
 .admin-edit-coupon-btn-cancel {
-    padding: 9px 24px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
+    padding: 10px 22px;
+    border-radius: var(--adm-radius-md);
+    border: 1px solid var(--adm-border);
     background-color: #ffffff;
-    color: #475569;
+    color: var(--adm-text-muted);
     font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-edit-coupon-btn-cancel:hover {
+    background-color: #f1f5f9;
+    color: var(--adm-text-main);
 }
 
 .admin-edit-coupon-btn-submit {
-    padding: 9px 24px;
-    border-radius: 8px;
+    padding: 10px 26px;
+    border-radius: var(--adm-radius-md);
     border: none;
-    background-color: #3b82f6;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: #ffffff;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.9rem;
     cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.25);
+    transition: all 0.2s ease;
+}
+
+.admin-edit-coupon-btn-submit:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+@media (max-width: 640px) {
+    .admin-edit-coupon-actions {
+        flex-direction: column-reverse;
+    }
+    .admin-edit-coupon-btn-cancel,
+    .admin-edit-coupon-btn-submit {
+        width: 100%;
+        min-height: 44px;
+        text-align: center;
+    }
 }

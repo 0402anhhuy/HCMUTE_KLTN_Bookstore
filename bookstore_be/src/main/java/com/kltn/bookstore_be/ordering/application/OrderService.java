@@ -42,6 +42,8 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -190,6 +192,8 @@ public class OrderService {
                 if (coupon.getMaxDiscountAmount() != null && couponDiscount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
                     couponDiscount = coupon.getMaxDiscountAmount();
                 }
+            } else if (coupon.getDiscountType() == Coupon.DiscountType.FREESHIP) {
+                couponDiscount = BigDecimal.ZERO;
             } else {
                 couponDiscount = coupon.getDiscountValue();
             }
@@ -202,8 +206,18 @@ public class OrderService {
                 ? request.getShippingAddress()
                 : dbUser.getAddress();
 
-        BigDecimal discountAmount = promotionDiscount.add(couponDiscount);
         BigDecimal shippingFee = calculateShippingFee(shippingAddress, totalAmount);
+        if (activeCoupon != null && activeCoupon.getDiscountType() == Coupon.DiscountType.FREESHIP) {
+            BigDecimal freeshipReduction = (activeCoupon.getDiscountValue() != null && activeCoupon.getDiscountValue().compareTo(BigDecimal.ZERO) > 0)
+                    ? activeCoupon.getDiscountValue().min(shippingFee)
+                    : shippingFee;
+            if (activeCoupon.getMaxDiscountAmount() != null && freeshipReduction.compareTo(activeCoupon.getMaxDiscountAmount()) > 0) {
+                freeshipReduction = activeCoupon.getMaxDiscountAmount();
+            }
+            couponDiscount = freeshipReduction;
+        }
+
+        BigDecimal discountAmount = promotionDiscount.add(couponDiscount);
 
         BigDecimal finalAmountBeforePoints = totalAmount.subtract(discountAmount).add(shippingFee);
         if (finalAmountBeforePoints.compareTo(BigDecimal.ZERO) < 0) {
@@ -411,13 +425,13 @@ public class OrderService {
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        ZoneId vnZone = ZoneId.of("Asia/Ho_Chi_Minh");
+        ZonedDateTime nowVN = ZonedDateTime.now(vnZone);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        vnp_Params.put("vnp_CreateDate", formatter.format(LocalDateTime.now()));
+        vnp_Params.put("vnp_CreateDate", formatter.format(nowVN));
         
-        cld.add(Calendar.MINUTE, 15);
-        // Expiration
-        vnp_Params.put("vnp_ExpireDate", formatter.format(LocalDateTime.now().plusMinutes(15)));
+        // Expiration (15 minutes from creation)
+        vnp_Params.put("vnp_ExpireDate", formatter.format(nowVN.plusMinutes(15)));
 
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
@@ -795,6 +809,10 @@ public class OrderService {
     @Transactional
     public void assignShipper(Long orderId, Long shipperId, User manager) {
         Order order = getOrderById(orderId);
+        if (order.getStatus() == Order.OrderStatus.shipping && order.getShipper() != null) {
+            String shipperDesc = order.getShipper().getFullName() + (order.getShipper().getVehicle() != null ? " (" + order.getShipper().getVehicle() + ")" : "");
+            throw new RuntimeException("Đơn hàng đang giao và đã được gán cho shipper \"" + shipperDesc + "\"");
+        }
         if (order.getStatus() == Order.OrderStatus.cancelled) {
             throw new RuntimeException("Không được chọn thông tin shipper ở đơn hàng đã giao thành công");
         }

@@ -32,7 +32,7 @@ export const useCheckout = () => {
     const [buyNowProduct, setBuyNowProduct] = useState(null);
     const [fetchingProduct, setFetchingProduct] = useState(!!productId);
 
-    // Lấy danh sách địa chỉ thực tế từ User profile (Không dùng mock)
+    // Lấy danh sách địa chỉ thực tế từ User profile
     const savedAddresses = useMemo(() => {
         if (!user || !user.address) return [];
         return user.address
@@ -45,7 +45,18 @@ export const useCheckout = () => {
     const [customAddress, setCustomAddress] = useState("");
     const [useCustomAddress, setUseCustomAddress] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("COD");
-    const [couponCode, setCouponCode] = useState(initialCoupon);
+    const [couponCode, setCouponCodeState] = useState(initialCoupon);
+    const [couponInput, setCouponInput] = useState(initialCoupon);
+    const isManualCouponRef = useRef(!!initialCoupon);
+
+    const setCouponCode = (code, isManual = true) => {
+        if (isManual) {
+            isManualCouponRef.current = true;
+        }
+        setCouponCodeState(code);
+        setCouponInput(code);
+    };
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -103,7 +114,6 @@ export const useCheckout = () => {
 
     useEffect(() => {
         if (user) {
-            // Nếu tài khoản chưa có địa chỉ nào được lưu, bật form nhập địa chỉ
             if (!user.address || savedAddresses.length === 0) {
                 setUseCustomAddress(true);
                 setRecipientName(user.fullName || "");
@@ -139,7 +149,7 @@ export const useCheckout = () => {
                     );
                     showToast?.(
                         err.response?.data?.error ||
-                            "Sản phẩm này không còn khả dụng hoặc đã được tạm ẩn.",
+                        "Sản phẩm này không còn khả dụng hoặc đã được tạm ẩn.",
                         "error",
                     );
                     setError("Không thể tải thông tin sản phẩm mua ngay.");
@@ -173,17 +183,17 @@ export const useCheckout = () => {
     const checkoutItems = buyNowProduct
         ? []
         : selectedCartItemIds.length > 0
-          ? (cart?.items || []).filter((item) =>
+            ? (cart?.items || []).filter((item) =>
                 selectedCartItemIds.includes(item.id),
             )
-          : cart?.items || [];
+            : cart?.items || [];
 
     const subtotal = buyNowProduct
         ? buyNowProduct.price * qty
         : checkoutItems.reduce(
-              (sum, item) => sum + item.product.price * item.quantity,
-              0,
-          );
+            (sum, item) => sum + item.product.price * item.quantity,
+            0,
+        );
 
     const getShippingFee = (address, amt) => {
         if (amt >= 500000) return 0;
@@ -305,9 +315,9 @@ export const useCheckout = () => {
         return 35000;
     };
 
-    const shippingFee = getShippingFee(addressOnly, subtotal);
+    const rawShippingFee = getShippingFee(addressOnly, subtotal);
 
-    const calculateDiscount = (coupon, currentSubtotal) => {
+    const calculateDiscount = (coupon, currentSubtotal, rawShipping = 30000) => {
         if (!coupon) return 0;
         if (currentSubtotal < coupon.minOrderValue) return 0;
 
@@ -321,17 +331,24 @@ export const useCheckout = () => {
                 disc = coupon.maxDiscountAmount;
             }
             return disc;
+        } else if (coupon.discountType === "FREESHIP") {
+            let val = coupon.discountValue || rawShipping;
+            let disc = Math.min(rawShipping, val);
+            if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
+                disc = coupon.maxDiscountAmount;
+            }
+            return disc;
         } else {
             return coupon.discountValue;
         }
     };
 
     useEffect(() => {
-        if (coupons.length > 0) {
+        if (coupons.length > 0 && !isManualCouponRef.current && !couponCode) {
             let maxDisc = 0;
             let best = null;
             coupons.forEach((c) => {
-                const disc = calculateDiscount(c, subtotal);
+                const disc = calculateDiscount(c, subtotal, rawShippingFee);
                 if (disc > maxDisc) {
                     maxDisc = disc;
                     best = c;
@@ -339,19 +356,27 @@ export const useCheckout = () => {
             });
             if (best) {
                 setBestCoupon(best);
-                setCouponCode(best.code);
+                setCouponCodeState(best.code);
+                setCouponInput(best.code);
             }
         }
-    }, [coupons, subtotal]);
+    }, [coupons, subtotal, couponCode, rawShippingFee]);
 
     const activeCouponObj = coupons.find((c) => c.code === couponCode);
-    const couponDiscount = calculateDiscount(activeCouponObj, subtotal);
+    const couponDiscount = calculateDiscount(activeCouponObj, subtotal, rawShippingFee);
+    const isFreeshipCoupon = activeCouponObj?.discountType === "FREESHIP";
+
+    // For freeship coupons, discount reduces shipping fee
+    const shippingFee = isFreeshipCoupon
+        ? Math.max(0, rawShippingFee - couponDiscount)
+        : rawShippingFee;
+    const finalCouponDiscount = isFreeshipCoupon ? 0 : couponDiscount;
 
     const rewardPoints = user?.rewardPoints || 0;
     const maxPointsValue = rewardPoints * 1000;
     const remainingAfterCoupon = Math.max(
         0,
-        subtotal + shippingFee - couponDiscount,
+        subtotal + shippingFee - finalCouponDiscount,
     );
     const pointsDiscount = usePoints
         ? Math.min(maxPointsValue, remainingAfterCoupon)
@@ -360,7 +385,7 @@ export const useCheckout = () => {
 
     const total = Math.max(
         0,
-        subtotal + shippingFee - couponDiscount - pointsDiscount,
+        subtotal + shippingFee - finalCouponDiscount - pointsDiscount,
     );
 
     const handlePlaceOrder = async (e) => {
@@ -385,12 +410,12 @@ export const useCheckout = () => {
                 couponCode: couponCode.trim() || null,
                 couponSnapshot: activeCouponObj
                     ? {
-                          id: activeCouponObj.id,
-                          discountType: activeCouponObj.discountType,
-                          discountValue: activeCouponObj.discountValue,
-                          minOrderValue: activeCouponObj.minOrderValue,
-                          maxDiscountAmount: activeCouponObj.maxDiscountAmount,
-                      }
+                        id: activeCouponObj.id,
+                        discountType: activeCouponObj.discountType,
+                        discountValue: activeCouponObj.discountValue,
+                        minOrderValue: activeCouponObj.minOrderValue,
+                        maxDiscountAmount: activeCouponObj.maxDiscountAmount,
+                    }
                     : null,
                 usePoints,
                 ...(productId
@@ -425,6 +450,34 @@ export const useCheckout = () => {
         }
     };
 
+    const handleApplyManualCoupon = (inputCode = couponInput) => {
+        const code = (inputCode || "").trim().toUpperCase();
+        if (!code) {
+            setCouponCode("");
+            showToast?.("Đã gỡ bỏ mã giảm giá", "info");
+            return;
+        }
+        const targetCoupon = coupons.find((c) => c.code.toUpperCase() === code);
+        if (!targetCoupon) {
+            showToast?.(`Mã giảm giá "${code}" không tồn tại hoặc đã hết hạn`, "error");
+            return;
+        }
+        const disc = calculateDiscount(targetCoupon, subtotal, rawShippingFee);
+        if (disc <= 0) {
+            if (subtotal < targetCoupon.minOrderValue) {
+                showToast?.(
+                    `Đơn hàng chưa đạt mức tối thiểu ${formatPrice(targetCoupon.minOrderValue)} để áp dụng mã này`,
+                    "warning",
+                );
+            } else {
+                showToast?.("Mã giảm giá chưa đủ điều kiện áp dụng", "warning");
+            }
+            return;
+        }
+        setCouponCode(targetCoupon.code);
+        showToast?.(`Áp dụng thành công mã giảm giá ${targetCoupon.code}!`, "success");
+    };
+
     return {
         user,
         cart,
@@ -443,6 +496,9 @@ export const useCheckout = () => {
         setPaymentMethod,
         couponCode,
         setCouponCode,
+        couponInput,
+        setCouponInput,
+        handleApplyManualCoupon,
         loading,
         error,
         coupons,

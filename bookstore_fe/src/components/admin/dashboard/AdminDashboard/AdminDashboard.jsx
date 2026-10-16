@@ -131,32 +131,42 @@ const AdminDashboard = () => {
                         <button
                             type="button"
                             className="admin-dashboard-bell-btn"
+                            aria-label="Thông báo"
                         >
-                            <Bell size={20} />
+                            <Bell size={19} />
+                            <span className="admin-dashboard-bell-dot" />
                         </button>
-                        <div className="admin-dashboard-avatar-box">
-                            {user?.avatar ? (
-                                <img
-                                    src={user.avatar}
-                                    alt={user.fullName || "Admin"}
-                                    className="admin-dashboard-avatar-img"
-                                />
-                            ) : null}
+                        <div className="admin-dashboard-user-profile">
+                            <div className="admin-dashboard-avatar-box">
+                                {user?.avatar ? (
+                                    <img
+                                        src={user.avatar}
+                                        alt={user.fullName || "Admin"}
+                                        className="admin-dashboard-avatar-img"
+                                    />
+                                ) : (
+                                    <span className="admin-dashboard-avatar-fallback">
+                                        {user?.fullName?.[0]?.toUpperCase() || "A"}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="admin-dashboard-user-info">
+                                <span className="admin-dashboard-user-name">
+                                    {user?.fullName || user?.username || "Admin"}
+                                </span>
+                                <span className="admin-dashboard-user-role">
+                                    Quản trị viên
+                                </span>
+                            </div>
                         </div>
-                        <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="admin-dashboard-logout-btn-header"
-                        >
-                            Đăng xuất
-                        </button>
                     </div>
                 </header>
 
                 <main className="admin-dashboard-content">
                     {loading ? (
                         <div className="admin-dashboard-loading-state">
-                            Đang tải dữ liệu Quản trị viên...
+                            <div className="admin-dashboard-spinner" />
+                            <span>Đang tải dữ liệu Quản trị viên...</span>
                         </div>
                     ) : (
                         <>
@@ -168,6 +178,8 @@ const AdminDashboard = () => {
                                     products={products}
                                     orders={orders}
                                     auditLogs={auditLogs}
+                                    setActiveTab={setActiveTab}
+                                    showToast={showToast}
                                 />
                             )}
                             {activeTab === "users" && (

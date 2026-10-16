@@ -1,0 +1,54 @@
+name: Deploy Frontend to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bookstore_fe/**'
+      - '.github/workflows/deploy-fe-vercel.yml'
+  workflow_dispatch:
+
+# Tự động hủy build cũ nếu có commit mới merge liên tiếp
+concurrency:
+  group: deploy-vercel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 
+    steps:
+      - name: 1. Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'bookstore_fe/package-lock.json'
+
+      - name: 3. Install Dependencies
+        working-directory: ./bookstore_fe
+        run: npm ci
+
+      - name: 4. Install Vercel CLI
+        run: npm install --global vercel@62.7.0
+
+      - name: 5. Configure Vercel Project & Deploy
+        env:
+          CI: true
+          VERCEL_TELEMETRY_DISABLED: 1
+        run: |
+          export VERCEL_TELEMETRY_DISABLED=1
+          ORG_ID=$(echo "${{ secrets.VERCEL_ORG_ID }}" | tr -d '\r\n[:space:]')
+          PROJECT_ID=$(echo "${{ secrets.VERCEL_PROJECT_ID }}" | tr -d '\r\n[:space:]')
+          TOKEN=$(echo "${{ secrets.VERCEL_TOKEN }}" | tr -d '\r\n[:space:]')
+          
+          mkdir -p .vercel
+          echo "{\"projectId\":\"$PROJECT_ID\",\"orgId\":\"$ORG_ID\"}" > .vercel/project.json
+          
+          vercel pull --yes --environment=production --token=$TOKEN --non-interactive
+          vercel build --prod --token=$TOKEN --non-interactive
+          vercel deploy --prebuilt --prod --token=$TOKEN --non-interactive
