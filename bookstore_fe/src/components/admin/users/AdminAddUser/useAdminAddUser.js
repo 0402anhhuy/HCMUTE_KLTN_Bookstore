@@ -36,6 +36,12 @@ export const useAdminAddUser = ({ onSave, showToast }) => {
             return;
         }
 
+        const phoneRegex = /^0[0-9]{9}$/;
+        if (!formData.phone || !phoneRegex.test(formData.phone.trim())) {
+            showToast("Số điện thoại không hợp lệ", "error");
+            return;
+        }
+
         setIsSaving(true);
 
         try {

@@ -21,6 +21,13 @@ export const useAdminEditUser = ({ user, onSave, showToast }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const phoneRegex = /^0[0-9]{9}$/;
+        if (formData.phone && !phoneRegex.test(formData.phone.trim())) {
+            showToast?.("Số điện thoại không hợp lệ", "error");
+            return;
+        }
+
         setIsSaving(true);
         try {
             const response = await api.put(`/admin/users/${user.id}`, formData);

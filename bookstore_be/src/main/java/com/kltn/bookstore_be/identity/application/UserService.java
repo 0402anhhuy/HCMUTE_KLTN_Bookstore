@@ -221,6 +221,12 @@ public class UserService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống");
         }
 
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (!request.getPhone().trim().matches("^0[0-9]{9}$")) {
+                throw new RuntimeException("Số điện thoại không hợp lệ");
+            }
+        }
+
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
