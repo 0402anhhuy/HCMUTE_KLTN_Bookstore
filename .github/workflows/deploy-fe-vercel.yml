@@ -51,4 +51,4 @@ jobs:
           
           vercel pull --yes --environment=production --token=$TOKEN --non-interactive
           vercel build --prod --token=$TOKEN --non-interactive
-          vercel deploy --prebuilt --prod --token=$TOKEN --non-interactive
+          vercel deploy --prebuilt --prod --token=$TOKEN --non-interactive --no-wait
