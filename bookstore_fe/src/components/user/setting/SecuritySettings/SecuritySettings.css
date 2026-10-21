@@ -1,60 +1,168 @@
 .security-settings-card {
     background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .security-settings-title {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    color: #111827;
-    margin: 0 0 16px 0;
+    color: #0f172a;
+    margin: 0 0 20px 0;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .security-settings-icon {
-    color: #0a422d;
+    color: #059669;
 }
 
 .security-settings-form {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
 }
 
-.security-settings-subhead {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #4b5563;
-    margin-bottom: 4px;
+.security-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.security-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+    margin: 0;
+}
+
+.security-label svg {
+    color: #059669;
+}
+
+.security-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
 }
 
 .security-settings-input {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.85rem;
+    padding: 11px 44px 11px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #0f172a;
     outline: none;
     box-sizing: border-box;
+    transition: all 0.2s ease;
+    min-height: 44px;
+    background-color: #ffffff;
+}
+
+.security-settings-input:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+.security-eye-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+
+.security-eye-btn:hover {
+    color: #334155;
+}
+
+.security-hint-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 0.78rem;
+    color: #166534;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.security-hint-icon {
+    color: #059669;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.security-actions-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
 }
 
 .security-settings-btn-submit {
-    padding: 8px;
-    background-color: #374151;
+    padding: 11px 24px;
+    background-color: #059669;
     color: #ffffff;
     border: none;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
     cursor: pointer;
-    margin-top: 4px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+    transition: all 0.2s ease;
+}
+
+.security-settings-btn-submit:hover:not(:disabled) {
+    background-color: #047857;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
 }
 
 .security-settings-btn-submit:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .security-settings-card {
+        padding: 16px 14px !important;
+        border-radius: 12px !important;
+    }
+
+    .security-settings-title {
+        font-size: 0.95rem !important;
+    }
+
+    .security-actions-row {
+        width: 100% !important;
+    }
+
+    .security-settings-btn-submit {
+        width: 100% !important;
+    }
 }

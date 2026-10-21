@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm --prefix bookstore_fe ci",
+  "buildCommand": "npm --prefix bookstore_fe run build",
+  "outputDirectory": "bookstore_fe/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
