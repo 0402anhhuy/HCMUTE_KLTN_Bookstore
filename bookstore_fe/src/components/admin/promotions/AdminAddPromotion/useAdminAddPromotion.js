@@ -25,7 +25,6 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
     const [discountValue, setDiscountValue] = useState("");
     const [startDate, setStartDate] = useState(() => {
         const now = new Date();
-        now.setMinutes(0, 0, 0);
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
@@ -178,6 +177,12 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
             showToast?.("Vui lòng chọn thời gian bắt đầu", "error");
             return;
         }
+        const selectedStart = new Date(startDate);
+        const now = new Date();
+        if (selectedStart.getTime() < now.getTime() - 60 * 1000) {
+            showToast?.("Thời gian bắt đầu không hợp lệ", "error");
+            return;
+        }
         if (!durationHours || isNaN(durationHours) || Number(durationHours) <= 0) {
             showToast?.("Vui lòng chọn thời gian diễn ra hợp lệ", "error");
             return;
@@ -186,6 +191,12 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
     };
 
     const handleSave = () => {
+        const selectedStart = new Date(startDate);
+        const now = new Date();
+        if (selectedStart.getTime() < now.getTime() - 60 * 1000) {
+            showToast?.("Thời gian bắt đầu không hợp lệ", "error");
+            return;
+        }
         if (selectedProductIds.length === 0) {
             showToast?.("Vui lòng chọn ít nhất 1 sản phẩm áp dụng", "error");
             return;
