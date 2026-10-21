@@ -221,6 +221,10 @@ public class UserService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống");
         }
 
+        if (request.getPassword() != null && request.getPassword().contains(" ")) {
+            throw new RuntimeException("Mật khẩu không hợp lệ");
+        }
+
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())

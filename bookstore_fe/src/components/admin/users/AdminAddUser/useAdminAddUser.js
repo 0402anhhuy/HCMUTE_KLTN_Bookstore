@@ -31,6 +31,11 @@ export const useAdminAddUser = ({ onSave, showToast }) => {
             return;
         }
 
+        if (/\s/.test(formData.password)) {
+            showToast("Mật khẩu không hợp lệ", "error");
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             showToast("Mật khẩu xác nhận không khớp", "error");
             return;
