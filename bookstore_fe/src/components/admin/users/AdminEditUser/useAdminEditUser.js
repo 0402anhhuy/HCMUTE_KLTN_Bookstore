@@ -21,6 +21,16 @@ export const useAdminEditUser = ({ user, onSave, showToast }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const phoneTrimmed = formData.phone ? formData.phone.trim() : "";
+        if (phoneTrimmed) {
+            const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+            if (!phoneRegex.test(phoneTrimmed)) {
+                showToast?.("Số điện thoại không hợp lệ", "error");
+                return;
+            }
+        }
+
         setIsSaving(true);
         try {
             const response = await api.put(`/admin/users/${user.id}`, formData);

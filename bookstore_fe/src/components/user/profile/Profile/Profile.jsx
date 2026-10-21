@@ -1,4 +1,18 @@
-import { ShieldAlert, User, MapPin, Heart, Gift, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+    ShieldAlert,
+    User,
+    MapPin,
+    Heart,
+    Gift,
+    Lock,
+    Save,
+    RotateCcw,
+    Wallet,
+    Coins,
+    Sparkles,
+} from "lucide-react";
+import { Breadcrumb, EmptyState } from "@/components/common";
 import { useProfile } from "./useProfile";
 import "./Profile.css";
 
@@ -14,6 +28,7 @@ import FavoriteProducts from "../../products/FavoriteProducts/FavoriteProducts";
 import SecuritySettings from "../../setting/SecuritySettings/SecuritySettings";
 
 const Profile = () => {
+    const navigate = useNavigate();
     const {
         user,
         fullName,
@@ -31,21 +46,49 @@ const Profile = () => {
 
     if (!user) {
         return (
-            <div className="page-container profile-unauth-container">
-                <ShieldAlert size={48} className="profile-unauth-icon" />
-                <h2 className="profile-unauth-title">
-                    Vui lòng đăng nhập để xem thông tin
-                </h2>
+            <div className="page-container animate-fade-in profile-page-container">
+                <Breadcrumb
+                    items={[
+                        { label: "Trang chủ", to: "/" },
+                        { label: "Tài khoản của tôi" },
+                    ]}
+                />
+                <EmptyState
+                    icon={Lock}
+                    title="Vui lòng đăng nhập để xem thông tin"
+                    description="Bạn cần đăng nhập để quản lý thông tin cá nhân, danh sách địa chỉ và các quyền lợi thành viên."
+                    actionText="Đăng nhập ngay"
+                    onAction={() => navigate("/login")}
+                />
             </div>
         );
     }
 
+    const formatVND = (amount) => {
+        return new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND",
+        }).format(amount || 0);
+    };
+
+    const handleResetForm = () => {
+        setFullName(user?.fullName || "");
+        setPhone(user?.phone || "");
+    };
+
     return (
         <div className="page-container animate-fade-in profile-page-container">
+            <Breadcrumb
+                items={[
+                    { label: "Trang chủ", to: "/" },
+                    { label: "Tài khoản của tôi" },
+                ]}
+            />
+
             <div className="profile-header-meta">
-                <h2 className="profile-title">Tài khoản của tôi</h2>
+                <h1 className="profile-title">Tài khoản của tôi</h1>
                 <p className="profile-subtitle">
-                    Quản lý thông tin cá nhân và bảo mật tài khoản.
+                    Quản lý thông tin cá nhân, sổ địa chỉ và ưu đãi thành viên.
                 </p>
             </div>
 
@@ -59,6 +102,26 @@ const Profile = () => {
                         <div className="profile-sidebar-user-meta">
                             <span className="profile-sidebar-welcome">Xin chào,</span>
                             <h4 className="profile-sidebar-name">{user.fullName}</h4>
+                            <span className="profile-sidebar-role-badge">
+                                <Sparkles size={12} /> Thành viên thân thiết
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="profile-sidebar-stats-row">
+                        <div className="profile-sidebar-stat-item">
+                            <Coins size={14} className="stat-coin-icon" />
+                            <div className="stat-meta">
+                                <span className="stat-label">Xu tích lũy</span>
+                                <strong className="stat-val">{user.rewardPoints || 0}</strong>
+                            </div>
+                        </div>
+                        <div className="profile-sidebar-stat-item">
+                            <Wallet size={14} className="stat-wallet-icon" />
+                            <div className="stat-meta">
+                                <span className="stat-label">Ví điện tử</span>
+                                <strong className="stat-val">{formatVND(user.walletBalance || 0)}</strong>
+                            </div>
                         </div>
                     </div>
 
@@ -117,13 +180,15 @@ const Profile = () => {
                                 <div className="profile-avatar-details">
                                     <div className="profile-user-fullname">{user.fullName}</div>
                                     <div className="profile-user-email">{user.email}</div>
-                                    <div className="profile-avatar-btn-group">
-                                        <button type="button" className="profile-avatar-btn-primary">
-                                            Tải ảnh mới
-                                        </button>
-                                        <button type="button" className="profile-avatar-btn-outline">
-                                            Xóa ảnh
-                                        </button>
+                                    <div className="profile-user-badges-row">
+                                        <span className="profile-badge-tier">
+                                            <Sparkles size={12} /> Thành viên BookStore
+                                        </span>
+                                        {user.phone && (
+                                            <span className="profile-badge-phone">
+                                                SĐT: {user.phone}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -137,8 +202,12 @@ const Profile = () => {
                             />
 
                             <div className="profile-form-actions">
-                                <button type="button" className="profile-btn-cancel">
-                                    Hủy
+                                <button
+                                    type="button"
+                                    onClick={handleResetForm}
+                                    className="profile-btn-cancel"
+                                >
+                                    <RotateCcw size={15} /> Đặt lại
                                 </button>
                                 <button
                                     type="button"
@@ -146,6 +215,7 @@ const Profile = () => {
                                     disabled={loading}
                                     className="profile-btn-submit"
                                 >
+                                    <Save size={15} />
                                     {loading ? "Đang lưu..." : "Lưu thay đổi"}
                                 </button>
                             </div>

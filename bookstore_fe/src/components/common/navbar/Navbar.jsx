@@ -221,7 +221,7 @@ const Navbar = () => {
                 <form onSubmit={handleNavSearch} className="navbar-search-form">
                     <input
                         type="text"
-                        placeholder="Tìm kiếm tựa sách, tác giả, thể loại..."
+                        placeholder="Tìm kiếm tên sách..."
                         value={navSearch}
                         onFocus={() => setShowSearchModal(true)}
                         onChange={(e) => setNavSearch(e.target.value)}
