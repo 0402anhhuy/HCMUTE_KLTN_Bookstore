@@ -281,6 +281,13 @@ public class UserService {
             throw new RuntimeException("Email đã được sử dụng bởi một tài khoản khác trong hệ thống");
         }
 
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            Optional<User> existingPhoneUser = userRepository.findByPhone(request.getPhone().trim());
+            if (existingPhoneUser.isPresent() && !existingPhoneUser.get().getId().equals(id)) {
+                throw new RuntimeException("Số điện thoại đã được dùng cho một tài khoản khác");
+            }
+        }
+
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
