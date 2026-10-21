@@ -291,6 +291,12 @@ public class UserService {
             throw new RuntimeException("Email đã được sử dụng bởi một tài khoản khác trong hệ thống");
         }
 
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
+                throw new RuntimeException("Số điện thoại không hợp lệ");
+            }
+        }
+
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
