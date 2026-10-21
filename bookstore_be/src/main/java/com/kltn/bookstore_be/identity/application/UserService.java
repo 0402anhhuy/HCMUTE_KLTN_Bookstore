@@ -295,6 +295,10 @@ public class UserService {
             if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
                 throw new RuntimeException("Số điện thoại không hợp lệ");
             }
+            Optional<User> existingPhoneUser = userRepository.findByPhone(request.getPhone().trim());
+            if (existingPhoneUser.isPresent() && !existingPhoneUser.get().getId().equals(id)) {
+                throw new RuntimeException("Số điện thoại đã được dùng cho một tài khoản khác");
+            }
         }
 
         user.setFullName(request.getFullName());
