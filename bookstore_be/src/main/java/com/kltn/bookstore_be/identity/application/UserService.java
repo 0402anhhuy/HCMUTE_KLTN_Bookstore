@@ -221,6 +221,12 @@ public class UserService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống");
         }
 
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (userRepository.existsByPhone(request.getPhone().trim())) {
+                throw new RuntimeException("Số điện thoại đã tồn tại");
+            }
+        }
+
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
