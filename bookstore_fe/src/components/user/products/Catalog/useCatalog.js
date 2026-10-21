@@ -21,7 +21,7 @@ export const useCatalog = () => {
     const [searchInput, setSearchInput] = useState(keyword);
 
     const [selectedPublishers, setSelectedPublishers] = useState([]);
-    const [selectedLanguages, setSelectedLanguages] = useState([]);
+    const [allPublishers, setAllPublishers] = useState([]);
 
     const [products, setProducts] = useState([]);
     const [page, setPage] = useState(0);
@@ -32,8 +32,14 @@ export const useCatalog = () => {
     useEffect(() => {
         const catId = searchParams.get("categoryId") || "";
         const kw = searchParams.get("keyword") || "";
+        const pub = searchParams.get("publisher") || "";
         setSelectedCategory(catId);
         setSearchInput(kw);
+        if (pub) {
+            setSelectedPublishers([pub]);
+        } else {
+            setSelectedPublishers([]);
+        }
         setPage(0);
     }, [searchParams]);
 
@@ -46,6 +52,17 @@ export const useCatalog = () => {
         }
     };
 
+    const fetchPublishers = async () => {
+        try {
+            const response = await api.get("/products/publishers");
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                setAllPublishers(response.data);
+            }
+        } catch (e) {
+            console.error("Lỗi lấy danh sách NXB:", e);
+        }
+    };
+
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         try {
@@ -55,6 +72,11 @@ export const useCatalog = () => {
             if (selectedCategory) url += `&categoryId=${selectedCategory}`;
             if (minPrice) url += `&minPrice=${minPrice}`;
             if (maxPrice) url += `&maxPrice=${maxPrice}`;
+            if (selectedPublishers && selectedPublishers.length > 0) {
+                selectedPublishers.forEach((pub) => {
+                    url += `&publisher=${encodeURIComponent(pub)}`;
+                });
+            }
 
             const response = await api.get(url);
             setProducts(response.data?.content || []);
@@ -63,60 +85,37 @@ export const useCatalog = () => {
             console.error("Lỗi lấy sản phẩm:", e);
         } finally {
             setLoading(false);
-            const targetElem =
-                document.querySelector(".catalog-grid") ||
-                document.querySelector(".catalog-content-section") ||
-                document.querySelector(".catalog-main-layout");
-            if (targetElem) {
-                const yOffset = -75;
-                const y =
-                    targetElem.getBoundingClientRect().top +
-                    window.pageYOffset +
-                    yOffset;
-                window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-            } else {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            }
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
-    }, [page, selectedCategory, keyword, minPrice, maxPrice]);
+    }, [page, selectedCategory, keyword, minPrice, maxPrice, selectedPublishers]);
 
     useEffect(() => {
         fetchCategories();
+        fetchPublishers();
     }, []);
 
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
 
-    // Trích xuất danh sách NXB & Ngôn ngữ từ dữ liệu thật
+    // Danh sách toàn bộ NXB có trong hệ thống
     const availablePublishers = useMemo(() => {
+        if (allPublishers.length > 0) {
+            return allPublishers;
+        }
         const set = new Set();
         products.forEach((p) => {
             if (p.publisher) set.add(p.publisher.trim());
         });
         return Array.from(set);
-    }, [products]);
+    }, [allPublishers, products]);
 
-    const availableLanguages = useMemo(() => {
-        const set = new Set();
-        products.forEach((p) => {
-            if (p.language) set.add(p.language.trim());
-        });
-        return Array.from(set);
-    }, [products]);
-
-    // Lọc theo NXB, Ngôn ngữ & Các khoảng giá đã chọn trên tập dữ liệu
+    // Lọc theo NXB & Các khoảng giá đã chọn trên tập dữ liệu
     const filteredProducts = useMemo(() => {
         return products.filter((p) => {
             if (
                 selectedPublishers.length > 0 &&
                 !selectedPublishers.includes(p.publisher)
-            ) {
-                return false;
-            }
-            if (
-                selectedLanguages.length > 0 &&
-                !selectedLanguages.includes(p.language)
             ) {
                 return false;
             }
@@ -131,7 +130,7 @@ export const useCatalog = () => {
             }
             return true;
         });
-    }, [products, selectedPublishers, selectedLanguages, selectedPriceRanges]);
+    }, [products, selectedPublishers, selectedPriceRanges]);
 
     const handleSearch = (e) => {
         if (e && e.preventDefault) e.preventDefault();
@@ -139,6 +138,7 @@ export const useCatalog = () => {
         const params = {};
         if (searchInput.trim()) params.keyword = searchInput.trim();
         if (selectedCategory) params.categoryId = selectedCategory;
+        if (selectedPublishers.length > 0) params.publisher = selectedPublishers[0];
         setSearchParams(params);
     };
 
@@ -150,7 +150,6 @@ export const useCatalog = () => {
         setSelectedPriceRanges([]);
         setSearchInput("");
         setSelectedPublishers([]);
-        setSelectedLanguages([]);
         setPage(0);
     };
 
@@ -229,14 +228,7 @@ export const useCatalog = () => {
                 ? prev.filter((item) => item !== pub)
                 : [...prev, pub],
         );
-    };
-
-    const toggleLanguage = (lang) => {
-        setSelectedLanguages((prev) =>
-            prev.includes(lang)
-                ? prev.filter((item) => item !== lang)
-                : [...prev, lang],
-        );
+        setPage(0);
     };
 
     const removeCategoryFilter = () => {
@@ -244,6 +236,7 @@ export const useCatalog = () => {
         setPage(0);
         const params = {};
         if (keyword) params.keyword = keyword;
+        if (selectedPublishers.length > 0) params.publisher = selectedPublishers[0];
         setSearchParams(params);
     };
 
@@ -259,6 +252,7 @@ export const useCatalog = () => {
         setPage(0);
         const params = {};
         if (selectedCategory) params.categoryId = selectedCategory;
+        if (selectedPublishers.length > 0) params.publisher = selectedPublishers[0];
         setSearchParams(params);
     };
 
@@ -290,11 +284,8 @@ export const useCatalog = () => {
         showMoreCategory,
         setShowMoreCategory,
         availablePublishers,
-        availableLanguages,
         selectedPublishers,
         togglePublisher,
-        selectedLanguages,
-        toggleLanguage,
         removeCategoryFilter,
         removePriceFilter,
         removeKeywordFilter,

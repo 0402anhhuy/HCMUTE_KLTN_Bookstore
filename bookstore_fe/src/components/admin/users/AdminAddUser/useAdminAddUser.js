@@ -36,6 +36,15 @@ export const useAdminAddUser = ({ onSave, showToast }) => {
             return;
         }
 
+        const phoneTrimmed = formData.phone ? formData.phone.trim() : "";
+        if (phoneTrimmed) {
+            const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+            if (!phoneRegex.test(phoneTrimmed)) {
+                showToast("Số điện thoại không hợp lệ", "error");
+                return;
+            }
+        }
+
         setIsSaving(true);
 
         try {

@@ -69,8 +69,42 @@ export const useAdminDashboard = () => {
             }
 
             try {
-                const prodRes = await productService.getProducts();
-                setProducts(prodRes.data?.content || prodRes.data || []);
+                const [prodRes, pendingRes, inactiveRes, rejectedRes] =
+                    await Promise.all([
+                        productService.getProducts({ size: 1000 }),
+                        productService
+                            .getPendingProducts()
+                            .catch(() => ({ data: [] })),
+                        productService
+                            .getProductsByStatus("INACTIVE")
+                            .catch(() => ({ data: [] })),
+                        productService
+                            .getRejectedProducts()
+                            .catch(() => ({ data: [] })),
+                    ]);
+                const activeList =
+                    prodRes.data?.content ||
+                    (Array.isArray(prodRes.data) ? prodRes.data : []);
+                const pendingList = Array.isArray(pendingRes.data)
+                    ? pendingRes.data
+                    : [];
+                const inactiveList = Array.isArray(inactiveRes.data)
+                    ? inactiveRes.data
+                    : [];
+                const rejectedList = Array.isArray(rejectedRes.data)
+                    ? rejectedRes.data
+                    : [];
+
+                const productMap = new Map();
+                [
+                    ...activeList,
+                    ...pendingList,
+                    ...inactiveList,
+                    ...rejectedList,
+                ].forEach((p) => {
+                    if (p && p.id) productMap.set(p.id, p);
+                });
+                setProducts(Array.from(productMap.values()));
             } catch (err) {
                 console.error("Error loading products", err);
             }

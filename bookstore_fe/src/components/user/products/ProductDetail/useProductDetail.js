@@ -111,7 +111,7 @@ export const useProductDetail = () => {
 
     const handleAddToCart = async () => {
         if (product && product.stockQuantity > 0) {
-            await addToCart(product.id, qty);
+            await addToCart(product.id, qty, product);
         }
     };
 

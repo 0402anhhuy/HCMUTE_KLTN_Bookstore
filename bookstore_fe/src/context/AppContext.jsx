@@ -9,9 +9,39 @@ import api from "../services/api";
 
 const AppContext = createContext();
 
+const getGuestCart = () => {
+    try {
+        const local = localStorage.getItem("guestCart");
+        if (!local) return { items: [] };
+        const parsed = JSON.parse(local);
+        if (!parsed || !Array.isArray(parsed.items)) return { items: [] };
+        const validItems = parsed.items
+            .filter((item) => item && item.product && typeof item.product === "object")
+            .map((item) => ({
+                id: item.id || `guest-${item.product.id || Date.now()}`,
+                product: item.product,
+                quantity: Number(item.quantity) || 1,
+            }));
+        return { items: validItems };
+    } catch {
+        return { items: [] };
+    }
+};
+
+const saveGuestCart = (guestCartObj) => {
+    try {
+        const sanitizedItems = (guestCartObj?.items || []).filter(
+            (item) => item && item.product && typeof item.product === "object",
+        );
+        localStorage.setItem("guestCart", JSON.stringify({ items: sanitizedItems }));
+    } catch (e) {
+        console.error("Failed to save guest cart", e);
+    }
+};
+
 export const AppProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [cart, setCart] = useState({ items: [] });
+    const [cart, setCart] = useState(() => getGuestCart());
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [favorites, setFavorites] = useState([]);
@@ -58,7 +88,7 @@ export const AppProvider = ({ children }) => {
             window.removeEventListener("auth-expired", handleAuthExpired);
     }, []);
 
-    // Load cart and notifications when user logs in
+    // Load cart and notifications when user logs in or is guest
     useEffect(() => {
         if (user) {
             // Sessions created before phone/address were included in the login
@@ -69,6 +99,8 @@ export const AppProvider = ({ children }) => {
             fetchCart();
             fetchNotifications();
             fetchFavorites();
+        } else {
+            fetchCart();
         }
     }, [user]);
 
@@ -160,11 +192,12 @@ export const AppProvider = ({ children }) => {
         };
     }, [user]);
 
-    const loginUser = (token, userData, rememberMe = false) => {
+    const loginUser = async (token, userData, rememberMe = false) => {
         const storage = rememberMe ? localStorage : sessionStorage;
         storage.setItem("token", token);
         storage.setItem("user", JSON.stringify(userData));
         storage.setItem("rememberMe", rememberMe ? "true" : "false");
+        await syncGuestCartToBackend();
         setUser(userData);
     };
 
@@ -193,27 +226,11 @@ export const AppProvider = ({ children }) => {
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("user");
         sessionStorage.removeItem("rememberMe");
+        localStorage.removeItem("guestCart");
         setUser(null);
         setCart({ items: [] });
         setNotifications([]);
         setUnreadCount(0);
-    };
-
-    const getGuestCart = () => {
-        try {
-            const local = localStorage.getItem("guestCart");
-            return local ? JSON.parse(local) : { items: [] };
-        } catch {
-            return { items: [] };
-        }
-    };
-
-    const saveGuestCart = (guestCartObj) => {
-        try {
-            localStorage.setItem("guestCart", JSON.stringify(guestCartObj));
-        } catch (e) {
-            console.error("Failed to save guest cart", e);
-        }
     };
 
     const syncGuestCartToBackend = async () => {

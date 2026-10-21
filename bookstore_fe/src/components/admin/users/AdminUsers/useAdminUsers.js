@@ -162,6 +162,7 @@ export const useAdminUsers = ({ users = [], showToast }) => {
         deleteTargetUser,
         setDeleteTargetUser,
         dropdownRef,
+        localUsers,
         setLocalUsers,
         filteredUsers,
         handleToggleStatus,

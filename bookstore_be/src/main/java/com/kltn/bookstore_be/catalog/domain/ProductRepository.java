@@ -17,15 +17,22 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "OR LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "OR LOWER(p.publisher) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:categoryIds IS NULL OR p.category.id IN :categoryIds) " +
+            "AND (:publishers IS NULL OR p.publisher IN :publishers) " +
+            "AND (:language IS NULL OR LOWER(p.language) = LOWER(:language)) " +
             "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
             "AND (:maxPrice IS NULL OR p.price <= :maxPrice)")
     Page<Product> searchProducts(
             @Param("keyword") String keyword,
             @Param("categoryIds") List<Long> categoryIds,
+            @Param("publishers") List<String> publishers,
+            @Param("language") String language,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable
     );
+
+    @Query("SELECT DISTINCT p.publisher FROM Product p WHERE p.status = 'ACTIVE' AND p.publisher IS NOT NULL AND TRIM(p.publisher) != '' ORDER BY p.publisher ASC")
+    List<String> findDistinctPublishers();
     List<Product> findByStatusOrderByIdDesc(Product.ProductStatus status);
     long countByStatus(Product.ProductStatus status);
 }
