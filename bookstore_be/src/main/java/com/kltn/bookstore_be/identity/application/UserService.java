@@ -233,6 +233,9 @@ public class UserService {
             if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
                 throw new RuntimeException("Số điện thoại không hợp lệ");
             }
+            if (userRepository.existsByPhone(request.getPhone().trim())) {
+                throw new RuntimeException("Số điện thoại đã tồn tại");
+            }
         }
 
         User user = User.builder()
