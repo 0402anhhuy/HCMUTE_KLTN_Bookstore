@@ -55,6 +55,10 @@ public class PromotionService {
     @Transactional
     @CacheEvict(value = "promotions", allEntries = true)
     public Promotion createPromotion(AdminCreatePromotionRequest request) {
+        if (request.getStartDate().isBefore(LocalDateTime.now().minusMinutes(1))) {
+            throw new RuntimeException("Thời gian bắt đầu không hợp lệ");
+        }
+
         if (!request.getEndDate().isAfter(request.getStartDate())) {
             throw new RuntimeException("Thời gian kết thúc phải lớn hơn thời gian bắt đầu");
         }
