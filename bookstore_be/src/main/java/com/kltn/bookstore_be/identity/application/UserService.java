@@ -225,6 +225,10 @@ public class UserService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống");
         }
 
+        if (request.getPassword() != null && request.getPassword().contains(" ")) {
+            throw new RuntimeException("Mật khẩu không hợp lệ");
+        }
+
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
                 throw new RuntimeException("Số điện thoại không hợp lệ");
@@ -297,6 +301,10 @@ public class UserService {
         if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
             if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
                 throw new RuntimeException("Số điện thoại không hợp lệ");
+            }
+            Optional<User> existingPhoneUser = userRepository.findByPhone(request.getPhone().trim());
+            if (existingPhoneUser.isPresent() && !existingPhoneUser.get().getId().equals(id)) {
+                throw new RuntimeException("Số điện thoại đã được dùng cho một tài khoản khác");
             }
         }
 
