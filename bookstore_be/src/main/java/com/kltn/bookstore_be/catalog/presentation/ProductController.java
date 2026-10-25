@@ -51,6 +51,7 @@ public class ProductController {
     public ResponseEntity<?> searchProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) List<String> publisher,
             @RequestParam(required = false) String language,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
@@ -67,12 +68,17 @@ public class ProductController {
             }
 
             Pageable pageable = PageRequest.of(page, size, sorting);
-            Page<Product> productPage = productService.searchProducts(keyword, categoryId, language, minPrice, maxPrice,
+            Page<Product> productPage = productService.searchProducts(keyword, categoryId, publisher, language, minPrice, maxPrice,
                     pageable);
             return ResponseEntity.ok(productPage);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/publishers")
+    public ResponseEntity<List<String>> getPublishers() {
+        return ResponseEntity.ok(productService.getDistinctPublishers());
     }
 
     @GetMapping("/{id}")

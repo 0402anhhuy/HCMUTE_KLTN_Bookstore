@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { Award, Ticket, Copy, Check, Wallet, ShoppingCart } from "lucide-react";
+import { Award, Ticket, Copy, Check, Wallet, ShoppingCart, Coins } from "lucide-react";
+import { EmptyState } from "@/components/common";
 import { useCouponsRewards } from "./useCouponsRewards";
 import "./CouponsRewards.css";
 
@@ -44,7 +45,7 @@ const CouponsRewards = () => {
                             </div>
                         </div>
                         <span className="coupons-rewards-wallet-tag">
-                            Hoàn tiền tự động
+                            Hoàn tiền & thanh toán
                         </span>
                     </div>
 
@@ -52,6 +53,7 @@ const CouponsRewards = () => {
                     <div className="coupons-rewards-points-row">
                         <div className="coupons-rewards-points-left">
                             <div className="coupons-rewards-points-label">
+                                <Coins size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: "4px", color: "#f59e0b" }} />
                                 Xu tích lũy
                             </div>
                             <div className="coupons-rewards-points-val">
@@ -71,26 +73,21 @@ const CouponsRewards = () => {
 
                 <div>
                     <div className="coupons-rewards-list-title">
-                        Mã giảm giá của bạn ({coupons.length} voucher)
+                        Mã giảm giá khả dụng ({coupons.length} voucher)
                     </div>
 
                     {loading ? (
                         <div className="coupons-rewards-loading-text">
-                            Đang tải...
+                            Đang tải danh sách voucher...
                         </div>
                     ) : coupons.length === 0 ? (
-                        <div className="coupons-rewards-empty-box">
-                            <Ticket
-                                size={24}
-                                className="coupons-rewards-empty-icon"
-                            />
-                            <div className="coupons-rewards-empty-text">
-                                Bạn chưa có mã giảm giá nào.
-                            </div>
-                            <div className="coupons-rewards-empty-subtext">
-                                Đánh giá sản phẩm để nhận voucher tự động!
-                            </div>
-                        </div>
+                        <EmptyState
+                            icon={Ticket}
+                            title="Bạn chưa có mã giảm giá nào"
+                            description="Đánh giá sản phẩm đã mua hoặc theo dõi các sự kiện khuyến mãi để nhận voucher tự động nhé!"
+                            actionText="Khám phá ngay"
+                            onAction={() => navigate("/catalog")}
+                        />
                     ) : (
                         <>
                             <div className="coupons-rewards-scroll-list">

@@ -31,9 +31,23 @@ export const useAdminAddUser = ({ onSave, showToast }) => {
             return;
         }
 
+        if (/\s/.test(formData.password)) {
+            showToast("Mật khẩu không hợp lệ", "error");
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             showToast("Mật khẩu xác nhận không khớp", "error");
             return;
+        }
+
+        const phoneTrimmed = formData.phone ? formData.phone.trim() : "";
+        if (phoneTrimmed) {
+            const phoneRegex = /^(0|\+84)[35789]\d{8}$/;
+            if (!phoneRegex.test(phoneTrimmed)) {
+                showToast("Số điện thoại không hợp lệ", "error");
+                return;
+            }
         }
 
         setIsSaving(true);

@@ -111,7 +111,7 @@ class ProductServiceTest {
             org.springframework.data.domain.Page<Product> page = new org.springframework.data.domain.PageImpl<>(
                     List.of(sampleProduct));
             when(categoryRepository.findByParentCategoryId(1L)).thenReturn(List.of());
-            when(productRepository.searchProducts(eq("Doraemon"), any(), eq("Tiếng Việt"), any(), any(), eq(pageable)))
+            when(productRepository.searchProducts(eq("Doraemon"), any(), isNull(), eq("Tiếng Việt"), any(), any(), eq(pageable)))
                     .thenReturn(page);
 
             org.springframework.data.domain.Page<Product> result = productService.searchProducts("Doraemon", 1L,
@@ -119,7 +119,26 @@ class ProductServiceTest {
 
             assertNotNull(result);
             assertEquals(1, result.getTotalElements());
-            verify(productRepository).searchProducts(eq("Doraemon"), any(), eq("Tiếng Việt"), any(), any(),
+            verify(productRepository).searchProducts(eq("Doraemon"), any(), isNull(), eq("Tiếng Việt"), any(), any(),
+                    eq(pageable));
+        }
+
+        @Test
+        @DisplayName("Tìm kiếm sản phẩm theo nhà xuất bản")
+        void searchProducts_withPublisherFilter_callsRepository() {
+            org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+            org.springframework.data.domain.Page<Product> page = new org.springframework.data.domain.PageImpl<>(
+                    List.of(sampleProduct));
+            when(categoryRepository.findByParentCategoryId(1L)).thenReturn(List.of());
+            when(productRepository.searchProducts(eq("Doraemon"), any(), eq(List.of("Kim Đồng")), isNull(), any(), any(), eq(pageable)))
+                    .thenReturn(page);
+
+            org.springframework.data.domain.Page<Product> result = productService.searchProducts("Doraemon", 1L,
+                    List.of("Kim Đồng"), null, BigDecimal.ZERO, BigDecimal.valueOf(50000), pageable);
+
+            assertNotNull(result);
+            assertEquals(1, result.getTotalElements());
+            verify(productRepository).searchProducts(eq("Doraemon"), any(), eq(List.of("Kim Đồng")), isNull(), any(), any(),
                     eq(pageable));
         }
 
@@ -323,6 +342,50 @@ class ProductServiceTest {
             productService.adjustStock(1L, 75, StockMovement.MovementType.ADJUST, "Kiểm kê", managerUser);
 
             assertEquals(75, sampleProduct.getStockQuantity());
+        }
+
+        @Test
+        @DisplayName("Điều chỉnh tồn kho với số lượng <= 0 - ném exception")
+        void adjustStock_zeroOrNegativeQuantity_throwsException() {
+            RuntimeException ex1 = assertThrows(RuntimeException.class, () -> {
+                productService.adjustStock(1L, 0, StockMovement.MovementType.IMPORT, "Nhập 0", managerUser);
+            });
+            assertEquals("Số lượng điều chỉnh phải lớn hơn 0", ex1.getMessage());
+
+            RuntimeException ex2 = assertThrows(RuntimeException.class, () -> {
+                productService.adjustStock(1L, -10, StockMovement.MovementType.EXPORT, "Xuất âm", managerUser);
+            });
+            assertEquals("Số lượng điều chỉnh phải lớn hơn 0", ex2.getMessage());
+        }
+
+        @Test
+        @DisplayName("Điều chỉnh tồn kho với số lượng null - ném exception")
+        void adjustStock_nullQuantity_throwsException() {
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+                productService.adjustStock(1L, null, StockMovement.MovementType.IMPORT, "Nhập null", managerUser);
+            });
+            assertEquals("Số lượng điều chỉnh phải lớn hơn 0", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Điều chỉnh tồn kho với số lượng vượt quá 1.000.000 - ném exception")
+        void adjustStock_quantityExceedsMaxLimit_throwsException() {
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+                productService.adjustStock(1L, 1_000_001, StockMovement.MovementType.IMPORT, "Nhập quá nhiều", managerUser);
+            });
+            assertEquals("Số lượng điều chỉnh không được vượt quá 1.000.000", ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("Nhập kho làm tổng tồn kho vượt quá 10.000.000 - ném exception")
+        void adjustStock_importExceedsMaxTotalStock_throwsException() {
+            sampleProduct.setStockQuantity(9_500_000);
+            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+                productService.adjustStock(1L, 600_000, StockMovement.MovementType.IMPORT, "Nhập quá tổng tồn", managerUser);
+            });
+            assertEquals("Số lượng tồn kho sau khi nhập vượt quá giới hạn tối đa (10.000.000)", ex.getMessage());
         }
     }
 }

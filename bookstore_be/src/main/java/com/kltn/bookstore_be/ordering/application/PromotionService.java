@@ -55,6 +55,10 @@ public class PromotionService {
     @Transactional
     @CacheEvict(value = "promotions", allEntries = true)
     public Promotion createPromotion(AdminCreatePromotionRequest request) {
+        if (request.getStartDate().isBefore(LocalDateTime.now().minusMinutes(1))) {
+            throw new RuntimeException("Thời gian bắt đầu không hợp lệ");
+        }
+
         if (!request.getEndDate().isAfter(request.getStartDate())) {
             throw new RuntimeException("Thời gian kết thúc phải lớn hơn thời gian bắt đầu");
         }
@@ -66,6 +70,14 @@ public class PromotionService {
         List<Product> products = productRepository.findAllById(request.getProductIds());
         if (products.isEmpty()) {
             throw new RuntimeException("Không tìm thấy sản phẩm nào hợp lệ. IDs được gửi: " + request.getProductIds());
+        }
+
+        if (request.getDiscountType() == Promotion.DiscountType.FIXED) {
+            for (Product p : products) {
+                if (p.getPrice() != null && request.getDiscountValue().compareTo(p.getPrice()) >= 0) {
+                    throw new RuntimeException("Giá trị khuyến mãi không hợp lệ và vượt mức giá trị sản phẩm");
+                }
+            }
         }
 
         // Kiểm tra xem có sản phẩm nào đã thuộc chương trình khuyến mãi khác đang hoặc sắp diễn ra không
@@ -134,6 +146,14 @@ public class PromotionService {
         List<Product> products = productRepository.findAllById(request.getProductIds());
         if (products.isEmpty()) {
             throw new RuntimeException("Không tìm thấy sản phẩm nào hợp lệ trong hệ thống. IDs được gửi: " + request.getProductIds());
+        }
+
+        if (request.getDiscountType() == Promotion.DiscountType.FIXED) {
+            for (Product p : products) {
+                if (p.getPrice() != null && request.getDiscountValue().compareTo(p.getPrice()) >= 0) {
+                    throw new RuntimeException("Giá trị khuyến mãi không hợp lệ và vượt mức giá trị sản phẩm");
+                }
+            }
         }
 
         // Kiểm tra xem có sản phẩm nào đã thuộc chương trình khuyến mãi khác (ngoại trừ chương trình đang sửa) không

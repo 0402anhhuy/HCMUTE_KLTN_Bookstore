@@ -809,6 +809,16 @@ public class OrderService {
     @Transactional
     public void assignShipper(Long orderId, Long shipperId, User manager) {
         Order order = getOrderById(orderId);
+        if (order.getStatus() == Order.OrderStatus.shipping && order.getShipper() != null) {
+            String shipperDesc = order.getShipper().getFullName() + (order.getShipper().getVehicle() != null ? " (" + order.getShipper().getVehicle() + ")" : "");
+            throw new RuntimeException("Đơn hàng đang giao và đã được gán cho shipper \"" + shipperDesc + "\"");
+        }
+        if (order.getStatus() == Order.OrderStatus.delivered) {
+            throw new RuntimeException("Không được chọn thông tin shipper ở đơn hàng đã giao thành công");
+        }
+        if (order.getStatus() == Order.OrderStatus.cancelled) {
+            throw new RuntimeException("Không được chọn thông tin shipper ở đơn hàng đã giao thành công");
+        }
         Shipper shipper = shipperRepository.findById(shipperId)
                 .orElseThrow(() -> new RuntimeException("Shipper không tồn tại"));
         order.setShipper(shipper);

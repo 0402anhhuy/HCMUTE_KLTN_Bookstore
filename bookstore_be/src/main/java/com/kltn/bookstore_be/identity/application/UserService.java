@@ -135,6 +135,10 @@ public class UserService {
             return false;
         }
 
+        if (user.getPasswordHash() != null && passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu mới không được trùng với mật khẩu cũ");
+        }
+
         // Update Password
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
@@ -221,6 +225,19 @@ public class UserService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống");
         }
 
+        if (request.getPassword() != null && request.getPassword().contains(" ")) {
+            throw new RuntimeException("Mật khẩu không hợp lệ");
+        }
+
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
+                throw new RuntimeException("Số điện thoại không hợp lệ");
+            }
+            if (userRepository.existsByPhone(request.getPhone().trim())) {
+                throw new RuntimeException("Số điện thoại đã tồn tại");
+            }
+        }
+
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
@@ -279,6 +296,16 @@ public class UserService {
         Optional<User> existingEmailUser = userRepository.findByEmail(request.getEmail());
         if (existingEmailUser.isPresent() && !existingEmailUser.get().getId().equals(id)) {
             throw new RuntimeException("Email đã được sử dụng bởi một tài khoản khác trong hệ thống");
+        }
+
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            if (!request.getPhone().trim().matches("^(0|\\+84)[35789]\\d{8}$")) {
+                throw new RuntimeException("Số điện thoại không hợp lệ");
+            }
+            Optional<User> existingPhoneUser = userRepository.findByPhone(request.getPhone().trim());
+            if (existingPhoneUser.isPresent() && !existingPhoneUser.get().getId().equals(id)) {
+                throw new RuntimeException("Số điện thoại đã được dùng cho một tài khoản khác");
+            }
         }
 
         user.setFullName(request.getFullName());

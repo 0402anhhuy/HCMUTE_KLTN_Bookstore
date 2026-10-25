@@ -25,7 +25,6 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
     const [discountValue, setDiscountValue] = useState("");
     const [startDate, setStartDate] = useState(() => {
         const now = new Date();
-        now.setMinutes(0, 0, 0);
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const day = String(now.getDate()).padStart(2, "0");
@@ -174,8 +173,26 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
             showToast?.("Giảm theo % không được vượt quá 100%", "error");
             return;
         }
+        if (discountType === "FIXED") {
+            const maxProductPrice = availableProducts.length > 0
+                ? Math.max(...availableProducts.map((p) => Number(p.price) || 0))
+                : 10000000;
+            if (Number(discountValue) > maxProductPrice || Number(discountValue) > 10000000) {
+                showToast?.(
+                    "Giá trị khuyến mãi không hợp lệ và vượt mức giá trị sản phẩm",
+                    "error"
+                );
+                return;
+            }
+        }
         if (!startDate) {
             showToast?.("Vui lòng chọn thời gian bắt đầu", "error");
+            return;
+        }
+        const selectedStart = new Date(startDate);
+        const now = new Date();
+        if (selectedStart.getTime() < now.getTime() - 60 * 1000) {
+            showToast?.("Thời gian bắt đầu không hợp lệ", "error");
             return;
         }
         if (!durationHours || isNaN(durationHours) || Number(durationHours) <= 0) {
@@ -186,9 +203,31 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
     };
 
     const handleSave = () => {
+        const selectedStart = new Date(startDate);
+        const now = new Date();
+        if (selectedStart.getTime() < now.getTime() - 60 * 1000) {
+            showToast?.("Thời gian bắt đầu không hợp lệ", "error");
+            return;
+        }
         if (selectedProductIds.length === 0) {
             showToast?.("Vui lòng chọn ít nhất 1 sản phẩm áp dụng", "error");
             return;
+        }
+
+        if (discountType === "FIXED") {
+            const selectedProducts = availableProducts.filter((p) =>
+                selectedProductIds.includes(p.id)
+            );
+            const hasExceedingPrice = selectedProducts.some(
+                (p) => Number(discountValue) >= Number(p.price)
+            );
+            if (hasExceedingPrice) {
+                showToast?.(
+                    "Giá trị khuyến mãi không hợp lệ và vượt mức giá trị sản phẩm",
+                    "error"
+                );
+                return;
+            }
         }
 
         const calculatedEndDate = calculateEndDateStr(startDate, durationHours) || endDate;

@@ -3,11 +3,7 @@ import { Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
-// Sửa từ:
-// import BookCard from "@/components/user/products/BookCard";
-
-// Thành:
-import BookCard from "@/components/user/products/Catalog/BookCard";
+import { BookCard } from "../BookCard";
 import "./RecommendationSection.css";
 
 const RecommendationSection = ({

@@ -8,7 +8,7 @@ export const useAdminProducts = ({ products = [], categories = [] }) => {
     const [categoryFilter, setCategoryFilter] = useState("");
     const [productStatusFilter, setProductStatusFilter] = useState("ALL");
     const [productPage, setProductPage] = useState(1);
-    const ITEMS_PER_PAGE = 5;
+    const ITEMS_PER_PAGE = 10;
 
     // Modal states
     const [selectedProductId, setSelectedProductId] = useState(null);
@@ -93,6 +93,13 @@ export const useAdminProducts = ({ products = [], categories = [] }) => {
         );
     }, [filteredProducts, productPage]);
 
+    const handleResetFilters = () => {
+        setProductSearch("");
+        setCategoryFilter("");
+        setProductStatusFilter("ALL");
+        setProductPage(1);
+    };
+
     return {
         productSearch,
         setProductSearch,
@@ -112,5 +119,6 @@ export const useAdminProducts = ({ products = [], categories = [] }) => {
         totalProductPages,
         paginatedProducts,
         getImagesList,
+        handleResetFilters,
     };
 };

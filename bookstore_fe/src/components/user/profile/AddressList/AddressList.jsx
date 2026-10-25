@@ -1,4 +1,4 @@
-import { MapPin, Edit, Trash2 } from "lucide-react";
+import { MapPin, Edit, Trash2, Check, Plus, Phone, User } from "lucide-react";
 import { useAddressList, parseAddress } from "./useAddressList";
 import "./AddressList.css";
 
@@ -31,10 +31,14 @@ const AddressList = ({ user, phone, fullName }) => {
 
     return (
         <div className="address-list-card">
-            <h3 className="address-list-title">
-                <MapPin size={18} className="address-list-icon" /> Danh sách địa
-                chỉ nhận hàng
-            </h3>
+            <div className="address-list-header-row">
+                <h3 className="address-list-title">
+                    <MapPin size={18} className="address-list-icon" /> Danh sách địa chỉ nhận hàng
+                </h3>
+                <span className="address-count-badge">
+                    {addressList.length}/5 địa chỉ
+                </span>
+            </div>
 
             <div className="address-list-stack">
                 {addressList.map((addr, idx) => {
@@ -52,9 +56,13 @@ const AddressList = ({ user, phone, fullName }) => {
                                 <span
                                     className={`address-badge ${isDefault ? "default" : ""}`}
                                 >
-                                    {isDefault
-                                        ? "Mặc định"
-                                        : `Địa chỉ phụ ${idx}`}
+                                    {isDefault ? (
+                                        <>
+                                            <Check size={12} /> Mặc định
+                                        </>
+                                    ) : (
+                                        `Địa chỉ ${idx + 1}`
+                                    )}
                                 </span>
 
                                 {/* Action buttons (only when not editing) */}
@@ -291,7 +299,7 @@ const AddressList = ({ user, phone, fullName }) => {
                         }}
                         className="address-btn-open-add"
                     >
-                        + Thêm địa chỉ mới
+                        <Plus size={16} /> Thêm địa chỉ mới
                     </button>
                 )
             )}

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
     Plus,
     Minus,
@@ -15,17 +15,26 @@ import {
     ChevronDown,
     ShoppingCart,
 } from "lucide-react";
-import { Breadcrumb } from "@/components/common";
+import {
+    Breadcrumb,
+    EmptyState,
+    RecommendationSection,
+} from "@/components/common";
 import { useCart } from "./useCart";
 import "./Cart.css";
 
 const Cart = () => {
+    const navigate = useNavigate();
     const {
         cart,
         updateCartQty,
         removeFromCart,
         clearCart,
+        user,
         couponCode,
+        setCouponCode,
+        usePoints,
+        setUsePoints,
         selectedItemIds,
         toggleSelectItem,
         isAllSelected,
@@ -33,7 +42,13 @@ const Cart = () => {
         formatPrice,
         totalAmount,
         coupons,
+        bestCoupon,
         couponDiscount,
+        shippingFee,
+        rewardPoints,
+        maxPointsValue,
+        pointsDiscount,
+        pointsUsed,
         total,
         calculateDiscount,
         handleCheckoutRedirect,
@@ -46,25 +61,27 @@ const Cart = () => {
     } = useCart();
 
     const [showMoreDiscounts, setShowMoreDiscounts] = useState(false);
+    const validItems = (cart?.items || []).filter(
+        (item) => item && item.product && typeof item.product === "object",
+    );
 
-    if (!cart?.items || cart.items.length === 0) {
+    if (validItems.length === 0) {
         return (
             <div className="page-container animate-fade-in cart-empty-container">
-                <div className="cart-empty-card">
-                    <ShoppingCart
-                        size={64}
-                        strokeWidth={1.5}
-                        color="#9ca3af"
-                        className="cart-empty-icon"
+                <Breadcrumb items={[{ label: "Giỏ hàng" }]} />
+                <EmptyState
+                    icon={ShoppingCart}
+                    title="Giỏ hàng của bạn đang trống"
+                    description="Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá ngay hàng ngàn tựa sách đặc sắc tại Bookstore!"
+                    actionText="Khám phá kho sách ngay"
+                    onAction={() => navigate("/catalog")}
+                    actionIcon={ArrowLeft}
+                />
+                <div className="cart-empty-recommendations">
+                    <RecommendationSection
+                        title="GỢI Ý DÀNH CHO BẠN"
+                        limit={10}
                     />
-                    <h2 className="cart-empty-title">Giỏ hàng trống</h2>
-                    <p className="cart-empty-desc">
-                        Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá
-                        ngay các tựa sách đặc sắc!
-                    </p>
-                    <Link to="/catalog" className="cart-empty-btn-shop">
-                        Khám phá kho sách
-                    </Link>
                 </div>
             </div>
         );
@@ -113,11 +130,28 @@ const Cart = () => {
         (c) => calculateDiscount(c, totalAmount) > 0,
     ).length;
 
+    // Tự động tính toán mã tốt nhất cho đơn hàng khi xem voucher
+    const computedBestCoupon = useMemo(() => {
+        if (!coupons || coupons.length === 0) return null;
+        let maxDisc = 0;
+        let best = null;
+        coupons.forEach((c) => {
+            const disc = calculateDiscount(c, totalAmount);
+            if (disc > maxDisc) {
+                maxDisc = disc;
+                best = c;
+            }
+        });
+        return best || bestCoupon;
+    }, [coupons, totalAmount, calculateDiscount, bestCoupon]);
+
     // Component render từng Item thẻ khuyến mãi
     const renderCouponCard = (c, isShippingType = false) => {
         const discountVal = calculateDiscount(c, totalAmount);
         const isEligible = totalAmount >= (c.minOrderValue || 0);
         const isSelected = couponCode === c.code;
+        const isBest =
+            Boolean(computedBestCoupon && computedBestCoupon.id === c.id && discountVal > 0);
         const missingAmount = Math.max(0, (c.minOrderValue || 0) - totalAmount);
         const progressPercent = Math.min(
             100,
@@ -130,6 +164,7 @@ const Cart = () => {
                 className={`fahasa-coupon-card ${isSelected ? "selected" : ""} ${!isEligible ? "disabled" : ""}`}
             >
                 {c.isHot && <div className="coupon-hot-badge">Sắp hết</div>}
+                {isBest && <div className="coupon-best-badge">Mã tốt nhất</div>}
 
                 {/* Stub bên trái */}
                 <div className="fahasa-coupon-stub">
@@ -158,10 +193,17 @@ const Cart = () => {
                         <Info size={16} className="coupon-info-icon" />
                     </div>
 
-                    <p className="coupon-condition-txt">
-                        Đơn hàng từ {formatPrice(c.minOrderValue)} - Mã:{" "}
-                        <strong>{c.code}</strong>
-                    </p>
+                    <div className="coupon-condition-row">
+                        <p className="coupon-condition-txt">
+                            Đơn hàng từ {formatPrice(c.minOrderValue)} - Mã:{" "}
+                            <strong>{c.code}</strong>
+                        </p>
+                        {isBest && (
+                            <span className="coupon-best-tag">
+                                Mã tốt nhất
+                            </span>
+                        )}
+                    </div>
 
                     <div className="coupon-expiry-txt">
                         HSD: {new Date(c.endDate).toLocaleDateString("vi-VN")}
@@ -223,7 +265,7 @@ const Cart = () => {
                                 className="cart-custom-checkbox"
                             />
                             <span className="cart-header-title">
-                                Chọn tất cả ({cart.items.length} sản phẩm)
+                                Chọn tất cả ({validItems.length} sản phẩm)
                             </span>
                         </label>
                         <span className="cart-header-col-qty">Số lượng</span>
@@ -233,18 +275,25 @@ const Cart = () => {
                     </div>
 
                     <div className="cart-card-box cart-items-list-card">
-                        {cart.items.map((item, idx) => {
+                        {validItems.map((item, idx) => {
                             const isSelected = selectedItemIds.has(item.id);
-                            const isOutOfStock =
-                                item.product.stockQuantity === 0;
-                            const originalPrice = Math.round(
-                                item.product.price * 1.25,
-                            );
+                            const prod = item.product || {};
+                            const stockQty = prod.stockQuantity ?? 100;
+                            const isOutOfStock = stockQty === 0;
+                            const price = Number(prod.price) || 0;
+                            const originalPrice =
+                                prod.originalPrice ||
+                                Math.round(price * 1.25);
+                            const imgUrl =
+                                prod.imageUrls?.[0] || prod.imageUrl;
+                            const prodId = prod.id;
+                            const prodName = prod.name || "Sách";
+                            const itemQty = Number(item.quantity) || 1;
 
                             return (
                                 <div
-                                    key={item.id}
-                                    className={`cart-product-row ${idx !== cart.items.length - 1 ? "has-divider" : ""}`}
+                                    key={item.id || `cart-item-${idx}`}
+                                    className={`cart-product-row ${idx !== validItems.length - 1 ? "has-divider" : ""}`}
                                 >
                                     <div className="cart-row-checkbox-col">
                                         <input
@@ -258,10 +307,10 @@ const Cart = () => {
                                     </div>
 
                                     <div className="cart-product-thumb-box">
-                                        {item.product.imageUrl ? (
+                                        {imgUrl ? (
                                             <img
-                                                src={item.product.imageUrl}
-                                                alt={item.product.name}
+                                                src={imgUrl}
+                                                alt={prodName}
                                                 className="cart-product-img"
                                             />
                                         ) : (
@@ -273,13 +322,11 @@ const Cart = () => {
 
                                     <div className="cart-product-info-col">
                                         <h4 className="cart-product-title">
-                                            {item.product.name}
+                                            {prodName}
                                         </h4>
                                         <div className="cart-product-price-sub">
                                             <span className="current-price">
-                                                {formatPrice(
-                                                    item.product.price,
-                                                )}
+                                                {formatPrice(price)}
                                             </span>
                                             <span className="old-price">
                                                 {formatPrice(originalPrice)}
@@ -299,8 +346,8 @@ const Cart = () => {
                                                 type="button"
                                                 onClick={() =>
                                                     updateCartQty(
-                                                        item.product.id,
-                                                        item.quantity - 1,
+                                                        prodId,
+                                                        itemQty - 1,
                                                     )
                                                 }
                                                 className="cart-qty-btn"
@@ -308,22 +355,20 @@ const Cart = () => {
                                                 <Minus size={12} />
                                             </button>
                                             <span className="cart-qty-number">
-                                                {item.quantity}
+                                                {itemQty}
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={() =>
                                                     updateCartQty(
-                                                        item.product.id,
-                                                        item.quantity + 1,
+                                                        prodId,
+                                                        itemQty + 1,
                                                     )
                                                 }
                                                 className="cart-qty-btn"
                                                 disabled={
                                                     isOutOfStock ||
-                                                    item.quantity >=
-                                                        item.product
-                                                            .stockQuantity
+                                                    itemQty >= stockQty
                                                 }
                                             >
                                                 <Plus size={12} />
@@ -332,15 +377,13 @@ const Cart = () => {
                                     </div>
 
                                     <div className="cart-product-subtotal-col">
-                                        {formatPrice(
-                                            item.product.price * item.quantity,
-                                        )}
+                                        {formatPrice(price * itemQty)}
                                     </div>
 
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            removeFromCart(item.product.id)
+                                            removeFromCart(prodId)
                                         }
                                         className="cart-btn-remove-item"
                                         title="Xóa sản phẩm"
@@ -415,24 +458,88 @@ const Cart = () => {
                             onClick={openCouponModal}
                         >
                             <span>
-                                {eligibleCouponsCount} khuyến mãi đủ điều kiện
+                                {eligibleCouponsCount > 0
+                                    ? `${eligibleCouponsCount} khuyến mãi đủ điều kiện`
+                                    : totalAmount === 0
+                                      ? "Chọn sản phẩm để mở khóa voucher"
+                                      : "Xem danh sách mã giảm giá"}
                             </span>
                             <ChevronRight size={14} />
                         </div>
                     </div>
 
-                    <div className="cart-shipping-notice-box">
-                        <Truck size={18} color="#0a422d" />
-                        <span>
-                            Miễn phí giao hàng cho đơn từ{" "}
-                            <strong>500.000đ</strong> trở lên!
-                        </span>
-                    </div>
+                    {/* KHỐI TIẾN ĐỘ FREESHIP TRỰC QUAN */}
+                    {(() => {
+                        const freeShipThreshold = 500000;
+                        const isFreeShipEligible = totalAmount >= freeShipThreshold;
+                        const freeShipRemaining = Math.max(
+                            0,
+                            freeShipThreshold - totalAmount,
+                        );
+                        const freeShipPercent = Math.min(
+                            100,
+                            Math.round(
+                                (totalAmount / freeShipThreshold) * 100,
+                            ),
+                        );
+
+                        return (
+                            <div className="cart-card-box cart-freeship-card">
+                                <div className="cart-freeship-header">
+                                    <Truck
+                                        size={18}
+                                        className="cart-freeship-icon"
+                                    />
+                                    <span className="cart-freeship-title">
+                                        {isFreeShipEligible
+                                            ? "Đơn hàng đủ điều kiện Freeship toàn quốc!"
+                                            : `Mua thêm ${formatPrice(freeShipRemaining)} để được Freeship`}
+                                    </span>
+                                </div>
+                                <div className="cart-freeship-progress-bar">
+                                    <div
+                                        className="cart-freeship-progress-fill"
+                                        style={{
+                                            width: `${freeShipPercent}%`,
+                                        }}
+                                    />
+                                </div>
+                                <div className="cart-freeship-subtext">
+                                    <span>Đơn từ 500.000đ</span>
+                                    <span>{freeShipPercent}%</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    {/* DÙNG ĐIỂM THƯỞNG */}
+                    {user && rewardPoints > 0 && (
+                        <div className="cart-card-box cart-points-card">
+                            <label className="cart-points-toggle-label">
+                                <input
+                                    type="checkbox"
+                                    checked={usePoints}
+                                    onChange={(e) =>
+                                        setUsePoints(e.target.checked)
+                                    }
+                                    className="cart-custom-checkbox"
+                                />
+                                <div className="cart-points-info">
+                                    <span className="cart-points-title">
+                                        Dùng điểm thưởng ({rewardPoints} điểm)
+                                    </span>
+                                    <span className="cart-points-sub">
+                                        Quy đổi giảm tối đa {formatPrice(maxPointsValue)}
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                    )}
 
                     <div className="cart-card-box cart-summary-card">
                         <div className="cart-summary-line">
                             <span>Thành tiền</span>
-                            <span className="val-text">
+                            <span className="val-text tabular-nums">
                                 {formatPrice(totalAmount)}
                             </span>
                         </div>
@@ -440,8 +547,10 @@ const Cart = () => {
                         {selectedItemIds.size > 0 && (
                             <div className="cart-summary-line">
                                 <span>Phí vận chuyển dự kiến</span>
-                                <span className="val-text">
-                                    {shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee)}
+                                <span className="val-text tabular-nums">
+                                    {shippingFee === 0
+                                        ? "Miễn phí"
+                                        : formatPrice(shippingFee)}
                                 </span>
                             </div>
                         )}
@@ -449,7 +558,7 @@ const Cart = () => {
                         {couponDiscount > 0 && (
                             <div className="cart-summary-line discount">
                                 <span>Giảm giá khuyến mãi</span>
-                                <span className="val-discount">
+                                <span className="val-discount tabular-nums">
                                     -{formatPrice(couponDiscount)}
                                 </span>
                             </div>
@@ -457,8 +566,10 @@ const Cart = () => {
 
                         {pointsDiscount > 0 && (
                             <div className="cart-summary-line discount">
-                                <span>Dùng điểm tích lũy ({pointsUsed} điểm)</span>
-                                <span className="val-discount">
+                                <span>
+                                    Dùng điểm tích lũy ({pointsUsed} điểm)
+                                </span>
+                                <span className="val-discount tabular-nums">
                                     -{formatPrice(pointsDiscount)}
                                 </span>
                             </div>
@@ -468,7 +579,7 @@ const Cart = () => {
                             <span className="total-label">
                                 Tổng Số Tiền (gồm VAT)
                             </span>
-                            <span className="total-val">
+                            <span className="total-val tabular-nums">
                                 {formatPrice(total)}
                             </span>
                         </div>
@@ -476,9 +587,10 @@ const Cart = () => {
                         <button
                             type="button"
                             onClick={handleCheckoutRedirect}
+                            disabled={selectedItemIds.size === 0}
                             className="cart-btn-submit-checkout"
                         >
-                            THANH TOÁN
+                            THANH TOÁN ({selectedItemIds.size})
                         </button>
                         <div className="cart-vat-note">
                             (Giá đã bao gồm VAT và ưu đãi áp dụng)
@@ -486,6 +598,35 @@ const Cart = () => {
                     </div>
                 </div>
             </div>
+
+
+            {/* MOBILE STICKY BOTTOM CHECKOUT BAR (iPhone 14 Pro Max & Mobile) */}
+            <div className="cart-mobile-sticky-bar">
+                <label className="cart-mobile-sticky-select-all">
+                    <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={toggleSelectAll}
+                        className="cart-custom-checkbox"
+                    />
+                    <span>Tất cả ({selectedItemIds.size})</span>
+                </label>
+                <div className="cart-mobile-sticky-total-box">
+                    <span className="sticky-total-label">Tổng thanh toán:</span>
+                    <span className="sticky-total-val tabular-nums">
+                        {formatPrice(total)}
+                    </span>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleCheckoutRedirect}
+                    disabled={selectedItemIds.size === 0}
+                    className="cart-mobile-sticky-btn-checkout"
+                >
+                    Thanh toán ({selectedItemIds.size})
+                </button>
+            </div>
+
 
             {/* MODAL MÃ KHUYẾN MÃI THEO PHÂN LOẠI */}
             {isCouponModalOpen &&
@@ -548,7 +689,7 @@ const Cart = () => {
                                     <div className="cart-modal-section-title">
                                         <span>Mã giảm giá</span>
                                         <span className="sub-limit">
-                                            Áp dụng tối đa: 1
+                                            Quy định: Tối đa 1 mã/đơn
                                         </span>
                                     </div>
                                     <div className="modal-coupons-group">
@@ -593,7 +734,7 @@ const Cart = () => {
                                     <div className="cart-modal-section-title">
                                         <span>Mã vận chuyển</span>
                                         <span className="sub-limit">
-                                            Áp dụng tối đa: 1
+                                            Quy định: Tối đa 1 mã/đơn
                                         </span>
                                     </div>
                                     <div className="modal-coupons-group">

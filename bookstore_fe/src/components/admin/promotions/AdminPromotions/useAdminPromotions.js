@@ -155,6 +155,16 @@ export const useAdminPromotions = () => {
         return matchSearch && matchStatus && matchType;
     });
 
+    const stats = {
+        total: promotions.length,
+        active: promotions.filter((p) => p.status === "ACTIVE").length,
+        pending: promotions.filter((p) => p.status === "PENDING").length,
+        totalRevenue: promotions.reduce(
+            (sum, p) => sum + (p.totalRevenue || 0),
+            0
+        ),
+    };
+
     return {
         showToast,
         promotions,
@@ -185,5 +195,6 @@ export const useAdminPromotions = () => {
         handleUpdatePromotion,
         handleDeletePromotion,
         handleResetFilter,
+        stats,
     };
 };

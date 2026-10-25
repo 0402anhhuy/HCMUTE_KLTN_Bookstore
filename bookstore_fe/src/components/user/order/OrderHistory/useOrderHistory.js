@@ -340,15 +340,15 @@ export const useOrderHistory = () => {
             case "preparing":
                 return "Đang đóng gói";
             case "shipping":
-                return "Đang vận chuyển";
+                return "Đang giao";
             case "delivered":
-                return "Giao hàng thành công";
+                return "Hoàn thành";
             case "cancelled":
                 return "Đã hủy";
             case "cancel_requested":
                 return "Yêu cầu đổi trả";
             case "refunded":
-                return "Đã hoàn tiền";
+                return "Trả hàng";
             default:
                 return status;
         }
@@ -385,20 +385,21 @@ export const useOrderHistory = () => {
     const tabs = [
         { id: "ALL", label: "Tất cả" },
         { id: "pending", label: "Chờ xác nhận" },
+        { id: "preparing", label: "Đang đóng gói" },
         { id: "shipping", label: "Đang giao" },
         { id: "delivered", label: "Hoàn thành" },
         { id: "cancelled", label: "Đã hủy" },
+        { id: "refunded", label: "Trả hàng" },
     ];
 
     const filteredOrders = orders.filter((o) => {
         if (activeTab === "ALL") return true;
-        if (
-            activeTab === "shipping" &&
-            (o.status === "confirmed" ||
-                o.status === "preparing" ||
-                o.status === "shipping")
-        )
-            return true;
+        if (activeTab === "preparing") {
+            return o.status === "confirmed" || o.status === "preparing";
+        }
+        if (activeTab === "refunded") {
+            return o.status === "refunded" || o.status === "cancel_requested";
+        }
         return o.status === activeTab;
     });
 
