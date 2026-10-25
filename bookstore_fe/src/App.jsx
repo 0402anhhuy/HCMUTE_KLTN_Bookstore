@@ -8,7 +8,7 @@ import {
     useNavigate,
 } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
-import { Navbar, Footer } from './components/common';
+import { Navbar, Footer, Chatbot } from './components/common';
 import { Home } from "./components/user/home";
 import { Login, Register } from "./components/auth";
 import { Profile } from "./components/user/profile/index";
@@ -191,6 +191,9 @@ function AppContent() {
 
             {/* Global Footer */}
             {!hideLayout && <Footer />}
+
+            {/* Chatbot hỗ trợ khách hàng - nút nổi góc phải dưới */}
+            {!hideLayout && <Chatbot />}
         </div>
     );
 }
