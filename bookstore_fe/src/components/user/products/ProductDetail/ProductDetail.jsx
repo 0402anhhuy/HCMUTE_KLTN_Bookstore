@@ -19,7 +19,8 @@ import {
     Building2,
     BookOpenText,
     Store,
-    BookOpen,
+    BookX,
+    ShieldCheck,
     ArrowLeft,
 } from "lucide-react";
 import {
