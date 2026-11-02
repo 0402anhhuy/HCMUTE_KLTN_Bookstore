@@ -43,6 +43,7 @@ const OrderHistory = () => {
         returnReasonDetail,
         setReturnReasonDetail,
         evidenceImages,
+        setEvidenceImages,
         uploadingImage,
         reviewProduct,
         setReviewProduct,
