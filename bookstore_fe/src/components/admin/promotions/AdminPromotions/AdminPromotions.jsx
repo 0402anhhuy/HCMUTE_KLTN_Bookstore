@@ -1,6 +1,6 @@
 import React from "react";
 import {
-    Sparkles,
+    Megaphone,
     Plus,
     Package,
     FileText,
@@ -89,7 +89,7 @@ const AdminPromotions = () => {
                             TỔNG CHƯƠNG TRÌNH
                         </span>
                         <div className="admin-promotions-stat-icon-wrap total">
-                            <Sparkles size={20} />
+                            <Megaphone size={20} />
                         </div>
                     </div>
                     <div className="admin-promotions-stat-value">{stats.total}</div>
@@ -220,7 +220,7 @@ const AdminPromotions = () => {
             ) : filteredPromotions.length === 0 ? (
                 <div className="admin-promotions-empty-container">
                     <EmptyState
-                        icon={Sparkles}
+                        icon={Megaphone}
                         title="Không tìm thấy chương trình khuyến mãi nào"
                         description={
                             isFiltered

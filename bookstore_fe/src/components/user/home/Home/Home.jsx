@@ -15,7 +15,6 @@ import {
     GraduationCap,
     BookMarked,
     LineChart,
-    Sparkles,
 } from "lucide-react";
 import { formatCategoryLabel } from "@/utils/categoryTree";
 import heroBooks from "@/assets/hero_books.png";
@@ -324,11 +323,11 @@ const Home = () => {
                             onClick={() => navigate("/catalog?keyword=manga")}
                         >
                             <div className="home-promo-watermark">
-                                <Sparkles size={58} />
+                                <Flame size={58} />
                             </div>
                             <div className="home-promo-content">
                                 <span className="home-promo-subtitle">
-                                    <Sparkles size={13} /> Manga & Light novel
+                                    <Flame size={13} /> Manga & Light novel
                                 </span>
                                 <h4 className="home-promo-title">Ưu đãi 35%</h4>
                                 <span className="home-promo-btn">

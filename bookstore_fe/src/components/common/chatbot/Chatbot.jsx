@@ -16,7 +16,7 @@ import {
     XCircle,
     Star,
     Lock,
-    Sparkles,
+    Bot,
 } from "lucide-react";
 import { GREETING, SUGGESTED_QUESTION_COUNT } from "./chatbotData";
 import { useChatbot } from "./useChatbot";
@@ -144,7 +144,7 @@ const Chatbot = () => {
                             >
                                 {msg.sender === "bot" && (
                                     <div className="chatbot-msg-avatar">
-                                        <Sparkles size={14} />
+                                        <Bot size={14} />
                                     </div>
                                 )}
                                 <div
@@ -175,7 +175,7 @@ const Chatbot = () => {
                         {isTyping && (
                             <div className="chatbot-msg-row chatbot-msg-row-bot">
                                 <div className="chatbot-msg-avatar">
-                                    <Sparkles size={14} />
+                                    <Bot size={14} />
                                 </div>
                                 <div className="chatbot-bubble chatbot-bubble-bot chatbot-typing">
                                     <span />

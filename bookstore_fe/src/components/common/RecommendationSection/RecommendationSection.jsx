@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sparkles } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
@@ -60,9 +60,8 @@ const RecommendationSection = ({
     return (
         <section className="recommendation-common-container">
             <div className="recommendation-common-header-banner">
-                <Sparkles size={18} />
+                <BookOpen size={18} />
                 <span>{title}</span>
-                <Sparkles size={18} />
             </div>
 
             {loading ? (

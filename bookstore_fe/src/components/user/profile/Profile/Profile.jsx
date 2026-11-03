@@ -10,7 +10,7 @@ import {
     RotateCcw,
     Wallet,
     Coins,
-    Sparkles,
+    Award,
 } from "lucide-react";
 import { Breadcrumb, EmptyState } from "@/components/common";
 import { useProfile } from "./useProfile";
@@ -103,7 +103,7 @@ const Profile = () => {
                             <span className="profile-sidebar-welcome">Xin chào,</span>
                             <h4 className="profile-sidebar-name">{user.fullName}</h4>
                             <span className="profile-sidebar-role-badge">
-                                <Sparkles size={12} /> Thành viên thân thiết
+                                <Award size={12} /> Thành viên thân thiết
                             </span>
                         </div>
                     </div>
@@ -182,7 +182,7 @@ const Profile = () => {
                                     <div className="profile-user-email">{user.email}</div>
                                     <div className="profile-user-badges-row">
                                         <span className="profile-badge-tier">
-                                            <Sparkles size={12} /> Thành viên BookStore
+                                            <Award size={12} /> Thành viên BookStore
                                         </span>
                                         {user.phone && (
                                             <span className="profile-badge-phone">
