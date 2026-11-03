@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LogOut, Bell, ShieldCheck, Menu, X } from "lucide-react";
 import { useAdminDashboard } from "./useAdminDashboard";
 
@@ -34,6 +34,10 @@ const AdminDashboard = () => {
         showToast,
         navTabs,
     } = useAdminDashboard();
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }, [activeTab]);
 
     return (
         <div className="admin-dashboard-layout">
