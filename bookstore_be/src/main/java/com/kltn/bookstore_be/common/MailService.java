@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,6 +33,7 @@ public class MailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    @Async("mailTaskExecutor")
     public void sendOtpEmail(String toEmail, String otpCode, String type) {
         String subject = "Bookstore - Xác thực mã OTP của bạn";
         String body = "Xin chào,\n\n"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/services/api";
 import { useApp } from "@/context/AppContext";
@@ -19,8 +19,23 @@ export const useRegister = () => {
     const [view, setView] = useState("register");
     const [otpCode, setOtpCode] = useState("");
     const [loading, setLoading] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
+
+    // Countdown timer for resend OTP cooldown
+    useEffect(() => {
+        let timer;
+        if (resendCooldown > 0) {
+            timer = setInterval(() => {
+                setResendCooldown((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [resendCooldown]);
 
     const handleRegisterSubmit = async (e) => {
         e.preventDefault();
@@ -44,6 +59,7 @@ export const useRegister = () => {
             });
             setMessage(response.data.message || "Mã OTP đã được gửi.");
             setView("otp");
+            setResendCooldown(60);
         } catch (err) {
             console.error("Register Error details:", err);
             setError(
@@ -81,7 +97,8 @@ export const useRegister = () => {
     };
 
     const handleResendOtp = async () => {
-        setLoading(true);
+        if (resendCooldown > 0 || resendLoading) return;
+        setResendLoading(true);
         setError("");
         setMessage("");
         try {
@@ -95,10 +112,11 @@ export const useRegister = () => {
             setMessage(
                 "Mã OTP mới đã được gửi tới email. Vui lòng kiểm tra hộp thư.",
             );
+            setResendCooldown(60);
         } catch (err) {
             setError(err.response?.data?.error || "Không thể gửi lại mã OTP.");
         } finally {
-            setLoading(false);
+            setResendLoading(false);
         }
     };
 
@@ -119,6 +137,8 @@ export const useRegister = () => {
         otpCode,
         setOtpCode,
         loading,
+        resendLoading,
+        resendCooldown,
         error,
         message,
         handleRegisterSubmit,

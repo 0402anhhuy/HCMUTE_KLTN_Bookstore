@@ -20,6 +20,8 @@ const Register = () => {
         otpCode,
         setOtpCode,
         loading,
+        resendLoading,
+        resendCooldown,
         error,
         message,
         handleRegisterSubmit,
@@ -240,9 +242,18 @@ const Register = () => {
                             <button
                                 type="button"
                                 onClick={handleResendOtp}
+                                disabled={
+                                    loading ||
+                                    resendLoading ||
+                                    resendCooldown > 0
+                                }
                                 className="register-btn-resend-otp"
                             >
-                                Gửi lại
+                                {resendLoading
+                                    ? "Đang gửi..."
+                                    : resendCooldown > 0
+                                      ? `Gửi lại (${resendCooldown}s)`
+                                      : "Gửi lại"}
                             </button>
                         </div>
 
