@@ -436,16 +436,18 @@
 
 .book-card-stars-wrapper {
     display: flex;
-    color: #ecc94b;
+    align-items: center;
+    gap: 2px;
 }
 
 .book-card-star-icon {
-    stroke: none;
+    flex-shrink: 0;
 }
 
 .book-card-rating-text {
     font-size: 0.75rem;
     color: #a0aec0;
+    margin-left: 4px;
 }
 
 .book-card-footer-row {
@@ -1324,6 +1326,32 @@
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+.bestseller-review-count {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-left: 4px;
+}
+
+.bestseller-no-reviews-text {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-right: 4px;
+}
+
+.bestseller-empty-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.bestseller-reviews-loading {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #94a3b8;
 }
 
 .bestseller-btn-view-detail {

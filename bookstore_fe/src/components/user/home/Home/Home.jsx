@@ -55,6 +55,9 @@ const Home = () => {
         activeBestseller,
         selectedBestsellerId,
         setSelectedBestsellerId,
+        bestsellerReviews,
+        bestsellerRating,
+        loadingBestsellerReviews,
         activeBestsellerTab,
         setActiveBestsellerTab,
         publishers,
@@ -753,16 +756,54 @@ const Home = () => {
                                             <div className="bestseller-review-header">
                                                 <span>Đánh giá sản phẩm</span>
                                                 <div className="bestseller-stars">
-                                                    <strong>5.0 / 5</strong>
-                                                    {[...Array(5)].map(
-                                                        (_, i) => (
-                                                            <Star
-                                                                key={i}
-                                                                size={14}
-                                                                fill="#f59e0b"
-                                                                color="#f59e0b"
-                                                            />
-                                                        ),
+                                                    {loadingBestsellerReviews ? (
+                                                        <span className="bestseller-reviews-loading">
+                                                            Đang tải...
+                                                        </span>
+                                                    ) : bestsellerReviews.length > 0 ? (
+                                                        <>
+                                                            <strong>
+                                                                {bestsellerRating.toFixed(1)} / 5
+                                                            </strong>
+                                                            {[1, 2, 3, 4, 5].map((starIdx) => (
+                                                                <Star
+                                                                    key={starIdx}
+                                                                    size={14}
+                                                                    fill={
+                                                                        bestsellerRating >= starIdx
+                                                                            ? "#f59e0b"
+                                                                            : "none"
+                                                                    }
+                                                                    color={
+                                                                        bestsellerRating >= starIdx
+                                                                            ? "#f59e0b"
+                                                                            : "#cbd5e1"
+                                                                    }
+                                                                />
+                                                            ))}
+                                                            <span className="bestseller-review-count">
+                                                                ({bestsellerReviews.length} đánh giá)
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="bestseller-no-reviews-text">
+                                                                Chưa có đánh giá
+                                                            </span>
+                                                            <div className="bestseller-empty-stars">
+                                                                {[1, 2, 3, 4, 5].map((starIdx) => (
+                                                                    <Star
+                                                                        key={starIdx}
+                                                                        size={14}
+                                                                        fill="none"
+                                                                        color="#cbd5e1"
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                            <span className="bestseller-review-count">
+                                                                (0 đánh giá)
+                                                            </span>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
@@ -913,14 +954,27 @@ const BookCard = ({
 
             <div className="book-card-footer-row">
                 <div className="book-card-stars-wrapper">
-                    {[...Array(5)].map((_, i) => (
-                        <Star
-                            key={i}
-                            size={13}
-                            fill="currentColor"
-                            className="book-card-star-icon"
-                        />
-                    ))}
+                    {[1, 2, 3, 4, 5].map((starIdx) => {
+                        const rating = product.averageRating || product.rating || 0;
+                        const isFilled = rating >= starIdx;
+                        return (
+                            <Star
+                                key={starIdx}
+                                size={13}
+                                fill={isFilled ? "#ecc94b" : "none"}
+                                color={isFilled ? "#ecc94b" : "#cbd5e1"}
+                                strokeWidth={1.5}
+                                className="book-card-star-icon"
+                            />
+                        );
+                    })}
+                    <span className="book-card-rating-text">
+                        {product.averageRating && product.averageRating > 0
+                            ? `(${product.averageRating.toFixed(1)})`
+                            : product.reviewCount
+                            ? `(${product.reviewCount})`
+                            : "(0)"}
+                    </span>
                 </div>
                 <button
                     type="button"
