@@ -55,17 +55,17 @@
     position: absolute;
     top: 100%;
     left: 0;
-    width: 960px;
-    min-height: 440px;
-    max-height: 520px;
+    width: min(720px, 92vw);
     background-color: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
     display: flex;
+    flex-direction: column;
     z-index: 1060;
-    overflow: hidden;
+    overflow-y: auto;
     text-align: left;
+    padding: 22px 28px;
     animation: fadeInNavbarModal 0.2s ease;
 }
 
@@ -145,7 +145,7 @@
 
 .mega-menu-sub-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 24px 20px;
 }
 

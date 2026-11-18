@@ -399,8 +399,17 @@ const Home = () => {
                         </div>
                         <div className="home-quick-categories-grid">
                             {(() => {
+                                const validCategories = (categories || []).filter((cat) => {
+                                    const name = (cat?.name || "").trim().toLowerCase();
+                                    return (
+                                        name !== "sách trong nước" &&
+                                        !name.includes("kinh tế chính trị") &&
+                                        !name.includes("quản trị kinh doanh")
+                                    );
+                                });
+
                                 const subCategories = [];
-                                (categories || []).forEach((cat) => {
+                                validCategories.forEach((cat) => {
                                     const children = cat.children || cat.subCategories;
                                     if (Array.isArray(children) && children.length > 0) {
                                         subCategories.push(...children);
@@ -409,7 +418,7 @@ const Home = () => {
                                     }
                                 });
 
-                                const displayCategories = subCategories.length > 0 ? subCategories : categories;
+                                const displayCategories = subCategories.length > 0 ? subCategories : validCategories;
 
                                 return displayCategories.slice(0, 10).map((cat) => (
                                     <div
@@ -512,7 +521,17 @@ const Home = () => {
                             >
                                 Tất cả
                             </button>
-                            {categories.slice(0, 8).map((cat) => (
+                            {categories
+                                .filter((cat) => {
+                                    const name = (cat?.name || "").trim().toLowerCase();
+                                    return (
+                                        name !== "sách trong nước" &&
+                                        !name.includes("kinh tế chính trị") &&
+                                        !name.includes("quản trị kinh doanh")
+                                    );
+                                })
+                                .slice(0, 8)
+                                .map((cat) => (
                                 <button
                                     key={cat.id}
                                     type="button"
