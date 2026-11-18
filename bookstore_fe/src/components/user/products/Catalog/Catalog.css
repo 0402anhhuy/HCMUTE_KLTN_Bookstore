@@ -350,6 +350,84 @@
     border-radius: 4px;
 }
 
+/* Custom Price Input Box */
+.catalog-custom-price-box {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.catalog-custom-price-label {
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.catalog-custom-price-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.catalog-price-input-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.catalog-price-input {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #1e293b;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.catalog-price-input:focus {
+    outline: none;
+    background-color: #ffffff;
+    border-color: #0a422d;
+    box-shadow: 0 0 0 2px rgba(10, 66, 45, 0.12);
+}
+
+.catalog-price-input::placeholder {
+    color: #94a3b8;
+    font-size: 0.78rem;
+}
+
+.catalog-price-dash {
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.85rem;
+    user-select: none;
+}
+
+.catalog-price-apply-btn {
+    width: 100%;
+    padding: 6px 12px;
+    background-color: #ffffff;
+    color: #0a422d;
+    border: 1px solid #0a422d;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.catalog-price-apply-btn:hover {
+    background-color: #0a422d;
+    color: #ffffff;
+}
+
 /* ================= PRODUCT CONTENT SECTION ================= */
 .catalog-content-section {
     flex: 1;

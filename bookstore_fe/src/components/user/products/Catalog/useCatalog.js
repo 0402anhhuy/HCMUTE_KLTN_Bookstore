@@ -17,6 +17,8 @@ export const useCatalog = () => {
     const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
+    const [customMinPrice, setCustomMinPrice] = useState("");
+    const [customMaxPrice, setCustomMaxPrice] = useState("");
     const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
     const [searchInput, setSearchInput] = useState(keyword);
 
@@ -147,6 +149,8 @@ export const useCatalog = () => {
         setSelectedCategory("");
         setMinPrice("");
         setMaxPrice("");
+        setCustomMinPrice("");
+        setCustomMaxPrice("");
         setSelectedPriceRanges([]);
         setSearchInput("");
         setSelectedPublishers([]);
@@ -189,6 +193,8 @@ export const useCatalog = () => {
     const [showMoreCategory, setShowMoreCategory] = useState(false);
 
     const togglePriceRange = (min, max) => {
+        setCustomMinPrice("");
+        setCustomMaxPrice("");
         setSelectedPriceRanges((prev) => {
             const exists = prev.some((r) => r.min === min && r.max === max);
             let updated;
@@ -243,8 +249,56 @@ export const useCatalog = () => {
     const removePriceFilter = () => {
         setMinPrice("");
         setMaxPrice("");
+        setCustomMinPrice("");
+        setCustomMaxPrice("");
         setSelectedPriceRanges([]);
         setPage(0);
+    };
+
+    const handleMinPriceChange = (e) => {
+        const raw = e.target.value.replace(/\D/g, "");
+        setCustomMinPrice(raw ? Number(raw).toLocaleString("vi-VN") : "");
+    };
+
+    const handleMaxPriceChange = (e) => {
+        const raw = e.target.value.replace(/\D/g, "");
+        setCustomMaxPrice(raw ? Number(raw).toLocaleString("vi-VN") : "");
+    };
+
+    const applyCustomPrice = useCallback(() => {
+        const rawMin = customMinPrice.replace(/\D/g, "");
+        const rawMax = customMaxPrice.replace(/\D/g, "");
+
+        if (!rawMin && !rawMax) {
+            setMinPrice("");
+            setMaxPrice("");
+            setSelectedPriceRanges([]);
+            setPage(0);
+            return;
+        }
+
+        let minVal = rawMin ? Number(rawMin) : 0;
+        let maxVal = rawMax ? Number(rawMax) : null;
+
+        if (maxVal !== null && minVal > maxVal) {
+            const temp = minVal;
+            minVal = maxVal;
+            maxVal = temp;
+            setCustomMinPrice(minVal.toLocaleString("vi-VN"));
+            setCustomMaxPrice(maxVal.toLocaleString("vi-VN"));
+        }
+
+        setSelectedPriceRanges([]);
+        setMinPrice(String(minVal));
+        setMaxPrice(maxVal !== null ? String(maxVal) : "");
+        setPage(0);
+    }, [customMinPrice, customMaxPrice]);
+
+    const handlePriceKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            applyCustomPrice();
+        }
     };
 
     const removeKeywordFilter = () => {
@@ -289,5 +343,11 @@ export const useCatalog = () => {
         removeCategoryFilter,
         removePriceFilter,
         removeKeywordFilter,
+        customMinPrice,
+        customMaxPrice,
+        handleMinPriceChange,
+        handleMaxPriceChange,
+        applyCustomPrice,
+        handlePriceKeyDown,
     };
 };

@@ -55,6 +55,12 @@ const Catalog = () => {
         removeCategoryFilter,
         removePriceFilter,
         removeKeywordFilter,
+        customMinPrice,
+        customMaxPrice,
+        handleMinPriceChange,
+        handleMaxPriceChange,
+        applyCustomPrice,
+        handlePriceKeyDown,
     } = useCatalog();
 
     // State quản lý mở rộng Accordion từng nhánh danh mục
@@ -472,6 +478,48 @@ const Catalog = () => {
                                         </label>
                                     );
                                 })}
+                            </div>
+
+                            {/* Ô nhập khoảng giá tìm kiếm (Nhấn Enter hoặc bấm Áp dụng để lọc) */}
+                            <div className="catalog-custom-price-box">
+                                <div className="catalog-custom-price-label">
+                                    Hoặc nhập khoảng giá:
+                                </div>
+                                <div className="catalog-custom-price-inputs">
+                                    <div className="catalog-price-input-wrapper">
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            placeholder="Từ ₫"
+                                            value={customMinPrice}
+                                            onChange={handleMinPriceChange}
+                                            onKeyDown={handlePriceKeyDown}
+                                            className="catalog-price-input"
+                                            aria-label="Giá từ"
+                                        />
+                                    </div>
+                                    <span className="catalog-price-dash">-</span>
+                                    <div className="catalog-price-input-wrapper">
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            placeholder="Đến ₫"
+                                            value={customMaxPrice}
+                                            onChange={handleMaxPriceChange}
+                                            onKeyDown={handlePriceKeyDown}
+                                            className="catalog-price-input"
+                                            aria-label="Giá đến"
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={applyCustomPrice}
+                                    className="catalog-price-apply-btn"
+                                    title="Áp dụng khoảng giá (hoặc nhấn Enter)"
+                                >
+                                    Áp dụng
+                                </button>
                             </div>
                         </div>
 
