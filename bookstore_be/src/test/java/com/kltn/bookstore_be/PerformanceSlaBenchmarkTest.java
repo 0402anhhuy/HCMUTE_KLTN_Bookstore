@@ -1308,8 +1308,7 @@ public class PerformanceSlaBenchmarkTest {
         File rootDir = currentDir.getName().equals("bookstore_be") ? currentDir.getParentFile() : currentDir;
 
         List<File> csvFiles = List.of(
-                new File(rootDir, "docs/benchmark_sla_data.csv"),
-                new File(rootDir, "docs/benchmark_sla_data_full.csv")
+                new File(rootDir, "docs/benchmark_sla_data.csv")
         );
 
         List<File> mdFiles = List.of(
