@@ -1,5 +1,6 @@
 package com.kltn.bookstore_be.ordering.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.kltn.bookstore_be.catalog.domain.*;
 
 import jakarta.persistence.*;
@@ -20,6 +21,7 @@ public class CartItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
+    @JsonIgnore
     private Cart cart;
 
     @ManyToOne(fetch = FetchType.EAGER)

@@ -90,13 +90,15 @@ const Cart = () => {
     // Tự động phân loại danh sách coupon thành: Mã giảm giá & Mã freeship
     const orderDiscounts = coupons.filter(
         (c) =>
-            c.discountType === "PERCENT" ||
-            !c.code.toUpperCase().includes("SHIP"),
+            c &&
+            (c.discountType === "PERCENT" ||
+                !String(c.code || "").toUpperCase().includes("SHIP")),
     );
     const shippingDiscounts = coupons.filter(
         (c) =>
-            c.code.toUpperCase().includes("SHIP") ||
-            c.discountType === "SHIPPING",
+            c &&
+            (String(c.code || "").toUpperCase().includes("SHIP") ||
+                c.discountType === "SHIPPING"),
     );
 
     // Fallback dữ liệu mẫu nếu chưa có mã freeship từ DB
@@ -206,7 +208,7 @@ const Cart = () => {
                     </div>
 
                     <div className="coupon-expiry-txt">
-                        HSD: {new Date(c.endDate).toLocaleDateString("vi-VN")}
+                        HSD: {c.endDate ? new Date(c.endDate).toLocaleDateString("vi-VN") : "Không giới hạn"}
                     </div>
 
                     {/* Thanh tiến độ đạt điều kiện */}

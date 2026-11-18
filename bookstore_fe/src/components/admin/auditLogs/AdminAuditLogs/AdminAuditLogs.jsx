@@ -24,7 +24,7 @@ import { useAdminAuditLogs } from "./useAdminAuditLogs";
 import "./AdminAuditLogs.css";
 
 const getActionBadgeClass = (action = "") => {
-    const act = action.toUpperCase();
+    const act = String(action || "").toUpperCase();
     if (act.includes("CREATE") || act.includes("ADD") || act.includes("INSERT")) {
         return "badge-create";
     }
