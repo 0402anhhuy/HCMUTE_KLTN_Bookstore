@@ -1,0 +1,27 @@
+Role,Feature,Endpoint,DurationMs,SlaTargetMs,Passed
+GUEST,"Danh sách sản phẩm Catalog","/api/products?page=0&size=12",1140,3000,true
+GUEST,"Tìm kiếm từ khóa","/api/products?keyword=sach",42,3000,true
+GUEST,"Lọc khoảng giá","/api/products?minPrice=...&maxPrice=...",924,3000,true
+GUEST,"Danh sách Nhà xuất bản","/api/products/publishers",41,3000,true
+GUEST,"Chi tiết sản phẩm","/api/products/180067",246,3000,true
+GUEST,"Danh mục sản phẩm","/api/categories",471,3000,true
+GUEST,"Danh mục gốc (Roots)","/api/categories/roots",172,3000,true
+GUEST,"Chương trình khuyến mãi","/api/promotions/active",47,3000,true
+GUEST,"Đánh giá sản phẩm","/api/reviews/product/180067",41,3000,true
+GUEST,"Đăng ký & Gửi OTP","/api/auth/register",436,3000,true
+USER,"Đăng nhập tài khoản","/api/auth/login",521,3000,true
+USER,"Thông tin hồ sơ cá nhân","/api/users/profile",144,3000,true
+USER,"Xem giỏ hàng","/api/cart",236,3000,true
+USER,"Lịch sử đơn mua của tôi","/api/orders",114,3000,true
+MANAGER,"Đăng nhập Manager","/api/auth/login",371,3000,true
+MANAGER,"Toàn bộ đơn hàng hệ thống","/api/orders/all",873,3000,true
+MANAGER,"Yêu cầu trả hàng & hoàn tiền","/api/orders/returns",232,3000,true
+MANAGER,"Biến động nhập xuất kho","/api/products/stock-movements",331,3000,true
+MANAGER,"Thống kê sản phẩm Active","/api/products/count/status/ACTIVE",75,3000,true
+MANAGER,"Kiểm duyệt đánh giá sản phẩm","/api/reviews",240,3000,true
+MANAGER,"Danh sách đội ngũ Shipper","/api/shippers",249,3000,true
+ADMIN,"Đăng nhập Admin","/api/auth/login",273,3000,true
+ADMIN,"Quản lý danh sách người dùng","/api/users",221,3000,true
+ADMIN,"Thống kê tổng người dùng","/api/users/total",209,3000,true
+ADMIN,"Nhật ký kiểm toán hệ thống","/api/admin/audit-logs",305,3000,true
+ADMIN,"Quản lý khuyến mãi toàn sàn","/api/admin/promotions",968,3000,true
