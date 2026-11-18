@@ -5,3 +5,8 @@ skills-lock.json
 CONTEXT.md
 AGENTS.md
 scripts/
+
+# SLA benchmark reports and datasets (keep in local docs only, do not push to GitHub)
+docs/benchmark_sla_data*.csv
+docs/BENCHMARK_SLA_REPORT.md
+bookstore_be/docs/

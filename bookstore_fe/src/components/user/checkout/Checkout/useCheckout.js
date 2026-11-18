@@ -165,8 +165,12 @@ export const useCheckout = () => {
         ? customAddress
         : parseAddress(savedAddresses[selectedAddressIdx], user?.fullName, user?.phone).address;
 
-    const shippingAddress = addressOnly.trim()
-        ? `${recipientName.trim()} | ${recipientPhone.trim()} | ${addressOnly.trim()}`
+    const safeRecipientName = String(recipientName || "").trim();
+    const safeRecipientPhone = String(recipientPhone || "").trim();
+    const safeAddressOnly = String(addressOnly || "").trim();
+
+    const shippingAddress = safeAddressOnly
+        ? `${safeRecipientName} | ${safeRecipientPhone} | ${safeAddressOnly}`
         : "";
 
     const formatPrice = (price) =>
@@ -180,18 +184,18 @@ export const useCheckout = () => {
         ? cartItemIdsParam.split(",").map(Number)
         : [];
 
-    const checkoutItems = buyNowProduct
+    const checkoutItems = productId
         ? []
         : selectedCartItemIds.length > 0
             ? (cart?.items || []).filter((item) =>
-                selectedCartItemIds.includes(item.id),
+                item && item.product && selectedCartItemIds.includes(item.id),
             )
-            : cart?.items || [];
+            : (cart?.items || []).filter((item) => item && item.product);
 
-    const subtotal = buyNowProduct
-        ? buyNowProduct.price * qty
+    const subtotal = productId
+        ? (buyNowProduct ? (Number(buyNowProduct.price) || 0) * qty : 0)
         : checkoutItems.reduce(
-            (sum, item) => sum + item.product.price * item.quantity,
+            (sum, item) => sum + (Number(item?.product?.price) || 0) * (Number(item?.quantity) || 1),
             0,
         );
 
@@ -457,7 +461,7 @@ export const useCheckout = () => {
             showToast?.("Đã gỡ bỏ mã giảm giá", "info");
             return;
         }
-        const targetCoupon = coupons.find((c) => c.code.toUpperCase() === code);
+        const targetCoupon = coupons.find((c) => String(c?.code || "").toUpperCase() === code);
         if (!targetCoupon) {
             showToast?.(`Mã giảm giá "${code}" không tồn tại hoặc đã hết hạn`, "error");
             return;

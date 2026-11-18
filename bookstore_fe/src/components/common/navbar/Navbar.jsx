@@ -98,119 +98,49 @@ const Navbar = () => {
 
                 {showCategoryMenu && (
                     <div className="navbar-mega-menu">
-                        {/* Cột trái: Danh mục cấp 1 */}
-                        <div className="mega-menu-sidebar">
-                            <h4 className="mega-menu-heading">
-                                Danh mục sản phẩm
-                            </h4>
-                            {categoryTree.map((cat) => (
-                                <button
-                                    type="button"
-                                    key={cat.id}
-                                    onMouseEnter={() =>
-                                        setActiveLevel1Id(cat.id)
-                                    }
-                                    onClick={() => handleCategoryClick(cat.id)}
-                                    className={`mega-menu-level1-item ${
-                                        String(activeLevel1Id) ===
-                                        String(cat.id)
-                                            ? "active"
-                                            : ""
-                                    }`}
-                                >
-                                    {cat.name}
-                                </button>
-                            ))}
+                        <div className="mega-menu-content-header">
+                            <BookOpen size={20} color="#0a422d" />
+                            <h3>Danh mục sản phẩm</h3>
                         </div>
 
-                        {/* Cột phải: Cấp 2 và Cấp 3 tương ứng */}
-                        <div className="mega-menu-content">
-                            {activeLevel1 && (
-                                <>
-                                    <div className="mega-menu-content-header">
-                                        <BookOpen size={20} color="#0a422d" />
-                                        <h3
-                                            onClick={() =>
-                                                handleCategoryClick(
-                                                    activeLevel1.id,
-                                                )
-                                            }
-                                        >
-                                            {activeLevel1.name}
-                                        </h3>
-                                    </div>
+                        <div className="mega-menu-sub-grid">
+                            {categoryTree.map((rootCat) => (
+                                <div
+                                    key={rootCat.id}
+                                    className="mega-menu-group"
+                                >
+                                    <h5
+                                        className="mega-menu-level2-title"
+                                        onClick={() =>
+                                            handleCategoryClick(rootCat.id)
+                                        }
+                                    >
+                                        {rootCat.name}
+                                    </h5>
 
-                                    <div className="mega-menu-sub-grid">
-                                        {activeLevel1.children &&
-                                        activeLevel1.children.length > 0 ? (
-                                            activeLevel1.children.map(
-                                                (level2) => (
-                                                    <div
-                                                        key={level2.id}
-                                                        className="mega-menu-group"
-                                                    >
-                                                        <h5
-                                                            className="mega-menu-level2-title"
-                                                            onClick={() =>
+                                    {rootCat.children &&
+                                        rootCat.children.length > 0 && (
+                                            <ul className="mega-menu-level3-list">
+                                                {rootCat.children.map(
+                                                    (subCat) => (
+                                                        <li
+                                                            key={subCat.id}
+                                                            className="mega-menu-level3-item"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
                                                                 handleCategoryClick(
-                                                                    level2.id,
-                                                                )
-                                                            }
+                                                                    subCat.id,
+                                                                );
+                                                            }}
                                                         >
-                                                            {level2.name}
-                                                        </h5>
-
-                                                        {level2.children &&
-                                                            level2.children
-                                                                .length > 0 && (
-                                                                <ul className="mega-menu-level3-list">
-                                                                    {level2.children
-                                                                        .slice(
-                                                                            0,
-                                                                            6,
-                                                                        )
-                                                                        .map(
-                                                                            (
-                                                                                level3,
-                                                                            ) => (
-                                                                                <li
-                                                                                    key={
-                                                                                        level3.id
-                                                                                    }
-                                                                                    className="mega-menu-level3-item"
-                                                                                    onClick={() =>
-                                                                                        handleCategoryClick(
-                                                                                            level3.id,
-                                                                                        )
-                                                                                    }
-                                                                                >
-                                                                                    {
-                                                                                        level3.name
-                                                                                    }
-                                                                                </li>
-                                                                            ),
-                                                                        )}
-                                                                </ul>
-                                                            )}
-
-                                                        {/* Đã bỏ nút Xem tất cả */}
-                                                    </div>
-                                                ),
-                                            )
-                                        ) : (
-                                            <p
-                                                style={{
-                                                    color: "#9ca3af",
-                                                    fontSize: "0.9rem",
-                                                }}
-                                            >
-                                                Chưa có phân loại con cho danh
-                                                mục này.
-                                            </p>
+                                                            {subCat.name}
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
                                         )}
-                                    </div>
-                                </>
-                            )}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

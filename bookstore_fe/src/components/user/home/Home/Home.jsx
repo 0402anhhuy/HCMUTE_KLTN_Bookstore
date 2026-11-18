@@ -397,51 +397,68 @@ const Home = () => {
                                 <Award size={20} color="#0a422d" /> Danh mục sản phẩm
                             </h3>
                         </div>
-                        <div className="home-quick-categories-grid">
-                            {(() => {
-                                const subCategories = [];
-                                (categories || []).forEach((cat) => {
-                                    const children = cat.children || cat.subCategories;
-                                    if (Array.isArray(children) && children.length > 0) {
-                                        subCategories.push(...children);
-                                    } else if (cat.parentId || cat.parent_id || cat.parent) {
-                                        subCategories.push(cat);
-                                    }
-                                });
+                        {(() => {
+                            const validCategories = (categories || []).filter((cat) => {
+                                const name = (cat?.name || "").trim().toLowerCase();
+                                return (
+                                    name !== "sách trong nước" &&
+                                    !name.includes("kinh tế chính trị") &&
+                                    !name.includes("quản trị kinh doanh")
+                                );
+                            });
 
-                                const displayCategories = subCategories.length > 0 ? subCategories : categories;
+                            const subCategories = [];
+                            validCategories.forEach((cat) => {
+                                const children = cat.children || cat.subCategories;
+                                if (Array.isArray(children) && children.length > 0) {
+                                    subCategories.push(...children);
+                                } else if (cat.parentId || cat.parent_id || cat.parent) {
+                                    subCategories.push(cat);
+                                }
+                            });
 
-                                return displayCategories.slice(0, 10).map((cat) => (
-                                    <div
-                                        key={cat.id}
-                                        className="home-quick-cat-item"
-                                        onClick={() =>
-                                            navigate(`/catalog?categoryId=${cat.id}`)
-                                        }
-                                    >
-                                        <div className="home-quick-cat-icon">
-                                            {cat.imageUrl ? (
-                                                <img
-                                                    src={cat.imageUrl}
-                                                    alt={cat.name}
-                                                    className="home-quick-cat-img"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src =
-                                                            "https://placehold.co/48x48?text=Book";
-                                                    }}
-                                                />
-                                            ) : (
-                                                <Award size={24} color="#0a422d" />
-                                            )}
+                            const displayCategories = subCategories.length > 0 ? subCategories : validCategories;
+                            const itemsToDisplay = displayCategories.slice(0, 10);
+
+                            return (
+                                <div
+                                    className="home-quick-categories-grid"
+                                    style={{
+                                        "--cat-count": itemsToDisplay.length || 6,
+                                    }}
+                                >
+                                    {itemsToDisplay.map((cat) => (
+                                        <div
+                                            key={cat.id}
+                                            className="home-quick-cat-item"
+                                            onClick={() =>
+                                                navigate(`/catalog?categoryId=${cat.id}`)
+                                            }
+                                        >
+                                            <div className="home-quick-cat-icon">
+                                                {cat.imageUrl ? (
+                                                    <img
+                                                        src={cat.imageUrl}
+                                                        alt={cat.name}
+                                                        className="home-quick-cat-img"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src =
+                                                                "https://placehold.co/48x48?text=Book";
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Award size={24} color="#0a422d" />
+                                                )}
+                                            </div>
+                                            <span className="home-quick-cat-name">
+                                                {cat.name}
+                                            </span>
                                         </div>
-                                        <span className="home-quick-cat-name">
-                                            {cat.name}
-                                        </span>
-                                    </div>
-                                ));
-                            })()}
-                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {/* D. XU HƯỚNG MUA SẮM (TRENDING SECTION VỚI TABS) */}
@@ -512,7 +529,17 @@ const Home = () => {
                             >
                                 Tất cả
                             </button>
-                            {categories.slice(0, 8).map((cat) => (
+                            {categories
+                                .filter((cat) => {
+                                    const name = (cat?.name || "").trim().toLowerCase();
+                                    return (
+                                        name !== "sách trong nước" &&
+                                        !name.includes("kinh tế chính trị") &&
+                                        !name.includes("quản trị kinh doanh")
+                                    );
+                                })
+                                .slice(0, 8)
+                                .map((cat) => (
                                 <button
                                     key={cat.id}
                                     type="button"
