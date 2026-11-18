@@ -1303,21 +1303,17 @@ public class PerformanceSlaBenchmarkTest {
 
         double avgMs = results.isEmpty() ? 0 : (double) totalMs / results.size();
 
-        // Xác định thư mục gốc của project và bookstore_be
+        // Xác định thư mục docs ở thư mục gốc của project
         File currentDir = new File(".").getAbsoluteFile();
         File rootDir = currentDir.getName().equals("bookstore_be") ? currentDir.getParentFile() : currentDir;
-        File beDir = new File(rootDir, "bookstore_be");
 
         List<File> csvFiles = List.of(
                 new File(rootDir, "docs/benchmark_sla_data.csv"),
-                new File(rootDir, "docs/benchmark_sla_data_full.csv"),
-                new File(beDir, "docs/benchmark_sla_data.csv"),
-                new File(beDir, "docs/benchmark_sla_data_full.csv")
+                new File(rootDir, "docs/benchmark_sla_data_full.csv")
         );
 
         List<File> mdFiles = List.of(
-                new File(rootDir, "docs/BENCHMARK_SLA_REPORT.md"),
-                new File(beDir, "docs/BENCHMARK_SLA_REPORT.md")
+                new File(rootDir, "docs/BENCHMARK_SLA_REPORT.md")
         );
 
         // 1. Xuất file CSV có nhúng tiền tố UTF-8 BOM (\uFEFF) giúp Excel hiển thị tiếng Việt có dấu chuẩn 100%
