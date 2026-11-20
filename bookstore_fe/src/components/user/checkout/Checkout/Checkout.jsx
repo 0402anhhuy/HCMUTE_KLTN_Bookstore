@@ -70,6 +70,50 @@ const Checkout = () => {
         handlePlaceOrder,
     } = useCheckout();
 
+    // Các phương thức thanh toán hỗ trợ (LUÔN KHAI BÁO TRƯỚC EARLY RETURN ĐỂ ĐẢM BẢO RULES OF HOOKS)
+    const paymentOptions = [
+        {
+            value: "COD",
+            label: "Thanh toán khi nhận hàng (COD)",
+            desc: "Nhận sách kiểm tra rồi mới thanh toán tiền mặt",
+            badge: "Tiện lợi",
+            icon: <Banknote size={22} className="checkout-payment-icon" />,
+        },
+        {
+            value: "VNPAY",
+            label: "VNPAY (QR Pay / Thẻ ATM / Visa)",
+            desc: "Thanh toán qua cổng ngân hàng hoặc ví VNPAY",
+            badge: "Khuyên dùng",
+            icon: <CreditCard size={22} className="checkout-payment-icon" />,
+        },
+        {
+            value: "WALLET",
+            label: "Ví BookStore",
+            desc: `Số dư ví hiện tại: ${formatPrice(user?.walletBalance || 0)}`,
+            badge: (user?.walletBalance || 0) >= total ? "Đủ số dư" : "Số dư thấp",
+            icon: <Wallet size={22} className="checkout-payment-icon" />,
+        },
+    ];
+
+    const totalItemsCount = buyNowProduct
+        ? (qty || 1)
+        : (checkoutItems || []).reduce((acc, item) => acc + (item.quantity || 1), 0);
+
+    // Tự động tính toán mã tốt nhất cho đơn hàng khi thanh toán (LUÔN CHẠY TRƯỚC EARLY RETURN)
+    const computedBestCoupon = useMemo(() => {
+        if (!coupons || coupons.length === 0) return null;
+        let maxDisc = 0;
+        let best = null;
+        coupons.forEach((c) => {
+            const disc = calculateDiscount ? calculateDiscount(c, subtotal) : 0;
+            if (disc > maxDisc) {
+                maxDisc = disc;
+                best = c;
+            }
+        });
+        return best || bestCoupon;
+    }, [coupons, subtotal, calculateDiscount, bestCoupon]);
+
     if (!user) {
         const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
         return (
@@ -156,50 +200,6 @@ const Checkout = () => {
             </div>
         );
     }
-
-    // Các phương thức thanh toán hỗ trợ
-    const paymentOptions = [
-        {
-            value: "COD",
-            label: "Thanh toán khi nhận hàng (COD)",
-            desc: "Nhận sách kiểm tra rồi mới thanh toán tiền mặt",
-            badge: "Tiện lợi",
-            icon: <Banknote size={22} className="checkout-payment-icon" />,
-        },
-        {
-            value: "VNPAY",
-            label: "VNPAY (QR Pay / Thẻ ATM / Visa)",
-            desc: "Thanh toán qua cổng ngân hàng hoặc ví VNPAY",
-            badge: "Khuyên dùng",
-            icon: <CreditCard size={22} className="checkout-payment-icon" />,
-        },
-        {
-            value: "WALLET",
-            label: "Ví BookStore",
-            desc: `Số dư ví hiện tại: ${formatPrice(user?.walletBalance || 0)}`,
-            badge: (user?.walletBalance || 0) >= total ? "Đủ số dư" : "Số dư thấp",
-            icon: <Wallet size={22} className="checkout-payment-icon" />,
-        },
-    ];
-
-    const totalItemsCount = buyNowProduct
-        ? qty
-        : (checkoutItems || []).reduce((acc, item) => acc + (item.quantity || 1), 0);
-
-    // Tự động tính toán mã tốt nhất cho đơn hàng khi thanh toán
-    const computedBestCoupon = useMemo(() => {
-        if (!coupons || coupons.length === 0) return null;
-        let maxDisc = 0;
-        let best = null;
-        coupons.forEach((c) => {
-            const disc = calculateDiscount(c, subtotal);
-            if (disc > maxDisc) {
-                maxDisc = disc;
-                best = c;
-            }
-        });
-        return best || bestCoupon;
-    }, [coupons, subtotal, calculateDiscount, bestCoupon]);
 
     return (
         <div className="page-container animate-fade-in checkout-page-container">

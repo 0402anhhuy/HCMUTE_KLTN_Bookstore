@@ -36,7 +36,11 @@ export const useCart = () => {
             return;
         }
         setSelectedItemIds((prev) => {
-            const currentIds = new Set(cart.items.map((item) => item.id));
+            const currentIds = new Set(
+                (cart.items || [])
+                    .filter((item) => item && item.id !== undefined && item.id !== null)
+                    .map((item) => item.id),
+            );
             if (prev.size === 0) {
                 return currentIds;
             }
@@ -72,7 +76,13 @@ export const useCart = () => {
         if (isAllSelected) {
             setSelectedItemIds(new Set());
         } else {
-            setSelectedItemIds(new Set((cart?.items || []).map((item) => item.id)));
+            setSelectedItemIds(
+                new Set(
+                    (cart?.items || [])
+                        .filter((item) => item && item.id !== undefined && item.id !== null)
+                        .map((item) => item.id),
+                ),
+            );
         }
     };
 

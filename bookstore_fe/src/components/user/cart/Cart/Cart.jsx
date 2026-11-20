@@ -65,36 +65,14 @@ const Cart = () => {
         (item) => item && item.product && typeof item.product === "object",
     );
 
-    if (validItems.length === 0) {
-        return (
-            <div className="page-container animate-fade-in cart-empty-container">
-                <Breadcrumb items={[{ label: "Giỏ hàng" }]} />
-                <EmptyState
-                    icon={ShoppingCart}
-                    title="Giỏ hàng của bạn đang trống"
-                    description="Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá ngay hàng ngàn tựa sách đặc sắc tại Bookstore!"
-                    actionText="Khám phá kho sách ngay"
-                    onAction={() => navigate("/catalog")}
-                    actionIcon={ArrowLeft}
-                />
-                <div className="cart-empty-recommendations">
-                    <RecommendationSection
-                        title="GỢI Ý DÀNH CHO BẠN"
-                        limit={10}
-                    />
-                </div>
-            </div>
-        );
-    }
-
-    // Tự động phân loại danh sách coupon thành: Mã giảm giá & Mã freeship
-    const orderDiscounts = coupons.filter(
+    // Tự động phân loại danh sách coupon thành: Mã giảm giá & Mã freeship (PHẢI KHAI BÁO TRƯỚC EARLY RETURN)
+    const orderDiscounts = (coupons || []).filter(
         (c) =>
             c &&
             (c.discountType === "PERCENT" ||
                 !String(c.code || "").toUpperCase().includes("SHIP")),
     );
-    const shippingDiscounts = coupons.filter(
+    const shippingDiscounts = (coupons || []).filter(
         (c) =>
             c &&
             (String(c.code || "").toUpperCase().includes("SHIP") ||
@@ -128,17 +106,17 @@ const Cart = () => {
                   },
               ];
 
-    const eligibleCouponsCount = coupons.filter(
-        (c) => calculateDiscount(c, totalAmount) > 0,
+    const eligibleCouponsCount = (coupons || []).filter(
+        (c) => calculateDiscount && calculateDiscount(c, totalAmount) > 0,
     ).length;
 
-    // Tự động tính toán mã tốt nhất cho đơn hàng khi xem voucher
+    // Tự động tính toán mã tốt nhất cho đơn hàng (LUÔN CHẠY TRƯỚC EARLY RETURN ĐỂ ĐẢM BẢO RULES OF HOOKS)
     const computedBestCoupon = useMemo(() => {
         if (!coupons || coupons.length === 0) return null;
         let maxDisc = 0;
         let best = null;
         coupons.forEach((c) => {
-            const disc = calculateDiscount(c, totalAmount);
+            const disc = calculateDiscount ? calculateDiscount(c, totalAmount) : 0;
             if (disc > maxDisc) {
                 maxDisc = disc;
                 best = c;
@@ -146,6 +124,28 @@ const Cart = () => {
         });
         return best || bestCoupon;
     }, [coupons, totalAmount, calculateDiscount, bestCoupon]);
+
+    if (validItems.length === 0) {
+        return (
+            <div className="page-container animate-fade-in cart-empty-container">
+                <Breadcrumb items={[{ label: "Giỏ hàng" }]} />
+                <EmptyState
+                    icon={ShoppingCart}
+                    title="Giỏ hàng của bạn đang trống"
+                    description="Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá ngay hàng ngàn tựa sách đặc sắc tại Bookstore!"
+                    actionText="Khám phá kho sách ngay"
+                    onAction={() => navigate("/catalog")}
+                    actionIcon={ArrowLeft}
+                />
+                <div className="cart-empty-recommendations">
+                    <RecommendationSection
+                        title="GỢI Ý DÀNH CHO BẠN"
+                        limit={10}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     // Component render từng Item thẻ khuyến mãi
     const renderCouponCard = (c, isShippingType = false) => {
