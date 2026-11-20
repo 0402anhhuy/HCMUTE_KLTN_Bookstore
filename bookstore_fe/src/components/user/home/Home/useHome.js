@@ -358,6 +358,40 @@ export const useHome = () => {
         return Math.round(product.price / (1 - discount / 100));
     };
 
+    // Dữ liệu cho phần Xu hướng mua sắm phản hồi theo từng tab
+    const trendingProducts = useMemo(() => {
+        if (!products || products.length === 0) return [];
+
+        if (activeTrendTab === "hot") {
+            // Sách Hot - Giảm sốc: sắp xếp giảm giá cao nhất
+            return [...products]
+                .sort((a, b) => getDiscountPercent(b) - getDiscountPercent(a))
+                .slice(0, 10);
+        }
+
+        if (activeTrendTab === "bestseller") {
+            // Bestseller ngoại văn: lọc sách tiếng Anh / ngoại văn
+            const foreign = products.filter((p) => {
+                const lang = (p.language || "").toLowerCase();
+                const cat = (p.category?.name || "").toLowerCase();
+                return (
+                    lang.includes("anh") ||
+                    lang.includes("english") ||
+                    lang.includes("ngoại") ||
+                    cat.includes("ngoại văn") ||
+                    cat.includes("foreign")
+                );
+            });
+            if (foreign.length >= 4) {
+                return foreign.slice(0, 10);
+            }
+            return [...products].reverse().slice(0, 10);
+        }
+
+        // Tab "all": Xu hướng theo ngày
+        return products.slice(0, 10);
+    }, [activeTrendTab, products]);
+
     const handleClearFilters = () => {
         setSearchParams({});
         setSelectedCategory("");
@@ -452,6 +486,7 @@ export const useHome = () => {
         fetchProducts,
         activeTrendTab,
         setActiveTrendTab,
+        trendingProducts,
         activeBestsellerTab,
         setActiveBestsellerTab,
         timeLeft,

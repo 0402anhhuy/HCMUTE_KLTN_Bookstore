@@ -48,6 +48,7 @@ const Home = () => {
         getDiscountPercent,
         activeTrendTab,
         setActiveTrendTab,
+        trendingProducts,
         timeLeft,
         flashSaleProducts,
         categories,
@@ -496,7 +497,7 @@ const Home = () => {
                         </div>
 
                         <div className="home-fahasa-products-grid">
-                            {products.slice(0, 10).map((product) => (
+                            {(trendingProducts || []).map((product) => (
                                 <BookCard
                                     key={product.id}
                                     product={product}
@@ -504,7 +505,13 @@ const Home = () => {
                                     addToCart={addToCart}
                                     formatPrice={formatPrice}
                                     getProductImage={getProductImage}
-                                    showBadge="Xu hướng"
+                                    showBadge={
+                                        activeTrendTab === "hot"
+                                            ? "Giảm sốc"
+                                            : activeTrendTab === "bestseller"
+                                              ? "Ngoại văn"
+                                              : "Xu hướng"
+                                    }
                                     originalPrice={getOriginalPrice(product)}
                                 />
                             ))}
