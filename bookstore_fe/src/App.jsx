@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import {
     BrowserRouter as Router,
     Routes,
@@ -82,15 +83,15 @@ function AppContent() {
                             toast.type === "error"
                                 ? "#fef2f2"
                                 : toast.type === "info"
-                                  ? "#eff6ff"
-                                  : "#ecfdf5",
+                                    ? "#eff6ff"
+                                    : "#ecfdf5",
                         border: `1px solid ${toast.type === "error" ? "#fee2e2" : toast.type === "info" ? "#dbeafe" : "#d1fae5"}`,
                         color:
                             toast.type === "error"
                                 ? "#b91c1c"
                                 : toast.type === "info"
-                                  ? "#1e40af"
-                                  : "#065f46",
+                                    ? "#1e40af"
+                                    : "#065f46",
                         boxShadow:
                             "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
                         display: "flex",
@@ -196,6 +197,8 @@ function AppContent() {
 
             {/* Chatbot hỗ trợ khách hàng - nút nổi góc phải dưới */}
             {!hideLayout && <Chatbot />}
+            {/* Vercel Analytics tracking */}
+            <Analytics />
         </div>
     );
 }
