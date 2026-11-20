@@ -11,6 +11,8 @@ const BookCard = ({
     originalPrice,
     isFlashSale,
 }) => {
+    if (!product) return null;
+
     const imageUrl = getProductImage ? getProductImage(product) : product?.imageUrl;
     const isOutOfStock = product?.stockQuantity === 0;
 
@@ -35,7 +37,7 @@ const BookCard = ({
                 {imageUrl ? (
                     <img
                         src={imageUrl}
-                        alt={product.name}
+                        alt={product?.name || "Sách"}
                         className="book-card-img"
                         loading="lazy"
                     />
@@ -54,10 +56,10 @@ const BookCard = ({
             </div>
 
             <div className="book-card-title">
-                {product.name}
+                {product?.name || "Đang cập nhật"}
             </div>
             <div className="book-card-author">
-                {product.author || "Đang cập nhật"}
+                {product?.author || "Đang cập nhật"}
             </div>
 
             <div className="book-card-rating-row">

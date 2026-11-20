@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
@@ -251,6 +251,60 @@ export const useHome = () => {
         return bestsellerList.find((p) => String(p.id) === String(activeBestsellerId)) || null;
     }, [bestsellerList, activeBestsellerId]);
 
+    // Trạng thái đánh giá cho sản phẩm bestseller đang chọn
+    const [bestsellerReviews, setBestsellerReviews] = useState([]);
+    const [loadingBestsellerReviews, setLoadingBestsellerReviews] = useState(false);
+    const reviewsCacheRef = useRef(new Map());
+
+    useEffect(() => {
+        if (!activeBestseller?.id) {
+            setBestsellerReviews([]);
+            return;
+        }
+
+        const productId = activeBestseller.id;
+        if (reviewsCacheRef.current.has(productId)) {
+            setBestsellerReviews(reviewsCacheRef.current.get(productId));
+            return;
+        }
+
+        let isMounted = true;
+        setLoadingBestsellerReviews(true);
+
+        api.get(`/reviews/product/${productId}`)
+            .then((res) => {
+                const data = Array.isArray(res.data) ? res.data : [];
+                reviewsCacheRef.current.set(productId, data);
+                if (isMounted) {
+                    setBestsellerReviews(data);
+                }
+            })
+            .catch((err) => {
+                console.error("Lỗi tải đánh giá sản phẩm bestseller:", err);
+                if (isMounted) {
+                    setBestsellerReviews([]);
+                }
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setLoadingBestsellerReviews(false);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [activeBestseller?.id]);
+
+    const bestsellerRating = useMemo(() => {
+        if (!bestsellerReviews || bestsellerReviews.length === 0) return 0;
+        const sum = bestsellerReviews.reduce(
+            (acc, r) => acc + (Number(r.rating) || 0),
+            0,
+        );
+        return sum / bestsellerReviews.length;
+    }, [bestsellerReviews]);
+
     // Hàm tính % giảm giá ảo hoặc từ dữ liệu gốc
     const getDiscountPercent = (product) => {
         if (product.promotionDiscountPercent !== undefined && product.promotionDiscountPercent !== null) return product.promotionDiscountPercent;
@@ -375,6 +429,9 @@ export const useHome = () => {
         activeBestsellerId,
         selectedBestsellerId,
         setSelectedBestsellerId,
+        bestsellerReviews,
+        bestsellerRating,
+        loadingBestsellerReviews,
         publishers,
         handlePublisherClick
     };

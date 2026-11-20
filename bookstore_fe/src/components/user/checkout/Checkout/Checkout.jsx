@@ -70,66 +70,7 @@ const Checkout = () => {
         handlePlaceOrder,
     } = useCheckout();
 
-    if (!user) {
-        return (
-            <div className="page-container animate-fade-in checkout-page-container">
-                <div className="checkout-breadcrumb-wrapper">
-                    <Breadcrumb
-                        items={[
-                            { label: "Giỏ hàng", path: "/cart" },
-                            { label: "Thanh toán & Đặt hàng" },
-                        ]}
-                    />
-                </div>
-                <EmptyState
-                    icon={Lock}
-                    title="Vui lòng đăng nhập để thanh toán"
-                    description="Bạn cần đăng nhập tài khoản để hoàn tất thông tin nhận hàng và hưởng các ưu đãi thành viên."
-                    actionText="Đăng nhập ngay"
-                    onAction={() => navigate("/login")}
-                    secondaryText="Quay lại giỏ hàng"
-                    onSecondary={() => navigate("/cart")}
-                />
-            </div>
-        );
-    }
-
-    if (fetchingProduct) {
-        return (
-            <div className="page-container animate-fade-in checkout-page-container">
-                <div className="checkout-loading-box">
-                    <Loader2 size={36} className="checkout-loading-spinner" />
-                    <p className="checkout-empty-text">
-                        Đang tải thông tin sản phẩm đặt mua...
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!productId && (!cart?.items || cart.items.length === 0)) {
-        return (
-            <div className="page-container animate-fade-in checkout-page-container">
-                <div className="checkout-breadcrumb-wrapper">
-                    <Breadcrumb
-                        items={[
-                            { label: "Giỏ hàng", path: "/cart" },
-                            { label: "Thanh toán & Đặt hàng" },
-                        ]}
-                    />
-                </div>
-                <EmptyState
-                    icon={ShoppingBag}
-                    title="Giỏ hàng của bạn đang trống"
-                    description="Chưa có sản phẩm nào được chọn để thanh toán. Khám phá các tác phẩm đặc sắc ngay!"
-                    actionText="Khám phá sách hay"
-                    onAction={() => navigate("/")}
-                />
-            </div>
-        );
-    }
-
-    // Các phương thức thanh toán hỗ trợ
+    // Các phương thức thanh toán hỗ trợ (LUÔN KHAI BÁO TRƯỚC EARLY RETURN ĐỂ ĐẢM BẢO RULES OF HOOKS)
     const paymentOptions = [
         {
             value: "COD",
@@ -155,16 +96,16 @@ const Checkout = () => {
     ];
 
     const totalItemsCount = buyNowProduct
-        ? qty
+        ? (qty || 1)
         : (checkoutItems || []).reduce((acc, item) => acc + (item.quantity || 1), 0);
 
-    // Tự động tính toán mã tốt nhất cho đơn hàng khi thanh toán
+    // Tự động tính toán mã tốt nhất cho đơn hàng khi thanh toán (LUÔN CHẠY TRƯỚC EARLY RETURN)
     const computedBestCoupon = useMemo(() => {
         if (!coupons || coupons.length === 0) return null;
         let maxDisc = 0;
         let best = null;
         coupons.forEach((c) => {
-            const disc = calculateDiscount(c, subtotal);
+            const disc = calculateDiscount ? calculateDiscount(c, subtotal) : 0;
             if (disc > maxDisc) {
                 maxDisc = disc;
                 best = c;
@@ -172,6 +113,93 @@ const Checkout = () => {
         });
         return best || bestCoupon;
     }, [coupons, subtotal, calculateDiscount, bestCoupon]);
+
+    if (!user) {
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        return (
+            <div className="page-container animate-fade-in checkout-page-container">
+                <div className="checkout-breadcrumb-wrapper">
+                    <Breadcrumb
+                        items={[
+                            { label: "Giỏ hàng", path: "/cart" },
+                            { label: "Thanh toán & Đặt hàng" },
+                        ]}
+                    />
+                </div>
+                <EmptyState
+                    icon={Lock}
+                    title="Vui lòng đăng nhập để thanh toán"
+                    description="Bạn cần đăng nhập tài khoản để hoàn tất thông tin nhận hàng và hưởng các ưu đãi thành viên."
+                    actionText="Đăng nhập ngay"
+                    onAction={() => navigate(`/login?returnUrl=${returnUrl}`)}
+                    secondaryText="Quay lại giỏ hàng"
+                    onSecondary={() => navigate("/cart")}
+                />
+            </div>
+        );
+    }
+
+    if (fetchingProduct) {
+        return (
+            <div className="page-container animate-fade-in checkout-page-container">
+                <div className="checkout-loading-box">
+                    <Loader2 size={36} className="checkout-loading-spinner" />
+                    <p className="checkout-empty-text">
+                        Đang tải thông tin sản phẩm đặt mua...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (productId && !fetchingProduct && !buyNowProduct) {
+        return (
+            <div className="page-container animate-fade-in checkout-page-container">
+                <div className="checkout-breadcrumb-wrapper">
+                    <Breadcrumb
+                        items={[
+                            { label: "Sản phẩm", path: `/product/${productId}` },
+                            { label: "Thanh toán & Đặt hàng" },
+                        ]}
+                    />
+                </div>
+                <EmptyState
+                    icon={AlertTriangle}
+                    variant="danger"
+                    title="Không tìm thấy thông tin sản phẩm"
+                    description={error || "Sản phẩm này hiện không còn khả dụng hoặc đã tạm dừng bán. Quý khách vui lòng chọn tác phẩm khác."}
+                    actionText="Khám phá kho sách"
+                    onAction={() => navigate("/catalog")}
+                    secondaryText="Quay lại giỏ hàng"
+                    onSecondary={() => navigate("/cart")}
+                />
+            </div>
+        );
+    }
+
+    if (!productId && (!cart?.items || checkoutItems.length === 0)) {
+        return (
+            <div className="page-container animate-fade-in checkout-page-container">
+                <div className="checkout-breadcrumb-wrapper">
+                    <Breadcrumb
+                        items={[
+                            { label: "Giỏ hàng", path: "/cart" },
+                            { label: "Thanh toán & Đặt hàng" },
+                        ]}
+                    />
+                </div>
+                <EmptyState
+                    icon={ShoppingBag}
+                    title="Chưa có sản phẩm nào được chọn"
+                    description="Chưa có sản phẩm nào được chọn để thanh toán. Khám phá các tác phẩm đặc sắc ngay!"
+                    actionText="Quay lại giỏ hàng"
+                    onAction={() => navigate("/cart")}
+                    secondaryText="Khám phá sách hay"
+                    onSecondary={() => navigate("/catalog")}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="page-container animate-fade-in checkout-page-container">
@@ -501,10 +529,10 @@ const Checkout = () => {
                             {buyNowProduct ? (
                                 <div className="checkout-item-preview-row">
                                     <div className="checkout-item-thumb-box">
-                                        {buyNowProduct.imageUrl ? (
+                                        {buyNowProduct.imageUrl || (Array.isArray(buyNowProduct.imageUrls) && buyNowProduct.imageUrls[0]) ? (
                                             <img
-                                                src={buyNowProduct.imageUrl}
-                                                alt={buyNowProduct.name}
+                                                src={buyNowProduct.imageUrl || buyNowProduct.imageUrls[0]}
+                                                alt={buyNowProduct.name || "Sách"}
                                                 className="checkout-item-thumb-img"
                                                 loading="lazy"
                                             />
@@ -519,27 +547,27 @@ const Checkout = () => {
                                             className="checkout-item-name"
                                             title={buyNowProduct.name}
                                         >
-                                            {buyNowProduct.name}
+                                            {buyNowProduct.name || "Sách đặt mua"}
                                         </div>
                                         <div className="checkout-item-qty">
                                             Số lượng: {qty}
                                         </div>
                                     </div>
                                     <div className="checkout-item-total-price">
-                                        {formatPrice(buyNowProduct.price * qty)}
+                                        {formatPrice((Number(buyNowProduct.price) || 0) * qty)}
                                     </div>
                                 </div>
                             ) : (
-                                checkoutItems.map((item) => (
+                                checkoutItems.map((item, idx) => (
                                     <div
-                                        key={item.id}
+                                        key={item.id || `checkout-item-${idx}`}
                                         className="checkout-item-preview-row"
                                     >
                                         <div className="checkout-item-thumb-box">
-                                            {item.product?.imageUrl ? (
+                                            {item.product?.imageUrl || (Array.isArray(item.product?.imageUrls) && item.product?.imageUrls[0]) ? (
                                                 <img
-                                                    src={item.product.imageUrl}
-                                                    alt={item.product.name}
+                                                    src={item.product?.imageUrl || item.product?.imageUrls[0]}
+                                                    alt={item.product?.name || "Sách"}
                                                     className="checkout-item-thumb-img"
                                                     loading="lazy"
                                                 />
@@ -554,15 +582,15 @@ const Checkout = () => {
                                                 className="checkout-item-name"
                                                 title={item.product?.name}
                                             >
-                                                {item.product?.name}
+                                                {item.product?.name || "Sách"}
                                             </div>
                                             <div className="checkout-item-qty">
-                                                Số lượng: {item.quantity}
+                                                Số lượng: {item.quantity || 1}
                                             </div>
                                         </div>
                                         <div className="checkout-item-total-price">
                                             {formatPrice(
-                                                item.product?.price * item.quantity,
+                                                (Number(item.product?.price) || 0) * (Number(item.quantity) || 1),
                                             )}
                                         </div>
                                     </div>

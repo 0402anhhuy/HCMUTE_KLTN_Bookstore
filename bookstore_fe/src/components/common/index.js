@@ -6,3 +6,4 @@ export { default as CarouselArrow } from './CarouselArrow/CarouselArrow';
 export { BookCard, BookCardSkeleton } from './BookCard';
 export { default as EmptyState } from './EmptyState/EmptyState';
 export { default as Chatbot } from './chatbot/Chatbot';
+export { default as ErrorBoundary } from './ErrorBoundary/ErrorBoundary';
