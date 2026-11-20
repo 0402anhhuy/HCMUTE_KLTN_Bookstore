@@ -8,7 +8,7 @@ import {
     useNavigate,
 } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
-import { Navbar, Footer, Chatbot } from './components/common';
+import { Navbar, Footer, Chatbot, ErrorBoundary } from './components/common';
 import { Home } from "./components/user/home";
 import { Login, Register } from "./components/auth";
 import { Profile } from "./components/user/profile/index";
@@ -167,26 +167,28 @@ function AppContent() {
 
             {/* Main App Content View Wrapper */}
             <main style={{ flex: 1, paddingTop: hideLayout ? "0" : "64px" }}>
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/orders" element={<OrderHistory />} />
-                    <Route
-                        path="/payment/vnpay-callback"
-                        element={<PaymentCallback />}
-                    />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/catalog" element={<Catalog />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/manager" element={<ManagerDashboard />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
+                <ErrorBoundary>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route path="/cart" element={<Cart />} />
+                        <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/orders" element={<OrderHistory />} />
+                        <Route
+                            path="/payment/vnpay-callback"
+                            element={<PaymentCallback />}
+                        />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/catalog" element={<Catalog />} />
+                        <Route path="/product/:id" element={<ProductDetail />} />
+                        <Route path="/manager" element={<ManagerDashboard />} />
+                        <Route path="/admin" element={<AdminDashboard />} />
 
-                    {/* Fallback routing */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                        {/* Fallback routing */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </ErrorBoundary>
             </main>
 
             {/* Global Footer */}

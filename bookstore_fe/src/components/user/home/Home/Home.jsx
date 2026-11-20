@@ -55,6 +55,9 @@ const Home = () => {
         activeBestseller,
         selectedBestsellerId,
         setSelectedBestsellerId,
+        bestsellerReviews,
+        bestsellerRating,
+        loadingBestsellerReviews,
         activeBestsellerTab,
         setActiveBestsellerTab,
         publishers,
@@ -397,51 +400,68 @@ const Home = () => {
                                 <Award size={20} color="#0a422d" /> Danh mục sản phẩm
                             </h3>
                         </div>
-                        <div className="home-quick-categories-grid">
-                            {(() => {
-                                const subCategories = [];
-                                (categories || []).forEach((cat) => {
-                                    const children = cat.children || cat.subCategories;
-                                    if (Array.isArray(children) && children.length > 0) {
-                                        subCategories.push(...children);
-                                    } else if (cat.parentId || cat.parent_id || cat.parent) {
-                                        subCategories.push(cat);
-                                    }
-                                });
+                        {(() => {
+                            const validCategories = (categories || []).filter((cat) => {
+                                const name = (cat?.name || "").trim().toLowerCase();
+                                return (
+                                    name !== "sách trong nước" &&
+                                    !name.includes("kinh tế chính trị") &&
+                                    !name.includes("quản trị kinh doanh")
+                                );
+                            });
 
-                                const displayCategories = subCategories.length > 0 ? subCategories : categories;
+                            const subCategories = [];
+                            validCategories.forEach((cat) => {
+                                const children = cat.children || cat.subCategories;
+                                if (Array.isArray(children) && children.length > 0) {
+                                    subCategories.push(...children);
+                                } else if (cat.parentId || cat.parent_id || cat.parent) {
+                                    subCategories.push(cat);
+                                }
+                            });
 
-                                return displayCategories.slice(0, 10).map((cat) => (
-                                    <div
-                                        key={cat.id}
-                                        className="home-quick-cat-item"
-                                        onClick={() =>
-                                            navigate(`/catalog?categoryId=${cat.id}`)
-                                        }
-                                    >
-                                        <div className="home-quick-cat-icon">
-                                            {cat.imageUrl ? (
-                                                <img
-                                                    src={cat.imageUrl}
-                                                    alt={cat.name}
-                                                    className="home-quick-cat-img"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src =
-                                                            "https://placehold.co/48x48?text=Book";
-                                                    }}
-                                                />
-                                            ) : (
-                                                <Award size={24} color="#0a422d" />
-                                            )}
+                            const displayCategories = subCategories.length > 0 ? subCategories : validCategories;
+                            const itemsToDisplay = displayCategories.slice(0, 10);
+
+                            return (
+                                <div
+                                    className="home-quick-categories-grid"
+                                    style={{
+                                        "--cat-count": itemsToDisplay.length || 6,
+                                    }}
+                                >
+                                    {itemsToDisplay.map((cat) => (
+                                        <div
+                                            key={cat.id}
+                                            className="home-quick-cat-item"
+                                            onClick={() =>
+                                                navigate(`/catalog?categoryId=${cat.id}`)
+                                            }
+                                        >
+                                            <div className="home-quick-cat-icon">
+                                                {cat.imageUrl ? (
+                                                    <img
+                                                        src={cat.imageUrl}
+                                                        alt={cat.name}
+                                                        className="home-quick-cat-img"
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src =
+                                                                "https://placehold.co/48x48?text=Book";
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Award size={24} color="#0a422d" />
+                                                )}
+                                            </div>
+                                            <span className="home-quick-cat-name">
+                                                {cat.name}
+                                            </span>
                                         </div>
-                                        <span className="home-quick-cat-name">
-                                            {cat.name}
-                                        </span>
-                                    </div>
-                                ));
-                            })()}
-                        </div>
+                                    ))}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     {/* D. XU HƯỚNG MUA SẮM (TRENDING SECTION VỚI TABS) */}
@@ -512,7 +532,17 @@ const Home = () => {
                             >
                                 Tất cả
                             </button>
-                            {categories.slice(0, 8).map((cat) => (
+                            {categories
+                                .filter((cat) => {
+                                    const name = (cat?.name || "").trim().toLowerCase();
+                                    return (
+                                        name !== "sách trong nước" &&
+                                        !name.includes("kinh tế chính trị") &&
+                                        !name.includes("quản trị kinh doanh")
+                                    );
+                                })
+                                .slice(0, 8)
+                                .map((cat) => (
                                 <button
                                     key={cat.id}
                                     type="button"
@@ -753,16 +783,54 @@ const Home = () => {
                                             <div className="bestseller-review-header">
                                                 <span>Đánh giá sản phẩm</span>
                                                 <div className="bestseller-stars">
-                                                    <strong>5.0 / 5</strong>
-                                                    {[...Array(5)].map(
-                                                        (_, i) => (
-                                                            <Star
-                                                                key={i}
-                                                                size={14}
-                                                                fill="#f59e0b"
-                                                                color="#f59e0b"
-                                                            />
-                                                        ),
+                                                    {loadingBestsellerReviews ? (
+                                                        <span className="bestseller-reviews-loading">
+                                                            Đang tải...
+                                                        </span>
+                                                    ) : bestsellerReviews.length > 0 ? (
+                                                        <>
+                                                            <strong>
+                                                                {bestsellerRating.toFixed(1)} / 5
+                                                            </strong>
+                                                            {[1, 2, 3, 4, 5].map((starIdx) => (
+                                                                <Star
+                                                                    key={starIdx}
+                                                                    size={14}
+                                                                    fill={
+                                                                        bestsellerRating >= starIdx
+                                                                            ? "#f59e0b"
+                                                                            : "none"
+                                                                    }
+                                                                    color={
+                                                                        bestsellerRating >= starIdx
+                                                                            ? "#f59e0b"
+                                                                            : "#cbd5e1"
+                                                                    }
+                                                                />
+                                                            ))}
+                                                            <span className="bestseller-review-count">
+                                                                ({bestsellerReviews.length} đánh giá)
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="bestseller-no-reviews-text">
+                                                                Chưa có đánh giá
+                                                            </span>
+                                                            <div className="bestseller-empty-stars">
+                                                                {[1, 2, 3, 4, 5].map((starIdx) => (
+                                                                    <Star
+                                                                        key={starIdx}
+                                                                        size={14}
+                                                                        fill="none"
+                                                                        color="#cbd5e1"
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                            <span className="bestseller-review-count">
+                                                                (0 đánh giá)
+                                                            </span>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
@@ -913,14 +981,27 @@ const BookCard = ({
 
             <div className="book-card-footer-row">
                 <div className="book-card-stars-wrapper">
-                    {[...Array(5)].map((_, i) => (
-                        <Star
-                            key={i}
-                            size={13}
-                            fill="currentColor"
-                            className="book-card-star-icon"
-                        />
-                    ))}
+                    {[1, 2, 3, 4, 5].map((starIdx) => {
+                        const rating = product.averageRating || product.rating || 0;
+                        const isFilled = rating >= starIdx;
+                        return (
+                            <Star
+                                key={starIdx}
+                                size={13}
+                                fill={isFilled ? "#ecc94b" : "none"}
+                                color={isFilled ? "#ecc94b" : "#cbd5e1"}
+                                strokeWidth={1.5}
+                                className="book-card-star-icon"
+                            />
+                        );
+                    })}
+                    <span className="book-card-rating-text">
+                        {product.averageRating && product.averageRating > 0
+                            ? `(${product.averageRating.toFixed(1)})`
+                            : product.reviewCount
+                            ? `(${product.reviewCount})`
+                            : "(0)"}
+                    </span>
                 </div>
                 <button
                     type="button"

@@ -31,21 +31,27 @@ export const useCart = () => {
     const [selectedItemIds, setSelectedItemIds] = useState(new Set());
 
     useEffect(() => {
-        if (cart?.items && cart.items.length > 0) {
-            setSelectedItemIds((prev) => {
-                const currentIds = new Set(cart.items.map((item) => item.id));
-                if (prev.size === 0) {
-                    return currentIds;
-                }
-                const next = new Set(prev);
-                next.forEach((id) => {
-                    if (!currentIds.has(id)) {
-                        next.delete(id);
-                    }
-                });
-                return next.size > 0 ? next : currentIds;
-            });
+        if (!cart?.items || cart.items.length === 0) {
+            setSelectedItemIds(new Set());
+            return;
         }
+        setSelectedItemIds((prev) => {
+            const currentIds = new Set(
+                (cart.items || [])
+                    .filter((item) => item && item.id !== undefined && item.id !== null)
+                    .map((item) => item.id),
+            );
+            if (prev.size === 0) {
+                return currentIds;
+            }
+            const next = new Set();
+            prev.forEach((id) => {
+                if (currentIds.has(id)) {
+                    next.add(id);
+                }
+            });
+            return next.size > 0 ? next : currentIds;
+        });
     }, [cart?.items]);
 
     const toggleSelectItem = (itemId) => {
@@ -60,16 +66,23 @@ export const useCart = () => {
         });
     };
 
-    const isAllSelected =
-        cart.items &&
+    const isAllSelected = Boolean(
+        cart?.items &&
         cart.items.length > 0 &&
-        selectedItemIds.size === cart.items.length;
+        selectedItemIds.size === cart.items.length
+    );
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
             setSelectedItemIds(new Set());
         } else {
-            setSelectedItemIds(new Set(cart.items.map((item) => item.id)));
+            setSelectedItemIds(
+                new Set(
+                    (cart?.items || [])
+                        .filter((item) => item && item.id !== undefined && item.id !== null)
+                        .map((item) => item.id),
+                ),
+            );
         }
     };
 
@@ -84,7 +97,7 @@ export const useCart = () => {
         .filter((item) => item && item.product && selectedItemIds.has(item.id))
         .reduce(
             (sum, item) =>
-                sum + (item.product.price || 0) * (item.quantity || 0),
+                sum + (Number(item?.product?.price) || 0) * (Number(item?.quantity) || 0),
             0,
         );
 
@@ -98,16 +111,16 @@ export const useCart = () => {
             const nextCoupons = res.data || [];
             const nextVersion = JSON.stringify(
                 nextCoupons.map((c) => ({
-                    id: c.id,
-                    code: c.code,
-                    discountType: c.discountType,
-                    discountValue: c.discountValue,
-                    minOrderValue: c.minOrderValue,
-                    maxDiscountAmount: c.maxDiscountAmount,
-                    status: c.status,
-                    endDate: c.endDate,
-                    usageLimit: c.usageLimit,
-                    usedCount: c.usedCount,
+                    id: c?.id,
+                    code: c?.code,
+                    discountType: c?.discountType,
+                    discountValue: c?.discountValue,
+                    minOrderValue: c?.minOrderValue,
+                    maxDiscountAmount: c?.maxDiscountAmount,
+                    status: c?.status,
+                    endDate: c?.endDate,
+                    usageLimit: c?.usageLimit,
+                    usedCount: c?.usedCount,
                 })),
             );
             if (
@@ -177,7 +190,7 @@ export const useCart = () => {
         }
     }, [coupons, totalAmount, couponCode]);
 
-    const activeCouponObj = coupons.find((c) => c.code === couponCode);
+    const activeCouponObj = coupons.find((c) => c?.code === couponCode);
     const savedAddresses =
         user && user.address ? user.address.split(" || ").filter(Boolean) : [];
     const defaultAddress = savedAddresses[0] || "";

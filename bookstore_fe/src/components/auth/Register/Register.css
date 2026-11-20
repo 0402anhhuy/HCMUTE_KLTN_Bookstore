@@ -209,6 +209,14 @@
     color: #4b5563;
     font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.register-btn-resend-otp:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f9fafb;
+    color: #9ca3af;
 }
 
 /* Footer Links */

@@ -388,10 +388,10 @@ const ManagerDashboard = () => {
             {/* User display */}
             <div className="manager-user-pill">
               <div className="manager-user-avatar">
-                {user ? user.fullName.charAt(0).toUpperCase() : 'M'}
+                {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'M'}
               </div>
               <span className="manager-user-name">
-                {user ? user.fullName : 'Manager'}
+                {user?.fullName || 'Manager'}
               </span>
             </div>
           </div>

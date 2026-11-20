@@ -2,14 +2,28 @@ export const buildCategoryTree = (categories = []) => {
     const nodesById = new Map();
     const roots = [];
 
-    categories.forEach((category) => {
+    // Lọc bỏ danh mục bọc ngoài "Sách trong nước" và các danh mục không có sản phẩm thực tế (zero data)
+    const validCategories = (categories || []).filter((category) => {
+        if (!category) return false;
+        const name = (category.name || "").trim().toLowerCase();
+        if (name === "sách trong nước") return false;
+        if (
+            name.includes("kinh tế chính trị") ||
+            name.includes("quản trị kinh doanh")
+        ) {
+            return false;
+        }
+        return true;
+    });
+
+    validCategories.forEach((category) => {
         nodesById.set(String(category.id), {
             ...category,
             children: [],
         });
     });
 
-    categories.forEach((category) => {
+    validCategories.forEach((category) => {
         const node = nodesById.get(String(category.id));
         const parentId =
             category.parentCategory?.id ??

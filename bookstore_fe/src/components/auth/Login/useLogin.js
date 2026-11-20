@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 
 export const useLogin = () => {
     const { loginUser, showToast } = useApp();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [view, setView] = useState("login"); // login, forgot, reset
 
     // Form states
@@ -44,7 +45,10 @@ export const useLogin = () => {
                 status: response.data.status,
             };
             loginUser(response.data.token, userData, rememberMe);
-            if (userData.role === "ADMIN") {
+            const returnUrl = searchParams.get("returnUrl");
+            if (returnUrl && !returnUrl.startsWith("//") && !returnUrl.includes("://")) {
+                navigate(returnUrl);
+            } else if (userData.role === "ADMIN") {
                 navigate("/admin");
             } else if (userData.role === "MANAGER") {
                 navigate("/manager");
