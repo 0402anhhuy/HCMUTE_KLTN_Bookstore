@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -36,6 +37,10 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ProductService productService;
+    private final UserRepository userRepository;
+    private final CouponRepository couponRepository;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
 
@@ -92,11 +97,45 @@ public class PaymentService {
             payment.setPaymentStatus(Payment.PaymentStatus.FAILED);
             paymentRepository.save(payment);
 
+            // Cancel order if still in pending status
+            if (order.getStatus() == Order.OrderStatus.pending) {
+                order.setStatus(Order.OrderStatus.cancelled);
+                order.setCancelledReason("Thanh toán qua VNPay không thành công hoặc người dùng hủy giao dịch (Mã lỗi: " + responseCode + ")");
+                order.setCancelledAt(LocalDateTime.now());
+                orderRepository.save(order);
+
+                // Restore inventory stock
+                if (orderItemRepository != null && productService != null) {
+                    List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+                    for (OrderItem item : items) {
+                        Product product = item.getProduct();
+                        product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                        productService.updateProduct(product.getId(), product);
+                    }
+                }
+
+                // Restore reward points
+                if (userRepository != null && order.getPointsUsed() != null && order.getPointsUsed() > 0) {
+                    User customer = order.getUser();
+                    customer.setRewardPoints((customer.getRewardPoints() != null ? customer.getRewardPoints() : 0) + order.getPointsUsed());
+                    userRepository.save(customer);
+                }
+
+                // Restore coupon
+                if (couponRepository != null && order.getCoupon() != null) {
+                    Coupon coupon = order.getCoupon();
+                    if (coupon.getUsedCount() != null && coupon.getUsedCount() > 0) {
+                        coupon.setUsedCount(coupon.getUsedCount() - 1);
+                        couponRepository.save(coupon);
+                    }
+                }
+            }
+
             auditLogService.log(order.getUser(), "PAYMENT_FAILED", "Thanh toán thất bại qua VNPay cho đơn hàng #" + orderId + ", Mã lỗi: " + responseCode);
             notificationService.createNotification(
                     order.getUser(),
                     "Thanh toán thất bại",
-                    "Giao dịch thanh toán qua VNPay cho đơn hàng #" + orderId + " không thành công.",
+                    "Giao dịch thanh toán qua VNPay cho đơn hàng #" + orderId + " không thành công. Đơn hàng đã được tự động hủy.",
                     Notification.NotificationType.ORDER,
                     "orders",
                     orderId
