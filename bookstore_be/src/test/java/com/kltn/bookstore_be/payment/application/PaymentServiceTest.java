@@ -45,6 +45,18 @@ class PaymentServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private com.kltn.bookstore_be.ordering.domain.OrderItemRepository orderItemRepository;
+
+    @Mock
+    private com.kltn.bookstore_be.catalog.application.ProductService productService;
+
+    @Mock
+    private com.kltn.bookstore_be.identity.domain.UserRepository userRepository;
+
+    @Mock
+    private com.kltn.bookstore_be.ordering.domain.CouponRepository couponRepository;
+
     private User sampleUser;
     private Order sampleOrder;
     private Payment samplePayment;
@@ -127,7 +139,7 @@ class PaymentServiceTest {
         }
 
         @Test
-        @DisplayName("Thanh toán thất bại (responseCode != 00) - cập nhật FAILED")
+        @DisplayName("Thanh toán thất bại (responseCode != 00) - cập nhật FAILED và hủy đơn hàng")
         void processCallback_failedPayment_updatesToFailed() {
             Map<String, String> params = new HashMap<>();
             params.put("vnp_TxnRef", "1");
@@ -140,11 +152,14 @@ class PaymentServiceTest {
             when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
             when(paymentRepository.findByOrderId(1L)).thenReturn(Optional.of(samplePayment));
             when(paymentRepository.save(any(Payment.class))).thenReturn(samplePayment);
+            when(orderRepository.save(any(Order.class))).thenReturn(sampleOrder);
 
             boolean result = paymentService.processVNPayCallback(params);
 
             assertFalse(result);
             assertEquals(Payment.PaymentStatus.FAILED, samplePayment.getPaymentStatus());
+            assertEquals(Order.OrderStatus.cancelled, sampleOrder.getStatus());
+            verify(orderRepository).save(sampleOrder);
             verify(auditLogService).log(eq(sampleUser), eq("PAYMENT_FAILED"), anyString());
         }
     }
