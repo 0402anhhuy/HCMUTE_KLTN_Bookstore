@@ -612,9 +612,7 @@ const Home = () => {
                                                     {product.name}
                                                 </h5>
                                                 <span className="bestseller-rank-sold">
-                                                    Đã bán trong tuần{" "}
-                                                    {((product.id * 19) % 150) +
-                                                        10}
+                                                    Đã bán {product.soldCount ?? 0}
                                                 </span>
                                             </div>
                                         </div>
@@ -660,11 +658,7 @@ const Home = () => {
                                                 </h4>
 
                                                 <span className="bestseller-detail-sold-text">
-                                                    Đã bán trong tuần{" "}
-                                                    {((activeBestseller.id *
-                                                        19) %
-                                                        150) +
-                                                        10}
+                                                    Đã bán {activeBestseller.soldCount ?? 0}
                                                 </span>
 
                                                 <div className="bestseller-detail-attributes">

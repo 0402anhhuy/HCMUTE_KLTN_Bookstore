@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
+import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
 
 // Import local image assets
@@ -236,19 +237,58 @@ export const useHome = () => {
 
     // Thêm state vào trong hook useHome:
     const [selectedBestsellerId, setSelectedBestsellerId] = useState(null);
+    const [bestsellerList, setBestsellerList] = useState([]);
+    const [loadingBestsellers, setLoadingBestsellers] = useState(false);
 
-    // Lấy danh sách Top 10 Bestseller
-    const bestsellerList = useMemo(() => {
-        if (!products || products.length === 0) return [];
-        return products.slice(0, 10);
-    }, [products]);
+    // Lấy danh sách Top 10 Bestseller theo tab danh mục thực tế từ backend
+    useEffect(() => {
+        let isMounted = true;
+        setLoadingBestsellers(true);
+        setSelectedBestsellerId(null);
+
+        const params = { limit: 10 };
+        if (activeBestsellerTab && activeBestsellerTab !== "all") {
+            params.categoryId = activeBestsellerTab;
+        }
+
+        productService.getBestsellers(params)
+            .then((res) => {
+                if (isMounted) {
+                    const data = Array.isArray(res.data) ? res.data : [];
+                    setBestsellerList(data);
+                }
+            })
+            .catch((err) => {
+                console.error("Lỗi khi tải danh sách bán chạy:", err);
+                if (isMounted) {
+                    // Fallback to local products if API has error
+                    if (!products || products.length === 0) {
+                        setBestsellerList([]);
+                    } else if (activeBestsellerTab === "all") {
+                        setBestsellerList(products.slice(0, 10));
+                    } else {
+                        const filtered = products.filter(
+                            (p) => String(p.category?.id || p.categoryId) === String(activeBestsellerTab)
+                        );
+                        setBestsellerList(filtered.length > 0 ? filtered.slice(0, 10) : products.slice(0, 10));
+                    }
+                }
+            })
+            .finally(() => {
+                if (isMounted) setLoadingBestsellers(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [activeBestsellerTab, products]);
 
     // Tự động gán sản phẩm đầu tiên khi có dữ liệu
     const activeBestsellerId = selectedBestsellerId || bestsellerList[0]?.id || null;
 
     // Chi tiết sản phẩm đang được chọn bên phải
     const activeBestseller = useMemo(() => {
-        return bestsellerList.find((p) => String(p.id) === String(activeBestsellerId)) || null;
+        return bestsellerList.find((p) => String(p.id) === String(activeBestsellerId)) || bestsellerList[0] || null;
     }, [bestsellerList, activeBestsellerId]);
 
     // Trạng thái đánh giá cho sản phẩm bestseller đang chọn
@@ -432,6 +472,7 @@ export const useHome = () => {
         bestsellerReviews,
         bestsellerRating,
         loadingBestsellerReviews,
+        loadingBestsellers,
         publishers,
         handlePublisherClick
     };
