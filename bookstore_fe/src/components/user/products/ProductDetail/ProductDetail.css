@@ -517,11 +517,28 @@ body {
 }
 
 .qty-picker-val {
-    width: 40px;
+    width: 44px;
+    height: 32px;
     text-align: center;
     font-weight: 700;
     font-size: 0.95rem;
     color: #111827;
+    border: none;
+    background: transparent;
+    padding: 0;
+    -moz-appearance: textfield;
+}
+
+.qty-picker-val::-webkit-outer-spin-button,
+.qty-picker-val::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-picker-val:focus {
+    outline: none;
+    background: #f1f5f9;
+    border-radius: 4px;
 }
 
 /* CTA Buttons */
