@@ -321,7 +321,9 @@ export const AppProvider = ({ children }) => {
         if (!user) {
             const currentGuest = getGuestCart();
             const item = (currentGuest.items || []).find(
-                (i) => String(i.product?.id) === String(productId),
+                (i) =>
+                    String(i.product?.id) === String(productId) ||
+                    String(i.id) === String(productId),
             );
             if (item) {
                 item.quantity = quantity;
@@ -330,12 +332,37 @@ export const AppProvider = ({ children }) => {
             }
             return;
         }
+
+        // Lưu snapshot để rollback nếu server gặp lỗi
+        const previousCart = cart;
+
+        // 1. Optimistic UI Update: Cập nhật số lượng ngay lập tức (0ms)
+        setCart((prev) => {
+            if (!prev || !prev.items) return prev;
+            return {
+                ...prev,
+                items: prev.items.map((i) => {
+                    if (
+                        String(i.product?.id) === String(productId) ||
+                        String(i.id) === String(productId)
+                    ) {
+                        return { ...i, quantity };
+                    }
+                    return i;
+                }),
+            };
+        });
+
+        // 2. Chạy ngầm PATCH lên server để tối ưu tốc độ và chuẩn REST
         try {
-            await api.put(
+            await api.patch(
                 `/cart/update?productId=${productId}&quantity=${quantity}`,
             );
-            await fetchCart();
         } catch (error) {
+            console.error("Failed to update cart quantity:", error);
+            // Rollback lại state cũ nếu có lỗi
+            setCart(previousCart);
+            await fetchCart();
             const msg =
                 error.response?.data?.error || "Không thể cập nhật số lượng";
             showToast(msg, "error");
@@ -356,13 +383,36 @@ export const AppProvider = ({ children }) => {
             showToast("Đã xóa sản phẩm khỏi giỏ hàng", "info");
             return;
         }
+
+        // Lưu snapshot để rollback nếu server gặp sự cố
+        const previousCart = cart;
+
+        // 1. Optimistic UI Update: Xóa sản phẩm khỏi màn hình ngay lập tức (0ms)
+        setCart((prev) => {
+            if (!prev || !prev.items) return prev;
+            return {
+                ...prev,
+                items: prev.items.filter(
+                    (i) =>
+                        String(i.product?.id) !== String(productId) &&
+                        String(i.id) !== String(productId),
+                ),
+            };
+        });
+        showToast("Đã xóa sản phẩm khỏi giỏ hàng", "info");
+
+        // 2. Gửi request xóa ngầm lên server
         try {
             await api.delete(`/cart/remove/${productId}`);
-            await fetchCart();
-            showToast("Đã xóa sản phẩm khỏi giỏ hàng", "info");
         } catch (error) {
             console.error("Failed to remove item:", error);
+            // Rollback nếu có lỗi
+            setCart(previousCart);
             await fetchCart();
+            showToast(
+                error.response?.data?.error || "Không thể xóa sản phẩm khỏi giỏ hàng",
+                "error",
+            );
         }
     };
 
@@ -373,12 +423,17 @@ export const AppProvider = ({ children }) => {
             showToast("Đã xóa toàn bộ sản phẩm khỏi giỏ hàng", "success");
             return;
         }
+
+        const previousCart = cart;
+        // 1. Optimistic UI Update: Xóa trắng giỏ hàng ngay lập tức (0ms)
+        setCart({ items: [] });
+        showToast("Đã xóa toàn bộ sản phẩm khỏi giỏ hàng", "success");
+
         try {
             await api.delete("/cart/clear");
-            await fetchCart();
-            showToast("Đã xóa toàn bộ sản phẩm khỏi giỏ hàng", "success");
         } catch (error) {
             console.error("Failed to clear cart:", error);
+            setCart(previousCart);
             await fetchCart();
             showToast("Không thể xóa giỏ hàng", "error");
         }
