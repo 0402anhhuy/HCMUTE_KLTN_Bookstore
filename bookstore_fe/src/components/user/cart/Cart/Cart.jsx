@@ -208,7 +208,12 @@ const Cart = () => {
                     </div>
 
                     <div className="coupon-expiry-txt">
-                        HSD: {c.endDate ? new Date(c.endDate).toLocaleDateString("vi-VN") : "Không giới hạn"}
+                        <span>HSD: {c.endDate ? new Date(c.endDate).toLocaleDateString("vi-VN") : "Không giới hạn"}</span>
+                        {c.usageLimit !== undefined && c.usageLimit !== null && (
+                            <span className="coupon-usage-badge">
+                                Còn {Math.max(0, (c.usageLimit || 0) - (c.usedCount || 0))} lượt
+                            </span>
+                        )}
                     </div>
 
                     {/* Thanh tiến độ đạt điều kiện */}
@@ -356,9 +361,21 @@ const Cart = () => {
                                             >
                                                 <Minus size={12} />
                                             </button>
-                                            <span className="cart-qty-number">
-                                                {itemQty}
-                                            </span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max={stockQty > 0 ? stockQty : 999}
+                                                value={itemQty}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value, 10);
+                                                    if (!isNaN(val) && val >= 1) {
+                                                        const capped = stockQty > 0 ? Math.min(val, stockQty) : val;
+                                                        updateCartQty(prodId, capped);
+                                                    }
+                                                }}
+                                                className="cart-qty-input"
+                                                aria-label="Số lượng sản phẩm"
+                                            />
                                             <button
                                                 type="button"
                                                 onClick={() =>
@@ -420,7 +437,7 @@ const Cart = () => {
                     <div className="cart-card-box cart-promo-card">
                         <div className="cart-sidebar-card-header">
                             <span className="header-title">
-                                <Ticket size={18} color="#0a422d" /> KHUYẾN MÃI
+                                <Ticket size={18} color="#0a422d" /> KHUYẾN MÃI {coupons && coupons.length > 0 ? `(${coupons.length})` : ""}
                             </span>
                             <span
                                 className="header-action-link"

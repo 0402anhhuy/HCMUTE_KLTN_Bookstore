@@ -410,6 +410,20 @@ export const useCart = () => {
         showToast?.(`Đã áp dụng mã ${code}`, "success");
     };
 
+    // Sắp xếp mã giảm giá: ưu tiên các mã áp dụng được và có mức giảm cao nhất lên đầu
+    const sortedCoupons = useMemo(() => {
+        if (!coupons || coupons.length === 0) return [];
+        return [...coupons].sort((a, b) => {
+            const discB = calculateDiscount(b, totalAmount, rawShippingFee);
+            const discA = calculateDiscount(a, totalAmount, rawShippingFee);
+            if (discB !== discA) return discB - discA;
+
+            const valB = Number(b.discountValue) || 0;
+            const valA = Number(a.discountValue) || 0;
+            return valB - valA;
+        });
+    }, [coupons, totalAmount, rawShippingFee]);
+
     return {
         cart,
         updateCartQty,
@@ -426,7 +440,7 @@ export const useCart = () => {
         toggleSelectAll,
         formatPrice,
         totalAmount,
-        coupons,
+        coupons: sortedCoupons,
         bestCoupon,
         couponDiscount,
         shippingFee,
