@@ -16,6 +16,33 @@ const BookCard = ({
     const imageUrl = getProductImage ? getProductImage(product) : product?.imageUrl;
     const isOutOfStock = product?.stockQuantity === 0;
 
+    const discountPercent = (() => {
+        if (product?.promotionDiscountPercent != null && Number(product.promotionDiscountPercent) > 0) {
+            return Math.round(Number(product.promotionDiscountPercent));
+        }
+        if (product?.discountPercent != null && Number(product.discountPercent) > 0) {
+            return Math.round(Number(product.discountPercent));
+        }
+        const orig = originalPrice || product?.originalPrice;
+        if (orig && Number(orig) > Number(product?.price || 0)) {
+            return Math.round(((Number(orig) - Number(product.price)) / Number(orig)) * 100);
+        }
+        if (showBadge && typeof showBadge === "string" && showBadge.includes("%")) {
+            const parsed = parseInt(showBadge.replace(/[^0-9]/g, ""), 10);
+            if (!isNaN(parsed) && parsed > 0) return parsed;
+        }
+        return 0;
+    })();
+
+    const computedOriginalPrice = (() => {
+        if (originalPrice) return originalPrice;
+        if (product?.originalPrice) return product.originalPrice;
+        if (discountPercent > 0 && product?.price) {
+            return Math.round(Number(product.price) / (1 - discountPercent / 100));
+        }
+        return null;
+    })();
+
     return (
         <div
             className="book-card-container group"
@@ -56,7 +83,12 @@ const BookCard = ({
             </div>
 
             <div className="book-card-title">
-                {product?.name || "Đang cập nhật"}
+                <span>{product?.name || "Đang cập nhật"}</span>
+                {discountPercent > 0 && (
+                    <span className="book-card-name-discount-tag">
+                        -{discountPercent}%
+                    </span>
+                )}
             </div>
             <div className="book-card-author">
                 {product?.author || "Đang cập nhật"}
@@ -88,12 +120,19 @@ const BookCard = ({
 
             <div className="book-card-bottom-row">
                 <div className="book-card-price-group">
-                    <span className="book-card-price tabular-nums">
-                        {formatPrice ? formatPrice(product.price) : `${Number(product.price || 0).toLocaleString("vi-VN")} đ`}
-                    </span>
-                    {originalPrice && (
+                    <div className="book-card-price-row">
+                        <span className="book-card-price tabular-nums">
+                            {formatPrice ? formatPrice(product.price) : `${Number(product.price || 0).toLocaleString("vi-VN")} đ`}
+                        </span>
+                        {discountPercent > 0 && (
+                            <span className="book-card-price-discount-tag">
+                                -{discountPercent}%
+                            </span>
+                        )}
+                    </div>
+                    {computedOriginalPrice && (
                         <span className="book-card-original-price tabular-nums">
-                            {formatPrice ? formatPrice(originalPrice) : `${Number(originalPrice).toLocaleString("vi-VN")} đ`}
+                            {formatPrice ? formatPrice(computedOriginalPrice) : `${Number(computedOriginalPrice).toLocaleString("vi-VN")} đ`}
                         </span>
                     )}
                 </div>

@@ -162,10 +162,9 @@ export const useHome = () => {
         return () => clearInterval(timer);
     }, [flashSaleEndsAt, fetchActivePromotions]);
 
-    const flashSaleProducts = useMemo(() => {
-        // Priority 1: Products assigned by Admin in active Promotion programs
+    const promoProductMap = useMemo(() => {
+        const map = new Map();
         if (activePromotions && activePromotions.length > 0) {
-            const promoProductMap = new Map();
             activePromotions.forEach((promo) => {
                 if (promo.applicableProducts && promo.applicableProducts.length > 0) {
                     promo.applicableProducts.forEach((p) => {
@@ -175,13 +174,12 @@ export const useHome = () => {
                         } else if (promo.discountType === "FIXED") {
                             discount = p.price ? Math.round(((Number(promo.discountValue) || 0) / p.price) * 100) : 0;
                         }
-                        
+
                         const pId = String(p.id);
-                        // Nếu sản phẩm đã tồn tại trong Map (nằm ở 2 sự kiện cùng lúc), giữ lại mức giảm giá ƯU ĐÃI NHẤT
-                        if (promoProductMap.has(pId)) {
-                            const existing = promoProductMap.get(pId);
+                        if (map.has(pId)) {
+                            const existing = map.get(pId);
                             if (discount > existing.promotionDiscountPercent) {
-                                promoProductMap.set(pId, {
+                                map.set(pId, {
                                     ...p,
                                     promotionDiscountPercent: discount,
                                     promotionTitle: promo.title,
@@ -190,7 +188,7 @@ export const useHome = () => {
                                 });
                             }
                         } else {
-                            promoProductMap.set(pId, {
+                            map.set(pId, {
                                 ...p,
                                 promotionDiscountPercent: discount,
                                 promotionTitle: promo.title,
@@ -201,7 +199,29 @@ export const useHome = () => {
                     });
                 }
             });
+        }
+        return map;
+    }, [activePromotions]);
 
+    const enrichedProducts = useMemo(() => {
+        if (!products || products.length === 0) return [];
+        if (promoProductMap.size === 0) return products;
+        return products.map((p) => {
+            const promo = promoProductMap.get(String(p.id));
+            if (promo) {
+                return {
+                    ...p,
+                    promotionDiscountPercent: promo.promotionDiscountPercent,
+                    promotionTitle: promo.promotionTitle,
+                };
+            }
+            return p;
+        });
+    }, [products, promoProductMap]);
+
+    const flashSaleProducts = useMemo(() => {
+        // Priority 1: Products assigned by Admin in active Promotion programs
+        if (promoProductMap.size > 0) {
             const uniquePromoProducts = Array.from(promoProductMap.values());
             if (uniquePromoProducts.length > 0) {
                 return uniquePromoProducts;
@@ -210,7 +230,7 @@ export const useHome = () => {
 
         // If no active promotion programs created by Admin, return empty list
         return [];
-    }, [activePromotions]);
+    }, [promoProductMap]);
 
     const flashSaleTotalPages = Math.max(
         1,
@@ -239,9 +259,9 @@ export const useHome = () => {
 
     // Lấy danh sách Top 10 Bestseller
     const bestsellerList = useMemo(() => {
-        if (!products || products.length === 0) return [];
-        return products.slice(0, 10);
-    }, [products]);
+        if (!enrichedProducts || enrichedProducts.length === 0) return [];
+        return enrichedProducts.slice(0, 10);
+    }, [enrichedProducts]);
 
     // Tự động gán sản phẩm đầu tiên khi có dữ liệu
     const activeBestsellerId = selectedBestsellerId || bestsellerList[0]?.id || null;
@@ -408,7 +428,7 @@ export const useHome = () => {
         setMinPrice,
         maxPrice,
         setMaxPrice,
-        products,
+        products: enrichedProducts,
         setPage,
         loading,
         categoryTree,
