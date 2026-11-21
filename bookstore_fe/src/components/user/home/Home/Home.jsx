@@ -63,6 +63,7 @@ const Home = () => {
         setActiveBestsellerTab,
         publishers,
         handlePublisherClick,
+        handlePromoCardClick,
     } = useHome();
 
     const navigate = useNavigate();
@@ -285,7 +286,7 @@ const Home = () => {
 
                         <div
                             className="home-promo-card home-promo-card-lit"
-                            onClick={() => navigate("/catalog?keyword=văn học")}
+                            onClick={() => handlePromoCardClick("lit")}
                         >
                             <div className="home-promo-watermark">
                                 <BookMarked size={58} />
@@ -305,7 +306,7 @@ const Home = () => {
 
                         <div
                             className="home-promo-card home-promo-card-biz"
-                            onClick={() => navigate("/catalog?keyword=kinh tế")}
+                            onClick={() => handlePromoCardClick("biz")}
                         >
                             <div className="home-promo-watermark">
                                 <LineChart size={58} />
@@ -325,7 +326,7 @@ const Home = () => {
 
                         <div
                             className="home-promo-card home-promo-card-manga"
-                            onClick={() => navigate("/catalog?keyword=manga")}
+                            onClick={() => handlePromoCardClick("manga")}
                         >
                             <div className="home-promo-watermark">
                                 <Sparkles size={58} />
