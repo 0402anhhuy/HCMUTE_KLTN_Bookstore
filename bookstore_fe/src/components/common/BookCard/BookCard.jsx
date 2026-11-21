@@ -1,4 +1,5 @@
 import { BookOpen, Star, ShoppingCart } from "lucide-react";
+import { getProductDiscountPercent, getProductOriginalPrice } from "../../../utils/productPricing";
 import "./BookCard.css";
 
 const BookCard = ({
@@ -17,30 +18,16 @@ const BookCard = ({
     const isOutOfStock = product?.stockQuantity === 0;
 
     const discountPercent = (() => {
-        if (product?.promotionDiscountPercent != null && Number(product.promotionDiscountPercent) > 0) {
-            return Math.round(Number(product.promotionDiscountPercent));
-        }
-        if (product?.discountPercent != null && Number(product.discountPercent) > 0) {
-            return Math.round(Number(product.discountPercent));
-        }
-        const orig = originalPrice || product?.originalPrice;
-        if (orig && Number(orig) > Number(product?.price || 0)) {
-            return Math.round(((Number(orig) - Number(product.price)) / Number(orig)) * 100);
-        }
         if (showBadge && typeof showBadge === "string" && showBadge.includes("%")) {
             const parsed = parseInt(showBadge.replace(/[^0-9]/g, ""), 10);
             if (!isNaN(parsed) && parsed > 0) return parsed;
         }
-        return 0;
+        return getProductDiscountPercent(product);
     })();
 
     const computedOriginalPrice = (() => {
         if (originalPrice) return originalPrice;
-        if (product?.originalPrice) return product.originalPrice;
-        if (discountPercent > 0 && product?.price) {
-            return Math.round(Number(product.price) / (1 - discountPercent / 100));
-        }
-        return null;
+        return getProductOriginalPrice(product, discountPercent);
     })();
 
     return (
@@ -120,20 +107,20 @@ const BookCard = ({
 
             <div className="book-card-bottom-row">
                 <div className="book-card-price-group">
-                    <div className="book-card-price-row">
-                        <span className="book-card-price tabular-nums">
-                            {formatPrice ? formatPrice(product.price) : `${Number(product.price || 0).toLocaleString("vi-VN")} đ`}
-                        </span>
-                        {discountPercent > 0 && (
-                            <span className="book-card-price-discount-tag">
+                    <span className={`book-card-price tabular-nums ${discountPercent > 0 ? "is-discounted" : ""}`}>
+                        {formatPrice ? formatPrice(product.price) : `${Number(product.price || 0).toLocaleString("vi-VN")} đ`}
+                    </span>
+                    {computedOriginalPrice && discountPercent > 0 ? (
+                        <div className="book-card-original-price-row">
+                            <span className="book-card-original-price tabular-nums">
+                                {formatPrice ? formatPrice(computedOriginalPrice) : `${Number(computedOriginalPrice).toLocaleString("vi-VN")} đ`}
+                            </span>
+                            <span className="book-card-discount-rate">
                                 -{discountPercent}%
                             </span>
-                        )}
-                    </div>
-                    {computedOriginalPrice && (
-                        <span className="book-card-original-price tabular-nums">
-                            {formatPrice ? formatPrice(computedOriginalPrice) : `${Number(computedOriginalPrice).toLocaleString("vi-VN")} đ`}
-                        </span>
+                        </div>
+                    ) : (
+                        <div className="book-card-original-price-placeholder" />
                     )}
                 </div>
 

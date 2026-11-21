@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 import { buildCategoryTree } from "@/utils/categoryTree";
+import { getProductDiscountPercent } from "@/utils/productPricing";
 
 export const useCatalog = () => {
     const { addToCart } = useApp();
@@ -174,16 +175,13 @@ export const useCatalog = () => {
 
     const enrichedProducts = useMemo(() => {
         if (!filteredProducts || filteredProducts.length === 0) return [];
-        if (promoProductMap.size === 0) return filteredProducts;
         return filteredProducts.map((p) => {
             const promo = promoProductMap.get(String(p.id));
-            if (promo) {
-                return {
-                    ...p,
-                    promotionDiscountPercent: promo.promotionDiscountPercent,
-                };
-            }
-            return p;
+            const disc = promo ? promo.promotionDiscountPercent : getProductDiscountPercent(p);
+            return {
+                ...p,
+                promotionDiscountPercent: disc,
+            };
         });
     }, [filteredProducts, promoProductMap]);
 
