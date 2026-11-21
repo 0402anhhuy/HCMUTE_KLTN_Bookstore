@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
+import { getProductDiscountPercent, getProductOriginalPrice } from "@/utils/productPricing";
 
 export const useProductDetail = () => {
     const { id } = useParams();
@@ -131,12 +132,8 @@ export const useProductDetail = () => {
             .replace("₫", "đ");
     };
 
-    const discountPercent = product?.discountPercent || promoDiscount || 0;
-    const originalPrice =
-        product?.originalPrice ||
-        (discountPercent > 0
-            ? Math.round(product.price / (1 - discountPercent / 100))
-            : null);
+    const discountPercent = promoDiscount || getProductDiscountPercent(product);
+    const originalPrice = getProductOriginalPrice(product, discountPercent);
 
     const averageRating = useMemo(() => {
         if (!reviews || reviews.length === 0) return 0;
