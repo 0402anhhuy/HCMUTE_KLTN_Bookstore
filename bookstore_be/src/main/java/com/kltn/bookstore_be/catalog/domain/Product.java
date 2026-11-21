@@ -86,6 +86,10 @@ public class Product {
     private List<String> imageUrls = new ArrayList<>();
 
     @Transient
+    @Builder.Default
+    private Long soldCount = 0L;
+
+    @Transient
     public String getImageUrl() {
         if (imageUrls != null && !imageUrls.isEmpty()) {
             return imageUrls.getFirst();

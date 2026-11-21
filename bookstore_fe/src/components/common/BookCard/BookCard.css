@@ -112,6 +112,23 @@
     color: #0a422d;
 }
 
+.book-card-name-discount-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fee2e2;
+    color: #dc2626;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+    border: 1px solid #fecaca;
+    white-space: nowrap;
+}
+
 .book-card-author {
     color: #64748b;
     font-size: 0.78rem;
@@ -163,12 +180,34 @@
     min-width: 0;
 }
 
+.book-card-price-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
 .book-card-price {
     font-weight: 800;
     font-size: 1.05rem;
     color: #0a422d;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
+}
+
+.book-card-price-discount-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fee2e2;
+    color: #dc2626;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 1.5px 5px;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+    white-space: nowrap;
 }
 
 .book-card-original-price {

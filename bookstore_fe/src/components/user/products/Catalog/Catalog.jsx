@@ -277,7 +277,7 @@ const Catalog = () => {
             <div className="catalog-header">
                 <h1 className="catalog-title">Khám phá kho sách</h1>
                 <p className="catalog-subtitle">
-                    Tìm kiếm, chọn lọc và khám phá hàng ngàn tựa sách giá trị tại Fahasa Bookstore.
+                    Tìm kiếm, chọn lọc và khám phá hàng ngàn tựa sách giá trị tại Bookstore.
                 </p>
             </div>
 

@@ -300,6 +300,10 @@
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .navbar-search-tag-chip:hover {

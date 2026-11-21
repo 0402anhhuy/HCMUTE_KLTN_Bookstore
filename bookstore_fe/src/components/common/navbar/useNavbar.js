@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { categoryService } from "@/services/categoryService";
+import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
 
 export const useNavbar = () => {
@@ -22,6 +23,8 @@ export const useNavbar = () => {
     const [activeLevel1Id, setActiveLevel1Id] = useState(null);
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [trendingKeywords, setTrendingKeywords] = useState([]);
+    const [loadingTrending, setLoadingTrending] = useState(false);
 
     const searchBoxRef = useRef(null);
     const categoryMenuRef = useRef(null);
@@ -39,28 +42,38 @@ export const useNavbar = () => {
         }
     }, [location]);
 
-    const trendingKeywords = [
-        "Bố con cá gai",
-        "Xứ cát",
-        "higashino keigo",
-        "dune",
-        "suy tưởng",
-        "sách giáo khoa",
-        "Chúa nhẫn",
-        "keigo",
-        "chúa tể những chiếc nhẫn",
-        "việt nam danh tác",
-        "haruki murakami",
-        "nhà giả kim",
-        "kitchen",
-        "nguyễn nhật ánh",
-        "kem đá",
-        "ray dalio",
-        "tội ác và hình phạt",
-        "hoàng tử bé",
-        "Anne tóc đỏ",
-        "Cứu tinh xứ cát",
-    ];
+    const [trendingKeywords, setTrendingKeywords] = useState([]);
+    const [loadingTrending, setLoadingTrending] = useState(false);
+
+    // Lấy top 10 sách bestseller thực tế từ DB để hiển thị gợi ý tìm kiếm
+    useEffect(() => {
+        let isMounted = true;
+        setLoadingTrending(true);
+        productService
+            .getBestsellers({ limit: 10 })
+            .then((res) => {
+                if (isMounted) {
+                    const data = Array.isArray(res.data) ? res.data : [];
+                    const titles = data
+                        .map((p) => p.name?.trim())
+                        .filter(Boolean)
+                        .slice(0, 10);
+                    if (titles.length > 0) {
+                        setTrendingKeywords(titles);
+                    }
+                }
+            })
+            .catch((err) => {
+                console.error("Lỗi khi tải từ khóa gợi ý bán chạy:", err);
+            })
+            .finally(() => {
+                if (isMounted) setLoadingTrending(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -201,6 +214,7 @@ export const useNavbar = () => {
         setShowSearchModal,
         searchBoxRef,
         trendingKeywords,
+        loadingTrending,
         notifications,
         unreadCount,
         favorites,

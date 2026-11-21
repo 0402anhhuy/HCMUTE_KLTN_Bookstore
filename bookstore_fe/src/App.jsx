@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import {
     BrowserRouter as Router,
     Routes,
@@ -8,7 +9,14 @@ import {
     useNavigate,
 } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
-import { Navbar, Footer, Chatbot, ErrorBoundary } from './components/common';
+import {
+    Navbar,
+    Footer,
+    Chatbot,
+    ErrorBoundary,
+    ProtectedRoute,
+    Unauthorized,
+} from "./components/common";
 import { Home } from "./components/user/home";
 import { Login, Register } from "./components/auth";
 import { Profile } from "./components/user/profile/index";
@@ -26,9 +34,12 @@ function AppContent() {
     const path = location.pathname.toLowerCase();
     const isAuthPage =
         path === "/login" || path === "/register";
-    const isManagerPage = path.startsWith("/manager");
-    const isAdminPage = path.startsWith("/admin");
-    const hideLayout = isAuthPage || isManagerPage || isAdminPage;
+    const isManagerAuthorized =
+        path.startsWith("/manager") &&
+        (user?.role === "MANAGER" || user?.role === "ADMIN");
+    const isAdminAuthorized =
+        path.startsWith("/admin") && user?.role === "ADMIN";
+    const hideLayout = isAuthPage || isManagerAuthorized || isAdminAuthorized;
 
     useEffect(() => {
         if (appLoading) return;
@@ -82,15 +93,15 @@ function AppContent() {
                             toast.type === "error"
                                 ? "#fef2f2"
                                 : toast.type === "info"
-                                  ? "#eff6ff"
-                                  : "#ecfdf5",
+                                    ? "#eff6ff"
+                                    : "#ecfdf5",
                         border: `1px solid ${toast.type === "error" ? "#fee2e2" : toast.type === "info" ? "#dbeafe" : "#d1fae5"}`,
                         color:
                             toast.type === "error"
                                 ? "#b91c1c"
                                 : toast.type === "info"
-                                  ? "#1e40af"
-                                  : "#065f46",
+                                    ? "#1e40af"
+                                    : "#065f46",
                         boxShadow:
                             "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
                         display: "flex",
@@ -173,17 +184,53 @@ function AppContent() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/cart" element={<Cart />} />
-                        <Route path="/checkout" element={<Checkout />} />
-                        <Route path="/orders" element={<OrderHistory />} />
+                        <Route
+                            path="/checkout"
+                            element={
+                                <ProtectedRoute>
+                                    <Checkout />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/orders"
+                            element={
+                                <ProtectedRoute>
+                                    <OrderHistory />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route
                             path="/payment/vnpay-callback"
                             element={<PaymentCallback />}
                         />
-                        <Route path="/profile" element={<Profile />} />
+                        <Route
+                            path="/profile"
+                            element={
+                                <ProtectedRoute>
+                                    <Profile />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="/catalog" element={<Catalog />} />
                         <Route path="/product/:id" element={<ProductDetail />} />
-                        <Route path="/manager" element={<ManagerDashboard />} />
-                        <Route path="/admin" element={<AdminDashboard />} />
+                        <Route
+                            path="/manager"
+                            element={
+                                <ProtectedRoute allowedRoles={["MANAGER", "ADMIN"]}>
+                                    <ManagerDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin"
+                            element={
+                                <ProtectedRoute allowedRoles={["ADMIN"]}>
+                                    <AdminDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route path="/403" element={<Unauthorized />} />
 
                         {/* Fallback routing */}
                         <Route path="*" element={<Navigate to="/" replace />} />
@@ -196,6 +243,8 @@ function AppContent() {
 
             {/* Chatbot hỗ trợ khách hàng - nút nổi góc phải dưới */}
             {!hideLayout && <Chatbot />}
+            {/* Vercel Analytics tracking */}
+            <Analytics />
         </div>
     );
 }

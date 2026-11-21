@@ -62,16 +62,6 @@ const ManagerDashboard = () => {
   const [stockMovements, setStockMovements] = useState([]);
   const [shippers, setShippers] = useState([]);
 
-  // Check role authorization
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    } else if (user.role !== 'MANAGER' && user.role !== 'ADMIN') {
-      showToast('Bạn không có quyền truy cập kênh quản lý!', 'error');
-      navigate('/');
-    }
-  }, [user, navigate]);
-
   // Load all data on mount
   useEffect(() => {
     if (user && (user.role === 'MANAGER' || user.role === 'ADMIN')) {

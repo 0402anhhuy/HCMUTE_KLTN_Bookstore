@@ -38,17 +38,6 @@ export const useAdminDashboard = () => {
     const [auditLogs, setAuditLogs] = useState([]);
     const [shippers, setShippers] = useState([]);
 
-    useEffect(() => {
-        if (appLoading) return;
-        if (!user) {
-            navigate("/login");
-        } else if (user.role === "ADMIN") {
-            navigate("/admin");
-        } else {
-            navigate("/");
-        }
-    }, [user, appLoading, navigate]);
-
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
