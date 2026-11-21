@@ -305,17 +305,26 @@ export const useHome = () => {
         return sum / bestsellerReviews.length;
     }, [bestsellerReviews]);
 
-    // Hàm tính % giảm giá ảo hoặc từ dữ liệu gốc
+    // Hàm tính % giảm giá thực tế từ dữ liệu khuyến mãi/sản phẩm (không dùng số giả lập)
     const getDiscountPercent = (product) => {
-        if (product.promotionDiscountPercent !== undefined && product.promotionDiscountPercent !== null) return product.promotionDiscountPercent;
-        if (product.discountPercent) return product.discountPercent;
-        // Tự sinh % cố định theo ID để hiển thị badge nếu DB chưa có cột discount
-        return ((product.id * 7) % 35) + 10;
+        if (!product) return 0;
+        if (product.promotionDiscountPercent !== undefined && product.promotionDiscountPercent !== null) {
+            return Number(product.promotionDiscountPercent) || 0;
+        }
+        if (product.discountPercent) {
+            return Number(product.discountPercent) || 0;
+        }
+        return 0;
     };
 
     const getOriginalPrice = (product) => {
+        if (!product || !product.price) return null;
+        if (product.originalPrice) return product.originalPrice;
         const discount = getDiscountPercent(product);
-        return Math.round(product.price / (1 - discount / 100));
+        if (discount > 0) {
+            return Math.round(product.price / (1 - discount / 100));
+        }
+        return null;
     };
 
     const handleClearFilters = () => {
