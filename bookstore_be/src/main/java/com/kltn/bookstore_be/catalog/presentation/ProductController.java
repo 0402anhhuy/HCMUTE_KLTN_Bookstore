@@ -81,6 +81,18 @@ public class ProductController {
         return ResponseEntity.ok(productService.getDistinctPublishers());
     }
 
+    @GetMapping("/bestsellers")
+    public ResponseEntity<?> getBestsellers(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            List<Product> bestsellers = productService.getBestsellers(categoryId, limit);
+            return ResponseEntity.ok(bestsellers);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable Long id) {
         try {

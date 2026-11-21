@@ -9,7 +9,14 @@ import {
     useNavigate,
 } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
-import { Navbar, Footer, Chatbot, ErrorBoundary } from './components/common';
+import {
+    Navbar,
+    Footer,
+    Chatbot,
+    ErrorBoundary,
+    ProtectedRoute,
+    Unauthorized,
+} from "./components/common";
 import { Home } from "./components/user/home";
 import { Login, Register } from "./components/auth";
 import { Profile } from "./components/user/profile/index";
@@ -27,9 +34,12 @@ function AppContent() {
     const path = location.pathname.toLowerCase();
     const isAuthPage =
         path === "/login" || path === "/register";
-    const isManagerPage = path.startsWith("/manager");
-    const isAdminPage = path.startsWith("/admin");
-    const hideLayout = isAuthPage || isManagerPage || isAdminPage;
+    const isManagerAuthorized =
+        path.startsWith("/manager") &&
+        (user?.role === "MANAGER" || user?.role === "ADMIN");
+    const isAdminAuthorized =
+        path.startsWith("/admin") && user?.role === "ADMIN";
+    const hideLayout = isAuthPage || isManagerAuthorized || isAdminAuthorized;
 
     useEffect(() => {
         if (appLoading) return;
@@ -174,17 +184,53 @@ function AppContent() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/cart" element={<Cart />} />
-                        <Route path="/checkout" element={<Checkout />} />
-                        <Route path="/orders" element={<OrderHistory />} />
+                        <Route
+                            path="/checkout"
+                            element={
+                                <ProtectedRoute>
+                                    <Checkout />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/orders"
+                            element={
+                                <ProtectedRoute>
+                                    <OrderHistory />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route
                             path="/payment/vnpay-callback"
                             element={<PaymentCallback />}
                         />
-                        <Route path="/profile" element={<Profile />} />
+                        <Route
+                            path="/profile"
+                            element={
+                                <ProtectedRoute>
+                                    <Profile />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="/catalog" element={<Catalog />} />
                         <Route path="/product/:id" element={<ProductDetail />} />
-                        <Route path="/manager" element={<ManagerDashboard />} />
-                        <Route path="/admin" element={<AdminDashboard />} />
+                        <Route
+                            path="/manager"
+                            element={
+                                <ProtectedRoute allowedRoles={["MANAGER", "ADMIN"]}>
+                                    <ManagerDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin"
+                            element={
+                                <ProtectedRoute allowedRoles={["ADMIN"]}>
+                                    <AdminDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route path="/403" element={<Unauthorized />} />
 
                         {/* Fallback routing */}
                         <Route path="*" element={<Navigate to="/" replace />} />
