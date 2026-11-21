@@ -24,6 +24,21 @@ import "./Home.css";
 import { RecommendationSection } from "@/components/common";
 import { useNavigate } from "react-router-dom";
 
+// Hàm loại bỏ tiêu đề sách bị lặp lại ở đầu phần mô tả sản phẩm
+const formatCleanDescription = (description, bookName) => {
+    if (!description) {
+        return "Tác phẩm được tái bản với chất lượng bìa cao cấp, đem lại trải nghiệm đọc sách tuyệt vời nhất cho độc giả yêu mến sách.";
+    }
+    let cleaned = description.trim();
+    if (bookName) {
+        const cleanName = bookName.trim().toLowerCase();
+        if (cleaned.toLowerCase().startsWith(cleanName)) {
+            cleaned = cleaned.slice(cleanName.length).replace(/^[\s:\-–—\n]+/, "").trim();
+        }
+    }
+    return cleaned || description;
+};
+
 const Home = () => {
     const {
         addToCart,
@@ -738,8 +753,10 @@ const Home = () => {
                                                         : ""
                                                 }`}
                                             >
-                                                {activeBestseller.description ||
-                                                    "Tác phẩm được tái bản với chất lượng bìa cao cấp, đem lại trải nghiệm đọc sách tuyệt vời nhất cho độc giả yêu mến sách."}
+                                                {formatCleanDescription(
+                                                    activeBestseller.description,
+                                                    activeBestseller.name,
+                                                )}
                                             </div>
                                             {activeBestseller.description &&
                                                 activeBestseller.description
