@@ -343,10 +343,13 @@ export const AppProvider = ({ children }) => {
     };
 
     const removeFromCart = async (productId) => {
+        if (!productId) return;
         if (!user) {
             const currentGuest = getGuestCart();
             currentGuest.items = (currentGuest.items || []).filter(
-                (i) => String(i.product?.id) !== String(productId),
+                (i) =>
+                    String(i.product?.id) !== String(productId) &&
+                    String(i.id) !== String(productId),
             );
             saveGuestCart(currentGuest);
             setCart({ items: [...currentGuest.items] });
@@ -359,6 +362,7 @@ export const AppProvider = ({ children }) => {
             showToast("Đã xóa sản phẩm khỏi giỏ hàng", "info");
         } catch (error) {
             console.error("Failed to remove item:", error);
+            await fetchCart();
         }
     };
 
@@ -375,6 +379,7 @@ export const AppProvider = ({ children }) => {
             showToast("Đã xóa toàn bộ sản phẩm khỏi giỏ hàng", "success");
         } catch (error) {
             console.error("Failed to clear cart:", error);
+            await fetchCart();
             showToast("Không thể xóa giỏ hàng", "error");
         }
     };

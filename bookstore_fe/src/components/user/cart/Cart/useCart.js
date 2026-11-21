@@ -66,10 +66,34 @@ export const useCart = () => {
         });
     };
 
+    const formatPrice = (price) => {
+        const num = Number(price);
+        return new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND",
+        }).format(Number.isFinite(num) ? num : 0);
+    };
+
+    // Luôn tính toán các ID đã chọn đồng bộ trực tiếp với danh sách item hiện có trong giỏ
+    const activeSelectedItemIds = useMemo(() => {
+        const availableIds = new Set(
+            (cart?.items || [])
+                .filter((item) => item && item.id !== undefined && item.id !== null)
+                .map((item) => item.id),
+        );
+        const active = new Set();
+        selectedItemIds.forEach((id) => {
+            if (availableIds.has(id)) {
+                active.add(id);
+            }
+        });
+        return active;
+    }, [cart?.items, selectedItemIds]);
+
     const isAllSelected = Boolean(
         cart?.items &&
         cart.items.length > 0 &&
-        selectedItemIds.size === cart.items.length
+        activeSelectedItemIds.size === cart.items.length
     );
 
     const toggleSelectAll = () => {
@@ -86,15 +110,8 @@ export const useCart = () => {
         }
     };
 
-    const formatPrice = (price) => {
-        return new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-        }).format(price || 0);
-    };
-
     const totalAmount = (cart?.items || [])
-        .filter((item) => item && item.product && selectedItemIds.has(item.id))
+        .filter((item) => item && item.product && activeSelectedItemIds.has(item.id))
         .reduce(
             (sum, item) =>
                 sum + (Number(item?.product?.price) || 0) * (Number(item?.quantity) || 0),
@@ -315,7 +332,7 @@ export const useCart = () => {
         return 35000;
     };
 
-    const hasSelectedItems = selectedItemIds && selectedItemIds.size > 0;
+    const hasSelectedItems = activeSelectedItemIds && activeSelectedItemIds.size > 0;
     const rawShippingFee = hasSelectedItems ? getShippingFee(defaultAddress, totalAmount) : 0;
     const couponDiscount = hasSelectedItems ? calculateDiscount(activeCouponObj, totalAmount, rawShippingFee) : 0;
     const isFreeshipCoupon = activeCouponObj?.discountType === "FREESHIP";
@@ -353,7 +370,7 @@ export const useCart = () => {
             navigate("/login");
             return;
         }
-        if (selectedItemIds.size === 0) {
+        if (activeSelectedItemIds.size === 0) {
             showToast?.(
                 "Vui lòng chọn ít nhất một sản phẩm để thanh toán.",
                 "error",
@@ -403,7 +420,7 @@ export const useCart = () => {
         setCouponCode,
         usePoints,
         setUsePoints,
-        selectedItemIds,
+        selectedItemIds: activeSelectedItemIds,
         toggleSelectItem,
         isAllSelected,
         toggleSelectAll,

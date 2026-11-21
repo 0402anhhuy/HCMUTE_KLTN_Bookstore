@@ -385,7 +385,7 @@ const Cart = () => {
                                     <button
                                         type="button"
                                         onClick={() =>
-                                            removeFromCart(prodId)
+                                            removeFromCart(prodId || item?.product?.id || item?.id)
                                         }
                                         className="cart-btn-remove-item"
                                         title="Xóa sản phẩm"

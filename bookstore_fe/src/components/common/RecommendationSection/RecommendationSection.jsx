@@ -33,11 +33,11 @@ const RecommendationSection = ({
     }, [limit]);
 
     const formatPrice = (price) => {
-        if (!price) return "0 đ";
+        const num = Number(price);
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
             currency: "VND",
-        }).format(price);
+        }).format(Number.isFinite(num) ? num : 0);
     };
 
     const getProductImage = (product) => {
