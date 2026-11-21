@@ -353,10 +353,14 @@ public class OrderService {
 
         // Audit Log and Notification
         auditLogService.log(dbUser, "CREATE_ORDER", "Khởi tạo đơn hàng #" + savedOrder.getId() + ", Tổng tiền: " + finalAmount + "đ");
+        String notifTitle = request.getPaymentMethod() == Order.PaymentMethod.VNPAY ? "Đơn hàng đang chờ thanh toán" : "Đặt hàng thành công";
+        String notifMsg = request.getPaymentMethod() == Order.PaymentMethod.VNPAY
+                ? "Đơn hàng #" + savedOrder.getId() + " đã được tạo và đang chờ thanh toán qua cổng VNPay."
+                : "Đơn hàng #" + savedOrder.getId() + " đã được tạo thành công. Phương thức thanh toán: " + request.getPaymentMethod();
         notificationService.createNotification(
                 dbUser,
-                "Đặt hàng thành công",
-                "Đơn hàng #" + savedOrder.getId() + " đã được tạo thành công. Phương thức thanh toán: " + request.getPaymentMethod(),
+                notifTitle,
+                notifMsg,
                 Notification.NotificationType.ORDER,
                 "orders",
                 savedOrder.getId()
@@ -519,6 +523,22 @@ public class OrderService {
             }
             paymentRepository.save(p);
         });
+
+        // Restore points if used
+        if (order.getPointsUsed() != null && order.getPointsUsed() > 0) {
+            User customer = order.getUser();
+            customer.setRewardPoints((customer.getRewardPoints() != null ? customer.getRewardPoints() : 0) + order.getPointsUsed());
+            userRepository.save(customer);
+        }
+
+        // Restore coupon if used
+        if (order.getCoupon() != null) {
+            Coupon coupon = order.getCoupon();
+            if (coupon.getUsedCount() != null && coupon.getUsedCount() > 0) {
+                coupon.setUsedCount(coupon.getUsedCount() - 1);
+                couponRepository.save(coupon);
+            }
+        }
 
         // Audit Log and Notification
         auditLogService.log(user, "CANCEL_ORDER", "Hủy đơn hàng #" + orderId + ", Lý do: " + reason);

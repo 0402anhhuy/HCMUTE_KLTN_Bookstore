@@ -88,6 +88,40 @@ export const useProductDetail = () => {
         if (id) fetchProductDetail();
     }, [id]);
 
+    const [promoDiscount, setPromoDiscount] = useState(0);
+
+    useEffect(() => {
+        const checkPromo = async () => {
+            try {
+                const res = await api.get("/promotions/active");
+                const promos = res.data || [];
+                let maxDiscount = 0;
+                promos.forEach((promo) => {
+                    if (promo.applicableProducts && promo.applicableProducts.length > 0) {
+                        promo.applicableProducts.forEach((p) => {
+                            if (String(p.id) === String(id)) {
+                                let disc = 0;
+                                if (promo.discountType === "PERCENT") {
+                                    disc = Number(promo.discountValue) || 0;
+                                } else if (promo.discountType === "FIXED" && p.price) {
+                                    disc = Math.round(((Number(promo.discountValue) || 0) / p.price) * 100);
+                                }
+                                if (disc > maxDiscount) maxDiscount = disc;
+                            }
+                        });
+                    }
+                });
+                setPromoDiscount(maxDiscount);
+            } catch (err) {
+                console.error("Failed to check active promotions for product:", err);
+            }
+        };
+
+        if (id) {
+            checkPromo();
+        }
+    }, [id]);
+
     const formatPrice = (price) => {
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
@@ -97,7 +131,7 @@ export const useProductDetail = () => {
             .replace("₫", "đ");
     };
 
-    const discountPercent = product?.discountPercent || 0;
+    const discountPercent = product?.discountPercent || promoDiscount || 0;
     const originalPrice =
         product?.originalPrice ||
         (discountPercent > 0

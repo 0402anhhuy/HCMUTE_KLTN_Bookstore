@@ -16,6 +16,7 @@ import {
     BookOpen,
     Menu,
     X,
+    TrendingUp,
 } from "lucide-react";
 import { useNavbar } from "./useNavbar";
 import "./Navbar.css";
@@ -37,6 +38,7 @@ const Navbar = () => {
         setShowSearchModal,
         searchBoxRef,
         trendingKeywords,
+        loadingTrending,
         notifications,
         unreadCount,
         totalCartItems,
@@ -169,20 +171,36 @@ const Navbar = () => {
                 {showSearchModal && (
                     <div className="navbar-search-modal">
                         <h4 className="navbar-search-modal-title">
+                            <TrendingUp
+                                size={16}
+                                style={{
+                                    display: "inline",
+                                    marginRight: "6px",
+                                    verticalAlign: "middle",
+                                    color: "#0a422d",
+                                }}
+                            />
                             Được tìm kiếm nhiều nhất
                         </h4>
-                        <div className="navbar-search-tags-grid">
-                            {trendingKeywords.map((keyword, index) => (
-                                <button
-                                    type="button"
-                                    key={index}
-                                    onClick={() => handleSelectKeyword(keyword)}
-                                    className="navbar-search-tag-chip"
-                                >
-                                    {keyword}
-                                </button>
-                            ))}
-                        </div>
+                        {trendingKeywords.length > 0 ? (
+                            <div className="navbar-search-tags-grid">
+                                {trendingKeywords.map((keyword, index) => (
+                                    <button
+                                        type="button"
+                                        key={index}
+                                        onClick={() => handleSelectKeyword(keyword)}
+                                        className="navbar-search-tag-chip"
+                                        title={`Tìm kiếm "${keyword}"`}
+                                    >
+                                        {keyword}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{ fontSize: "0.85rem", color: "#6b7280", padding: "4px 0" }}>
+                                {loadingTrending ? "Đang tải gợi ý..." : "Chưa có từ khóa tìm kiếm nổi bật."}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

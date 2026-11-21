@@ -34,5 +34,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT DISTINCT p.publisher FROM Product p WHERE p.status = 'ACTIVE' AND p.publisher IS NOT NULL AND TRIM(p.publisher) != '' ORDER BY p.publisher ASC")
     List<String> findDistinctPublishers();
     List<Product> findByStatusOrderByIdDesc(Product.ProductStatus status);
+    List<Product> findByStatusOrderByIdDesc(Product.ProductStatus status, Pageable pageable);
+    List<Product> findByStatusAndCategoryIdInOrderByIdDesc(Product.ProductStatus status, List<Long> categoryIds, Pageable pageable);
     long countByStatus(Product.ProductStatus status);
 }

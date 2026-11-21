@@ -23,6 +23,9 @@ import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.catalog.domain.CategoryRepository;
 import com.kltn.bookstore_be.catalog.domain.ProductRepository;
 import com.kltn.bookstore_be.catalog.domain.StockMovementRepository;
+import com.kltn.bookstore_be.ordering.domain.OrderItemRepository;
+import com.kltn.bookstore_be.ordering.domain.ProductSalesProjection;
+import org.springframework.data.domain.PageRequest;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
@@ -43,6 +46,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final OrderItemRepository orderItemRepository;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
 
@@ -66,6 +70,65 @@ public class ProductService {
 
     public List<String> getDistinctPublishers() {
         return productRepository.findDistinctPublishers();
+    }
+
+    public List<Product> getBestsellers(Long categoryId, int limit) {
+        int targetLimit = (limit <= 0) ? 10 : limit;
+        List<Product> results = new ArrayList<>();
+        List<Long> seenProductIds = new ArrayList<>();
+
+        List<ProductSalesProjection> salesList;
+        if (categoryId != null) {
+            List<Long> categoryIds = getAllCategoryAndDescendantIds(categoryId);
+            salesList = orderItemRepository.findTopSellingProductsByCategoryIds(
+                    categoryIds, PageRequest.of(0, targetLimit)
+            );
+        } else {
+            salesList = orderItemRepository.findTopSellingProducts(
+                    PageRequest.of(0, targetLimit)
+            );
+        }
+
+        if (salesList != null) {
+            for (ProductSalesProjection proj : salesList) {
+                Long pId = proj.getProductId();
+                productRepository.findById(pId).ifPresent(p -> {
+                    p.setSoldCount(proj.getTotalSold() != null ? proj.getTotalSold() : 0L);
+                    results.add(p);
+                    seenProductIds.add(pId);
+                });
+            }
+        }
+
+        // Cold start / fallback: if we haven't reached targetLimit, fill with active products with soldCount = 0
+        if (results.size() < targetLimit) {
+            List<Product> fallbackList;
+            if (categoryId != null) {
+                List<Long> categoryIds = getAllCategoryAndDescendantIds(categoryId);
+                fallbackList = productRepository.findByStatusAndCategoryIdInOrderByIdDesc(
+                        Product.ProductStatus.ACTIVE, categoryIds, PageRequest.of(0, targetLimit)
+                );
+            } else {
+                fallbackList = productRepository.findByStatusOrderByIdDesc(
+                        Product.ProductStatus.ACTIVE, PageRequest.of(0, targetLimit)
+                );
+            }
+
+            if (fallbackList != null) {
+                for (Product fb : fallbackList) {
+                    if (!seenProductIds.contains(fb.getId())) {
+                        fb.setSoldCount(0L);
+                        results.add(fb);
+                        seenProductIds.add(fb.getId());
+                        if (results.size() >= targetLimit) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return results;
     }
 
     public List<Long> getAllCategoryAndDescendantIds(Long rootCategoryId) {

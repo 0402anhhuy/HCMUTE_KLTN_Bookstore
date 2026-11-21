@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -60,6 +61,15 @@ public class CartController {
 
     @PutMapping("/update")
     public ResponseEntity<?> updateItem(@RequestParam Long productId, @RequestParam Integer quantity) {
+        return processUpdateItem(productId, quantity);
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<?> patchItem(@RequestParam Long productId, @RequestParam Integer quantity) {
+        return processUpdateItem(productId, quantity);
+    }
+
+    private ResponseEntity<?> processUpdateItem(Long productId, Integer quantity) {
         try {
             User user = userService.getAuthenticatedUser();
             CartItem item = cartService.updateCartItemQuantity(user.getId(), productId, quantity);
@@ -74,6 +84,15 @@ public class CartController {
 
     @DeleteMapping("/remove/{productId}")
     public ResponseEntity<?> removeItem(@PathVariable Long productId) {
+        return processRemoveItem(productId);
+    }
+
+    @PatchMapping("/remove/{productId}")
+    public ResponseEntity<?> patchRemoveItem(@PathVariable Long productId) {
+        return processRemoveItem(productId);
+    }
+
+    private ResponseEntity<?> processRemoveItem(Long productId) {
         try {
             User user = userService.getAuthenticatedUser();
             cartService.removeItemFromCart(user.getId(), productId);
@@ -85,6 +104,15 @@ public class CartController {
 
     @DeleteMapping("/clear")
     public ResponseEntity<?> clearCart() {
+        return processClearCart();
+    }
+
+    @PatchMapping("/clear")
+    public ResponseEntity<?> patchClearCart() {
+        return processClearCart();
+    }
+
+    private ResponseEntity<?> processClearCart() {
         try {
             User user = userService.getAuthenticatedUser();
             Cart cart = cartService.getCartForUser(user.getId());

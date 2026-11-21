@@ -346,9 +346,20 @@ const ProductDetail = () => {
                                 >
                                     -
                                 </button>
-                                <span className="qty-picker-val tabular-nums">
-                                    {qty}
-                                </span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max={product.stockQuantity || 99}
+                                    value={qty}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value, 10);
+                                        if (!isNaN(val) && val >= 1) {
+                                            setQty(Math.min(product.stockQuantity || 99, val));
+                                        }
+                                    }}
+                                    className="qty-picker-val qty-picker-input tabular-nums"
+                                    aria-label="Số lượng sản phẩm"
+                                />
                                 <button
                                     type="button"
                                     onClick={() =>

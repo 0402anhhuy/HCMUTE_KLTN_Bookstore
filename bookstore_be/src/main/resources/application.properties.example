@@ -36,10 +36,10 @@ spring.mail.properties.mail.smtp.timeout=5000
 spring.mail.properties.mail.smtp.writetimeout=5000
 
 # VNPay Sandbox Configuration
-vnpay.tmn-code=your_vnpay_tmn_code
-vnpay.hash-secret=your_vnpay_hash_secret
-vnpay.api-url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-vnpay.return-url=http://localhost:5173/payment/vnpay-callback
+vnpay.tmn-code=${VNPAY_TMN_CODE:9IFBW7P7}
+vnpay.hash-secret=${VNPAY_HASH_SECRET:J6ST1VDWJE0FKLZTZBBJL0BLLB1OKM4U}
+vnpay.api-url=${VNPAY_API_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+vnpay.return-url=${VNPAY_RETURN_URL:https://bookstorefe-gilt.vercel.app/payment/vnpay-callback}
 
 # Cloudinary Configuration
 cloudinary.cloud-name=your_cloudinary_cloud_name
