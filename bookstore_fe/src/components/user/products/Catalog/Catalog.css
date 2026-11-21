@@ -27,7 +27,7 @@
     color: #0a422d;
     margin: 0 0 6px 0;
     letter-spacing: -0.02em;
-    font-family: "Playfair Display", "Georgia", serif;
+    font-family: inherit;
 }
 
 .catalog-subtitle {
