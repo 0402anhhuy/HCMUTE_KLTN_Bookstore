@@ -281,7 +281,17 @@ const Home = () => {
                     <div className="home-promo-banners-grid">
                         <div
                             className="home-promo-card home-promo-card-edu"
-                            onClick={() => navigate("/catalog?keyword=học")}
+                            onClick={() => {
+                                const matchedCat = (categories || []).find((c) => {
+                                    const name = (c?.name || "").toLowerCase();
+                                    return name.includes("kỹ năng") || name.includes("tâm lý") || name.includes("giáo dục");
+                                });
+                                if (matchedCat) {
+                                    navigate(`/catalog?categoryId=${matchedCat.id}`);
+                                } else {
+                                    navigate("/catalog");
+                                }
+                            }}
                         >
                             <div className="home-promo-watermark">
                                 <GraduationCap size={58} />
@@ -291,7 +301,7 @@ const Home = () => {
                                     <GraduationCap size={13} /> Hành trang đến trường
                                 </span>
                                 <h4 className="home-promo-title">
-                                    Giảm đến 50%
+                                    Tủ sách học tập
                                 </h4>
                                 <span className="home-promo-btn">
                                     Khám phá ngay →
@@ -707,20 +717,24 @@ const Home = () => {
                                                             activeBestseller.price,
                                                         )}
                                                     </span>
-                                                    <span className="bestseller-detail-original-price">
-                                                        {formatPrice(
-                                                            getOriginalPrice(
-                                                                activeBestseller,
-                                                            ),
-                                                        )}
-                                                    </span>
-                                                    <span className="bestseller-detail-discount-tag">
-                                                        -
-                                                        {getDiscountPercent(
-                                                            activeBestseller,
-                                                        )}
-                                                        %
-                                                    </span>
+                                                    {getDiscountPercent(activeBestseller) > 0 && getOriginalPrice(activeBestseller) && (
+                                                        <>
+                                                            <span className="bestseller-detail-original-price">
+                                                                {formatPrice(
+                                                                    getOriginalPrice(
+                                                                        activeBestseller,
+                                                                    ),
+                                                                )}
+                                                            </span>
+                                                            <span className="bestseller-detail-discount-tag">
+                                                                -
+                                                                {getDiscountPercent(
+                                                                    activeBestseller,
+                                                                )}
+                                                                %
+                                                            </span>
+                                                        </>
+                                                    )}
                                                 </div>
 
                                                 <button

@@ -163,10 +163,9 @@ export const useHome = () => {
         return () => clearInterval(timer);
     }, [flashSaleEndsAt, fetchActivePromotions]);
 
-    const flashSaleProducts = useMemo(() => {
-        // Priority 1: Products assigned by Admin in active Promotion programs
+    const promoProductMap = useMemo(() => {
+        const map = new Map();
         if (activePromotions && activePromotions.length > 0) {
-            const promoProductMap = new Map();
             activePromotions.forEach((promo) => {
                 if (promo.applicableProducts && promo.applicableProducts.length > 0) {
                     promo.applicableProducts.forEach((p) => {
@@ -176,13 +175,12 @@ export const useHome = () => {
                         } else if (promo.discountType === "FIXED") {
                             discount = p.price ? Math.round(((Number(promo.discountValue) || 0) / p.price) * 100) : 0;
                         }
-                        
+
                         const pId = String(p.id);
-                        // Nếu sản phẩm đã tồn tại trong Map (nằm ở 2 sự kiện cùng lúc), giữ lại mức giảm giá ƯU ĐÃI NHẤT
-                        if (promoProductMap.has(pId)) {
-                            const existing = promoProductMap.get(pId);
+                        if (map.has(pId)) {
+                            const existing = map.get(pId);
                             if (discount > existing.promotionDiscountPercent) {
-                                promoProductMap.set(pId, {
+                                map.set(pId, {
                                     ...p,
                                     promotionDiscountPercent: discount,
                                     promotionTitle: promo.title,
@@ -191,7 +189,7 @@ export const useHome = () => {
                                 });
                             }
                         } else {
-                            promoProductMap.set(pId, {
+                            map.set(pId, {
                                 ...p,
                                 promotionDiscountPercent: discount,
                                 promotionTitle: promo.title,
@@ -202,7 +200,29 @@ export const useHome = () => {
                     });
                 }
             });
+        }
+        return map;
+    }, [activePromotions]);
 
+    const enrichedProducts = useMemo(() => {
+        if (!products || products.length === 0) return [];
+        if (promoProductMap.size === 0) return products;
+        return products.map((p) => {
+            const promo = promoProductMap.get(String(p.id));
+            if (promo) {
+                return {
+                    ...p,
+                    promotionDiscountPercent: promo.promotionDiscountPercent,
+                    promotionTitle: promo.promotionTitle,
+                };
+            }
+            return p;
+        });
+    }, [products, promoProductMap]);
+
+    const flashSaleProducts = useMemo(() => {
+        // Priority 1: Products assigned by Admin in active Promotion programs
+        if (promoProductMap.size > 0) {
             const uniquePromoProducts = Array.from(promoProductMap.values());
             if (uniquePromoProducts.length > 0) {
                 return uniquePromoProducts;
@@ -211,7 +231,7 @@ export const useHome = () => {
 
         // If no active promotion programs created by Admin, return empty list
         return [];
-    }, [activePromotions]);
+    }, [promoProductMap]);
 
     const flashSaleTotalPages = Math.max(
         1,
@@ -345,17 +365,26 @@ export const useHome = () => {
         return sum / bestsellerReviews.length;
     }, [bestsellerReviews]);
 
-    // Hàm tính % giảm giá ảo hoặc từ dữ liệu gốc
+    // Hàm tính % giảm giá thực tế từ dữ liệu khuyến mãi/sản phẩm (không dùng số giả lập)
     const getDiscountPercent = (product) => {
-        if (product.promotionDiscountPercent !== undefined && product.promotionDiscountPercent !== null) return product.promotionDiscountPercent;
-        if (product.discountPercent) return product.discountPercent;
-        // Tự sinh % cố định theo ID để hiển thị badge nếu DB chưa có cột discount
-        return ((product.id * 7) % 35) + 10;
+        if (!product) return 0;
+        if (product.promotionDiscountPercent !== undefined && product.promotionDiscountPercent !== null) {
+            return Number(product.promotionDiscountPercent) || 0;
+        }
+        if (product.discountPercent) {
+            return Number(product.discountPercent) || 0;
+        }
+        return 0;
     };
 
     const getOriginalPrice = (product) => {
+        if (!product || !product.price) return null;
+        if (product.originalPrice) return product.originalPrice;
         const discount = getDiscountPercent(product);
-        return Math.round(product.price / (1 - discount / 100));
+        if (discount > 0) {
+            return Math.round(product.price / (1 - discount / 100));
+        }
+        return null;
     };
 
     // Dữ liệu cho phần Xu hướng mua sắm phản hồi theo từng tab
@@ -530,7 +559,7 @@ export const useHome = () => {
         setMinPrice,
         maxPrice,
         setMaxPrice,
-        products,
+        products: enrichedProducts,
         setPage,
         loading,
         categoryTree,
