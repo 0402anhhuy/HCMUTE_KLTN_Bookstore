@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { categoryService } from "@/services/categoryService";
+import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
 
 export const useNavbar = () => {
@@ -22,6 +23,8 @@ export const useNavbar = () => {
     const [activeLevel1Id, setActiveLevel1Id] = useState(null);
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [trendingKeywords, setTrendingKeywords] = useState([]);
+    const [loadingTrending, setLoadingTrending] = useState(false);
 
     const searchBoxRef = useRef(null);
     const categoryMenuRef = useRef(null);
@@ -39,28 +42,77 @@ export const useNavbar = () => {
         }
     }, [location]);
 
-    const trendingKeywords = [
-        "Bố con cá gai",
-        "Xứ cát",
-        "higashino keigo",
-        "dune",
-        "suy tưởng",
-        "sách giáo khoa",
-        "Chúa nhẫn",
-        "keigo",
-        "chúa tể những chiếc nhẫn",
-        "việt nam danh tác",
-        "haruki murakami",
-        "nhà giả kim",
-        "kitchen",
-        "nguyễn nhật ánh",
-        "kem đá",
-        "ray dalio",
-        "tội ác và hình phạt",
-        "hoàng tử bé",
-        "Anne tóc đỏ",
-        "Cứu tinh xứ cát",
-    ];
+    // Gợi ý top 10 sách bestseller thực tế từ database thay vì danh sách tĩnh hardcode
+    useEffect(() => {
+        let isMounted = true;
+        setLoadingTrending(true);
+
+        const fetchTrending = async () => {
+            try {
+                // 1. Thử gọi API bestsellers
+                let books = [];
+                try {
+                    const res = await productService.getBestsellers({ limit: 10 });
+                    if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                        books = res.data;
+                    }
+                } catch {
+                    // API bestsellers chưa có hoặc lỗi
+                }
+
+                // 2. Fallback sang danh sách sách đã duyệt (Active) thực tế trong database
+                if (books.length === 0) {
+                    try {
+                        const activeRes = await productService.getApprovedProducts();
+                        if (activeRes && activeRes.data && Array.isArray(activeRes.data) && activeRes.data.length > 0) {
+                            books = activeRes.data;
+                        }
+                    } catch {
+                        // Fallback tiếp tục
+                    }
+                }
+
+                // 3. Fallback sang searchProducts thông thường
+                if (books.length === 0) {
+                    try {
+                        const searchRes = await productService.getProducts({ size: 10 });
+                        const content = searchRes?.data?.content || (Array.isArray(searchRes?.data) ? searchRes.data : []);
+                        if (content && content.length > 0) {
+                            books = content;
+                        }
+                    } catch {
+                        // Bỏ qua
+                    }
+                }
+
+                if (isMounted && books.length > 0) {
+                    const titles = [];
+                    const seen = new Set();
+                    for (const book of books) {
+                        const name = (book?.name || "").trim();
+                        if (name && !seen.has(name.toLowerCase())) {
+                            seen.add(name.toLowerCase());
+                            titles.push(name);
+                            if (titles.length >= 10) break;
+                        }
+                    }
+                    if (titles.length > 0) {
+                        setTrendingKeywords(titles);
+                    }
+                }
+            } catch (err) {
+                console.error("Lỗi khi tải gợi ý sách bestseller:", err);
+            } finally {
+                if (isMounted) setLoadingTrending(false);
+            }
+        };
+
+        fetchTrending();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -201,6 +253,7 @@ export const useNavbar = () => {
         setShowSearchModal,
         searchBoxRef,
         trendingKeywords,
+        loadingTrending,
         notifications,
         unreadCount,
         favorites,

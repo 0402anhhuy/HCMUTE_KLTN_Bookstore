@@ -41,6 +41,9 @@ class ProductServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private com.kltn.bookstore_be.ordering.domain.OrderItemRepository orderItemRepository;
+
     private Category sampleCategory;
     private Product sampleProduct;
     private User managerUser;
@@ -386,6 +389,55 @@ class ProductServiceTest {
                 productService.adjustStock(1L, 600_000, StockMovement.MovementType.IMPORT, "Nhập quá tổng tồn", managerUser);
             });
             assertEquals("Số lượng tồn kho sau khi nhập vượt quá giới hạn tối đa (10.000.000)", ex.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Lấy danh sách Bestseller thực tế")
+    class GetBestsellersTests {
+
+        @Test
+        @DisplayName("Lấy danh sách Bestseller - có đơn hàng thực tế - xếp theo lượt bán giảm dần")
+        void getBestsellers_withSales_returnsRankedBySoldCount() {
+            Product p1 = Product.builder().id(1L).name("Book 1").status(Product.ProductStatus.ACTIVE).category(sampleCategory).build();
+            Product p2 = Product.builder().id(2L).name("Book 2").status(Product.ProductStatus.ACTIVE).category(sampleCategory).build();
+
+            com.kltn.bookstore_be.ordering.domain.ProductSalesProjection proj1 = mock(com.kltn.bookstore_be.ordering.domain.ProductSalesProjection.class);
+            when(proj1.getProductId()).thenReturn(2L);
+            when(proj1.getTotalSold()).thenReturn(15L);
+
+            com.kltn.bookstore_be.ordering.domain.ProductSalesProjection proj2 = mock(com.kltn.bookstore_be.ordering.domain.ProductSalesProjection.class);
+            when(proj2.getProductId()).thenReturn(1L);
+            when(proj2.getTotalSold()).thenReturn(8L);
+
+            when(orderItemRepository.findTopSellingProducts(any())).thenReturn(List.of(proj1, proj2));
+            when(productRepository.findById(2L)).thenReturn(Optional.of(p2));
+            when(productRepository.findById(1L)).thenReturn(Optional.of(p1));
+
+            List<Product> result = productService.getBestsellers(null, 10);
+
+            assertEquals(2, result.size());
+            assertEquals(2L, result.get(0).getId());
+            assertEquals(15L, result.get(0).getSoldCount());
+            assertEquals(1L, result.get(1).getId());
+            assertEquals(8L, result.get(1).getSoldCount());
+        }
+
+        @Test
+        @DisplayName("Lấy danh sách Bestseller - cold start chưa có lượt bán - fallback lấy sách trong danh mục với soldCount=0")
+        void getBestsellers_coldStart_fillsWithZeroSalesProducts() {
+            Product p1 = Product.builder().id(1L).name("Book 1").status(Product.ProductStatus.ACTIVE).category(sampleCategory).build();
+
+            when(orderItemRepository.findTopSellingProductsByCategoryIds(anyList(), any())).thenReturn(List.of());
+            when(categoryRepository.findByParentCategoryId(1L)).thenReturn(List.of());
+            when(productRepository.findByStatusAndCategoryIdInOrderByIdDesc(eq(Product.ProductStatus.ACTIVE), anyList(), any()))
+                    .thenReturn(List.of(p1));
+
+            List<Product> result = productService.getBestsellers(1L, 10);
+
+            assertEquals(1, result.size());
+            assertEquals(1L, result.get(0).getId());
+            assertEquals(0L, result.get(0).getSoldCount());
         }
     }
 }
