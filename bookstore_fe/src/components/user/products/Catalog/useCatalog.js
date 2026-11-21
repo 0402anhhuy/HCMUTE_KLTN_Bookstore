@@ -1,273 +1,88 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
-import api from "@/services/api";
-import { buildCategoryTree } from "@/utils/categoryTree";
+import { useHome } from "@/components/user/home";
 
+/**
+ * Hook của trang Catalog.
+ *
+ * Phần tải/lọc sản phẩm được dùng chung với trang chủ (`useHome`) để tránh 2 nguồn
+ * logic khác nhau: trang chủ lọc theo state cục bộ, còn Catalog đồng bộ bộ lọc lên URL.
+ * Nhờ vậy, mọi lựa chọn ở bộ lọc (danh mục, giá, NXB) đều thực sự được gửi xuống API.
+ */
 export const useCatalog = () => {
     const { addToCart } = useApp();
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // Lấy query param từ URL
-    const keyword = searchParams.get("keyword") || "";
-    const categoryFromUrl = searchParams.get("categoryId") || "";
+    const {
+        keyword,
+        selectedCategory,
+        setSelectedCategory,
+        minPrice,
+        setMinPrice,
+        maxPrice,
+        setMaxPrice,
+        selectedPublishers,
+        setSelectedPublishers,
+        products,
+        page,
+        setPage,
+        totalPages,
+        loading,
+        categories,
+        categoryTree,
+        publishers,
+        handleClearFilters: clearAllFilters,
+        openProductDetail,
+        formatPrice,
+        getProductImage,
+        fetchProducts,
+    } = useHome({ syncFiltersWithUrl: true });
 
-    const [categories, setCategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(categoryFromUrl);
-    const [minPrice, setMinPrice] = useState("");
-    const [maxPrice, setMaxPrice] = useState("");
-    const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
-    const [searchInput, setSearchInput] = useState(keyword);
+    // ===== Ô tìm kiếm trên trang =====
+    // Chỉ là bản nháp của người dùng; khi URL đổi (bấm tìm kiếm ở navbar) thì khoá lại theo URL
+    const [searchDraft, setSearchDraft] = useState(null);
+    const searchInput = searchDraft ?? keyword;
+    const setSearchInput = setSearchDraft;
 
-    const [selectedPublishers, setSelectedPublishers] = useState([]);
-    const [allPublishers, setAllPublishers] = useState([]);
-
-    const [products, setProducts] = useState([]);
-    const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
-    const [loading, setLoading] = useState(true);
-
-    // Đồng bộ khi URL thay đổi
-    useEffect(() => {
-        const catId = searchParams.get("categoryId") || "";
-        const kw = searchParams.get("keyword") || "";
-        const pub = searchParams.get("publisher") || "";
-        setSelectedCategory(catId);
-        setSearchInput(kw);
-        if (pub) {
-            setSelectedPublishers([pub]);
-        } else {
-            setSelectedPublishers([]);
-        }
-        setPage(0);
-    }, [searchParams]);
-
-    const fetchCategories = async () => {
-        try {
-            const response = await api.get("/categories");
-            setCategories(response.data || []);
-        } catch (e) {
-            console.error("Lỗi lấy danh mục:", e);
-        }
-    };
-
-    const fetchPublishers = async () => {
-        try {
-            const response = await api.get("/products/publishers");
-            if (Array.isArray(response.data) && response.data.length > 0) {
-                setAllPublishers(response.data);
-            }
-        } catch (e) {
-            console.error("Lỗi lấy danh sách NXB:", e);
-        }
-    };
-
-    const fetchProducts = useCallback(async () => {
-        setLoading(true);
-        try {
-            let url = `/products?page=${page}&size=12`;
-            if (keyword.trim())
-                url += `&keyword=${encodeURIComponent(keyword)}`;
-            if (selectedCategory) url += `&categoryId=${selectedCategory}`;
-            if (minPrice) url += `&minPrice=${minPrice}`;
-            if (maxPrice) url += `&maxPrice=${maxPrice}`;
-            if (selectedPublishers && selectedPublishers.length > 0) {
-                selectedPublishers.forEach((pub) => {
-                    url += `&publisher=${encodeURIComponent(pub)}`;
-                });
-            }
-
-            const response = await api.get(url);
-            setProducts(response.data?.content || []);
-            setTotalPages(response.data?.totalPages || 1);
-        } catch (e) {
-            console.error("Lỗi lấy sản phẩm:", e);
-        } finally {
-            setLoading(false);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-    }, [page, selectedCategory, keyword, minPrice, maxPrice, selectedPublishers]);
-
-    const [activePromotions, setActivePromotions] = useState([]);
-
-    const fetchActivePromotions = useCallback(async () => {
-        try {
-            const response = await api.get("/promotions/active");
-            setActivePromotions(response.data || []);
-        } catch (e) {
-            console.error("Lỗi lấy khuyến mãi:", e);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchCategories();
-        fetchPublishers();
-        fetchActivePromotions();
-    }, [fetchActivePromotions]);
-
-    useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
-
-    const promoProductMap = useMemo(() => {
-        const map = new Map();
-        if (activePromotions && activePromotions.length > 0) {
-            activePromotions.forEach((promo) => {
-                if (promo.applicableProducts && promo.applicableProducts.length > 0) {
-                    promo.applicableProducts.forEach((p) => {
-                        let discount = 0;
-                        if (promo.discountType === "PERCENT") {
-                            discount = Number(promo.discountValue) || 0;
-                        } else if (promo.discountType === "FIXED") {
-                            discount = p.price ? Math.round(((Number(promo.discountValue) || 0) / p.price) * 100) : 0;
-                        }
-                        const pId = String(p.id);
-                        if (map.has(pId)) {
-                            const existing = map.get(pId);
-                            if (discount > existing.promotionDiscountPercent) {
-                                map.set(pId, { ...p, promotionDiscountPercent: discount });
-                            }
-                        } else {
-                            map.set(pId, { ...p, promotionDiscountPercent: discount });
-                        }
-                    });
-                }
-            });
-        }
-        return map;
-    }, [activePromotions]);
-
-    // Danh sách toàn bộ NXB có trong hệ thống
+    // ===== Danh sách toàn bộ NXB =====
     const availablePublishers = useMemo(() => {
-        if (allPublishers.length > 0) {
-            return allPublishers;
-        }
+        const list = (publishers || []).map((p) => p.name);
+        if (list.length > 0) return list;
         const set = new Set();
         products.forEach((p) => {
             if (p.publisher) set.add(p.publisher.trim());
         });
         return Array.from(set);
-    }, [allPublishers, products]);
+    }, [publishers, products]);
 
-    // Lọc theo NXB & Các khoảng giá đã chọn trên tập dữ liệu
-    const filteredProducts = useMemo(() => {
-        return products.filter((p) => {
-            if (
-                selectedPublishers.length > 0 &&
-                !selectedPublishers.includes(p.publisher)
-            ) {
-                return false;
-            }
-            if (selectedPriceRanges.length > 0) {
-                const price = Number(p.price || 0);
-                const matches = selectedPriceRanges.some((r) => {
-                    const min = r.min !== "" ? Number(r.min) : 0;
-                    const max = r.max !== "" ? Number(r.max) : Infinity;
-                    return price >= min && price <= max;
-                });
-                if (!matches) return false;
-            }
-            return true;
-        });
-    }, [products, selectedPublishers, selectedPriceRanges]);
-
-    const enrichedProducts = useMemo(() => {
-        if (!filteredProducts || filteredProducts.length === 0) return [];
-        if (promoProductMap.size === 0) return filteredProducts;
-        return filteredProducts.map((p) => {
-            const promo = promoProductMap.get(String(p.id));
-            if (promo) {
-                return {
-                    ...p,
-                    promotionDiscountPercent: promo.promotionDiscountPercent,
-                };
-            }
-            return p;
-        });
-    }, [filteredProducts, promoProductMap]);
-
-    const handleSearch = (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-        setPage(0);
-        const params = {};
-        if (searchInput.trim()) params.keyword = searchInput.trim();
-        if (selectedCategory) params.categoryId = selectedCategory;
-        if (selectedPublishers.length > 0) params.publisher = selectedPublishers[0];
-        setSearchParams(params);
-    };
-
-    const handleClearFilters = () => {
-        setSearchParams({});
-        setSelectedCategory("");
-        setMinPrice("");
-        setMaxPrice("");
-        setSelectedPriceRanges([]);
-        setSearchInput("");
-        setSelectedPublishers([]);
-        setPage(0);
-    };
-
-    const openProductDetail = (product) => {
-        navigate(`/product/${product.id}`);
-    };
-
-    const formatPrice = (price) => {
-        return new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-        })
-            .format(price || 0)
-            .replace("₫", "đ");
-    };
-
-    const getProductImage = (product) => {
-        if (!product) return null;
-        if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
-            return product.imageUrls[0];
-        }
-        if (typeof product.imageUrl === "string" && product.imageUrl) {
-            const splitImgs = product.imageUrl
-                .split("||")
-                .map((s) => s.trim())
-                .filter(Boolean);
-            return splitImgs[0] || product.imageUrl;
-        }
-        return null;
-    };
-
-    const categoryTree = useMemo(
-        () => buildCategoryTree(categories),
-        [categories],
-    );
-
-    const [showMoreCategory, setShowMoreCategory] = useState(false);
+    // ===== Khoảng giá dạng checkbox =====
+    const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
 
     const togglePriceRange = (min, max) => {
         setSelectedPriceRanges((prev) => {
             const exists = prev.some((r) => r.min === min && r.max === max);
-            let updated;
-            if (exists) {
-                updated = prev.filter((r) => !(r.min === min && r.max === max));
-            } else {
-                updated = [...prev, { min, max }];
-            }
+            const updated = exists
+                ? prev.filter((r) => !(r.min === min && r.max === max))
+                : [...prev, { min, max }];
 
+            // Gửi khoảng giá bao trùm các lựa chọn xuống API
             if (updated.length === 0) {
                 setMinPrice("");
                 setMaxPrice("");
-            } else if (updated.length === 1) {
-                setMinPrice(updated[0].min);
-                setMaxPrice(updated[0].max);
             } else {
-                // Multi range selected: compute overall min and max for API call
-                const mins = updated.map((r) => (r.min !== "" ? Number(r.min) : 0));
+                const mins = updated.map((r) =>
+                    r.min !== "" ? Number(r.min) : 0,
+                );
                 const overallMin = Math.min(...mins);
                 const hasNoMax = updated.some((r) => r.max === "");
                 const maxs = updated
                     .map((r) => (r.max !== "" ? Number(r.max) : 0))
                     .filter(Boolean);
-                const overallMax = hasNoMax || maxs.length === 0 ? "" : String(Math.max(...maxs));
+                const overallMax =
+                    hasNoMax || maxs.length === 0
+                        ? ""
+                        : String(Math.max(...maxs));
                 setMinPrice(String(overallMin));
                 setMaxPrice(overallMax);
             }
@@ -277,22 +92,23 @@ export const useCatalog = () => {
         setPage(0);
     };
 
-    const togglePublisher = (pub) => {
-        setSelectedPublishers((prev) =>
-            prev.includes(pub)
-                ? prev.filter((item) => item !== pub)
-                : [...prev, pub],
-        );
-        setPage(0);
-    };
+    // ===== NXB =====
+    const togglePublisher = useCallback(
+        (pub) => {
+            setSelectedPublishers((prev) =>
+                prev.includes(pub)
+                    ? prev.filter((item) => item !== pub)
+                    : [...prev, pub],
+            );
+            setPage(0);
+        },
+        [setSelectedPublishers, setPage],
+    );
 
+    // ===== Chip xoá từng bộ lọc =====
     const removeCategoryFilter = () => {
         setSelectedCategory("");
         setPage(0);
-        const params = {};
-        if (keyword) params.keyword = keyword;
-        if (selectedPublishers.length > 0) params.publisher = selectedPublishers[0];
-        setSearchParams(params);
     };
 
     const removePriceFilter = () => {
@@ -303,19 +119,41 @@ export const useCatalog = () => {
     };
 
     const removeKeywordFilter = () => {
-        setSearchInput("");
+        setSearchDraft(null);
         setPage(0);
-        const params = {};
-        if (selectedCategory) params.categoryId = selectedCategory;
-        if (selectedPublishers.length > 0) params.publisher = selectedPublishers[0];
-        setSearchParams(params);
+        // Xoá keyword khỏi URL nhưng giữ lại các bộ lọc khác
+        const next = new URLSearchParams(searchParams);
+        next.delete("keyword");
+        setSearchParams(next, { replace: true });
     };
 
+    // ===== Tìm kiếm theo từ khoá =====
+    const handleSearch = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        setPage(0);
+        // Đẩy từ khoá lên URL ngay để hook tự tải lại danh sách
+        const next = new URLSearchParams(searchParams);
+        next.delete("page");
+        if (searchInput.trim()) next.set("keyword", searchInput.trim());
+        else next.delete("keyword");
+        setSearchParams(next);
+    };
+
+    const handleClearFilters = () => {
+        setSelectedPriceRanges([]);
+        setSearchDraft(null);
+        clearAllFilters();
+    };
+
+    const [showMoreCategory, setShowMoreCategory] = useState(false);
+
     return {
+        // Dữ liệu & trạng thái
         keyword,
         searchInput,
         setSearchInput,
         categories,
+        categoryTree,
         selectedCategory,
         setSelectedCategory,
         minPrice,
@@ -324,25 +162,32 @@ export const useCatalog = () => {
         setMaxPrice,
         selectedPriceRanges,
         togglePriceRange,
-        products: enrichedProducts,
+        products,
         page,
         setPage,
         totalPages,
         loading,
-        categoryTree,
+
+        // Hành động
         handleSearch,
         handleClearFilters,
         openProductDetail,
         addToCart,
         formatPrice,
         getProductImage,
-        showMoreCategory,
-        setShowMoreCategory,
+        fetchProducts,
+
+        // Bộ lọc NXB
         availablePublishers,
         selectedPublishers,
         togglePublisher,
+
+        // Chip bộ lọc
         removeCategoryFilter,
         removePriceFilter,
         removeKeywordFilter,
+
+        showMoreCategory,
+        setShowMoreCategory,
     };
 };

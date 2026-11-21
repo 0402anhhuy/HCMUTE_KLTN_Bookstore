@@ -51,6 +51,9 @@ const Home = () => {
         setMaxPrice,
         products,
         setPage,
+        page,
+        totalElements,
+        totalPages,
         loading,
         categoryTree,
         isSearchActive,
@@ -74,11 +77,14 @@ const Home = () => {
         bestsellerReviews,
         bestsellerRating,
         loadingBestsellerReviews,
+        loadingBestsellers,
         activeBestsellerTab,
-        setActiveBestsellerTab,
+        handleBestsellerTabChange,
         publishers,
         handlePublisherClick,
         handlePromoCardClick,
+        selectedPublishers,
+        togglePublisher,
     } = useHome();
 
     const navigate = useNavigate();
@@ -100,6 +106,7 @@ const Home = () => {
                             if (isLeaf) {
                                 setSelectedCategory(String(node.id));
                                 setPage(0);
+                                fetchProducts();
                             }
                         }}
                         disabled={!isLeaf}
@@ -173,6 +180,7 @@ const Home = () => {
                                     onClick={() => {
                                         setSelectedCategory("");
                                         setPage(0);
+                                        fetchProducts();
                                     }}
                                     className={`home-category-node-btn ${selectedCategory === ""
                                             ? "selected"
@@ -181,7 +189,7 @@ const Home = () => {
                                 >
                                     Tất cả danh mục
                                 </button>
-                                {renderCategoryTree(categoryTree)}
+                                {renderCategoryTree(categoryTree, 0)}
                             </div>
                         </div>
 
@@ -196,9 +204,10 @@ const Home = () => {
                                     className="form-input home-price-input"
                                     placeholder="Từ"
                                     value={minPrice}
-                                    onChange={(e) =>
-                                        setMinPrice(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setMinPrice(e.target.value);
+                                        setPage(0);
+                                    }}
                                 />
                                 <span className="home-price-separator">-</span>
                                 <input
@@ -206,12 +215,41 @@ const Home = () => {
                                     className="form-input home-price-input"
                                     placeholder="Đến"
                                     value={maxPrice}
-                                    onChange={(e) =>
-                                        setMaxPrice(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setMaxPrice(e.target.value);
+                                        setPage(0);
+                                    }}
                                 />
                             </div>
                         </div>
+
+                        {/* Publishers */}
+                        {publishers.length > 0 && (
+                            <div className="home-filter-group">
+                                <label className="home-filter-label">
+                                    Nhà xuất bản
+                                </label>
+                                <div className="home-category-tree-scroll">
+                                    {publishers.slice(0, 15).map((pub) => {
+                                        const active = selectedPublishers.includes(
+                                            pub.name,
+                                        );
+                                        return (
+                                            <button
+                                                key={pub.id}
+                                                type="button"
+                                                onClick={() =>
+                                                    togglePublisher(pub.name)
+                                                }
+                                                className={`home-category-node-btn ${active ? "selected" : ""}`}
+                                            >
+                                                {pub.name}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="home-filter-actions-row">
                             <button
@@ -239,6 +277,11 @@ const Home = () => {
                         <div className="home-results-header">
                             <h2 className="home-results-title">
                                 Kết quả tìm kiếm {keyword && `cho "${keyword}"`}
+                                {!loading && (
+                                    <span className="home-results-count">
+                                        {` (${totalElements} sản phẩm)`}
+                                    </span>
+                                )}
                             </h2>
                             <button
                                 type="button"
@@ -269,6 +312,37 @@ const Home = () => {
                                         getProductImage={getProductImage}
                                     />
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Phân trang kết quả lọc */}
+                        {!loading && totalPages > 1 && (
+                            <div className="home-filter-pagination">
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    disabled={page <= 0}
+                                    onClick={() =>
+                                        setPage((p) => Math.max(0, p - 1))
+                                    }
+                                >
+                                    Trước
+                                </button>
+                                <span className="home-filter-page-info">
+                                    Trang {page + 1} / {totalPages}
+                                </span>
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    disabled={page >= totalPages - 1}
+                                    onClick={() =>
+                                        setPage((p) =>
+                                            Math.min(totalPages - 1, p + 1),
+                                        )
+                                    }
+                                >
+                                    Sau
+                                </button>
                             </div>
                         )}
                     </div>
@@ -561,7 +635,7 @@ const Home = () => {
                             <button
                                 type="button"
                                 className={`bestseller-tab-btn ${activeBestsellerTab === "all" ? "active" : ""}`}
-                                onClick={() => setActiveBestsellerTab("all")}
+                                onClick={() => handleBestsellerTabChange("all")}
                             >
                                 Tất cả
                             </button>
@@ -581,7 +655,7 @@ const Home = () => {
                                     type="button"
                                     className={`bestseller-tab-btn ${activeBestsellerTab === String(cat.id) ? "active" : ""}`}
                                     onClick={() =>
-                                        setActiveBestsellerTab(String(cat.id))
+                                        handleBestsellerTabChange(cat.id)
                                     }
                                 >
                                     {cat.name}
@@ -593,6 +667,11 @@ const Home = () => {
                         <div className="bestseller-dual-container">
                             {/* Left Column: Top 10 List */}
                             <div className="bestseller-left-column">
+                                {loadingBestsellers && bestsellerList.length === 0 && (
+                                    <div className="bestseller-loading-hint">
+                                        Đang tải bảng xếp hạng...
+                                    </div>
+                                )}
                                 {bestsellerList.map((product, index) => {
                                     const rank = index + 1;
                                     const isSelected =
