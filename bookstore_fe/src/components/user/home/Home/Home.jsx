@@ -24,6 +24,21 @@ import "./Home.css";
 import { RecommendationSection } from "@/components/common";
 import { useNavigate } from "react-router-dom";
 
+// Hàm loại bỏ tiêu đề sách bị lặp lại ở đầu phần mô tả sản phẩm
+const formatCleanDescription = (description, bookName) => {
+    if (!description) {
+        return "Tác phẩm được tái bản với chất lượng bìa cao cấp, đem lại trải nghiệm đọc sách tuyệt vời nhất cho độc giả yêu mến sách.";
+    }
+    let cleaned = description.trim();
+    if (bookName) {
+        const cleanName = bookName.trim().toLowerCase();
+        if (cleaned.toLowerCase().startsWith(cleanName)) {
+            cleaned = cleaned.slice(cleanName.length).replace(/^[\s:\-–—\n]+/, "").trim();
+        }
+    }
+    return cleaned || description;
+};
+
 const Home = () => {
     const {
         addToCart,
@@ -48,6 +63,7 @@ const Home = () => {
         getDiscountPercent,
         activeTrendTab,
         setActiveTrendTab,
+        trendingProducts,
         timeLeft,
         flashSaleProducts,
         categories,
@@ -62,6 +78,7 @@ const Home = () => {
         setActiveBestsellerTab,
         publishers,
         handlePublisherClick,
+        handlePromoCardClick,
     } = useHome();
 
     const navigate = useNavigate();
@@ -294,7 +311,7 @@ const Home = () => {
 
                         <div
                             className="home-promo-card home-promo-card-lit"
-                            onClick={() => navigate("/catalog?keyword=văn học")}
+                            onClick={() => handlePromoCardClick("lit")}
                         >
                             <div className="home-promo-watermark">
                                 <BookMarked size={58} />
@@ -314,7 +331,7 @@ const Home = () => {
 
                         <div
                             className="home-promo-card home-promo-card-biz"
-                            onClick={() => navigate("/catalog?keyword=kinh tế")}
+                            onClick={() => handlePromoCardClick("biz")}
                         >
                             <div className="home-promo-watermark">
                                 <LineChart size={58} />
@@ -334,7 +351,7 @@ const Home = () => {
 
                         <div
                             className="home-promo-card home-promo-card-manga"
-                            onClick={() => navigate("/catalog?keyword=manga")}
+                            onClick={() => handlePromoCardClick("manga")}
                         >
                             <div className="home-promo-watermark">
                                 <Sparkles size={58} />
@@ -506,7 +523,7 @@ const Home = () => {
                         </div>
 
                         <div className="home-fahasa-products-grid">
-                            {products.slice(0, 10).map((product) => (
+                            {(trendingProducts || []).map((product) => (
                                 <BookCard
                                     key={product.id}
                                     product={product}
@@ -514,7 +531,13 @@ const Home = () => {
                                     addToCart={addToCart}
                                     formatPrice={formatPrice}
                                     getProductImage={getProductImage}
-                                    showBadge="Xu hướng"
+                                    showBadge={
+                                        activeTrendTab === "hot"
+                                            ? "Giảm sốc"
+                                            : activeTrendTab === "bestseller"
+                                              ? "Ngoại văn"
+                                              : "Xu hướng"
+                                    }
                                     originalPrice={getOriginalPrice(product)}
                                 />
                             ))}
@@ -622,9 +645,7 @@ const Home = () => {
                                                     {product.name}
                                                 </h5>
                                                 <span className="bestseller-rank-sold">
-                                                    Đã bán trong tuần{" "}
-                                                    {((product.id * 19) % 150) +
-                                                        10}
+                                                    Đã bán {product.soldCount ?? 0}
                                                 </span>
                                             </div>
                                         </div>
@@ -670,11 +691,7 @@ const Home = () => {
                                                 </h4>
 
                                                 <span className="bestseller-detail-sold-text">
-                                                    Đã bán trong tuần{" "}
-                                                    {((activeBestseller.id *
-                                                        19) %
-                                                        150) +
-                                                        10}
+                                                    Đã bán {activeBestseller.soldCount ?? 0}
                                                 </span>
 
                                                 <div className="bestseller-detail-attributes">
@@ -752,8 +769,10 @@ const Home = () => {
                                                         : ""
                                                 }`}
                                             >
-                                                {activeBestseller.description ||
-                                                    "Tác phẩm được tái bản với chất lượng bìa cao cấp, đem lại trải nghiệm đọc sách tuyệt vời nhất cho độc giả yêu mến sách."}
+                                                {formatCleanDescription(
+                                                    activeBestseller.description,
+                                                    activeBestseller.name,
+                                                )}
                                             </div>
                                             {activeBestseller.description &&
                                                 activeBestseller.description

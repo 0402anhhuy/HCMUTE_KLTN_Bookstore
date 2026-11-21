@@ -97,7 +97,7 @@ const BookCard = ({
             <div className="book-card-rating-row">
                 <div className="book-card-stars">
                     {[1, 2, 3, 4, 5].map((starIdx) => {
-                        const rating = product.averageRating || product.rating || 0;
+                        const rating = Number(product.averageRating || product.rating || 0);
                         const isFilled = rating >= starIdx;
                         return (
                             <Star
@@ -110,10 +110,10 @@ const BookCard = ({
                     })}
                 </div>
                 <span className="book-card-rating-text">
-                    {product.averageRating && product.averageRating > 0
-                        ? `(${product.averageRating.toFixed(1)})`
-                        : product.reviewCount
-                        ? `(${product.reviewCount})`
+                    {Number(product.averageRating) > 0
+                        ? `(${Number(product.averageRating).toFixed(1)})`
+                        : Number(product.reviewCount) > 0
+                        ? `(${Number(product.reviewCount)})`
                         : "(0)"}
                 </span>
             </div>

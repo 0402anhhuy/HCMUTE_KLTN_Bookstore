@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
+import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
 
 // Import local image assets
@@ -256,19 +257,58 @@ export const useHome = () => {
 
     // Thêm state vào trong hook useHome:
     const [selectedBestsellerId, setSelectedBestsellerId] = useState(null);
+    const [bestsellerList, setBestsellerList] = useState([]);
+    const [loadingBestsellers, setLoadingBestsellers] = useState(false);
 
-    // Lấy danh sách Top 10 Bestseller
-    const bestsellerList = useMemo(() => {
-        if (!enrichedProducts || enrichedProducts.length === 0) return [];
-        return enrichedProducts.slice(0, 10);
-    }, [enrichedProducts]);
+    // Lấy danh sách Top 10 Bestseller theo tab danh mục thực tế từ backend
+    useEffect(() => {
+        let isMounted = true;
+        setLoadingBestsellers(true);
+        setSelectedBestsellerId(null);
+
+        const params = { limit: 10 };
+        if (activeBestsellerTab && activeBestsellerTab !== "all") {
+            params.categoryId = activeBestsellerTab;
+        }
+
+        productService.getBestsellers(params)
+            .then((res) => {
+                if (isMounted) {
+                    const data = Array.isArray(res.data) ? res.data : [];
+                    setBestsellerList(data);
+                }
+            })
+            .catch((err) => {
+                console.error("Lỗi khi tải danh sách bán chạy:", err);
+                if (isMounted) {
+                    // Fallback to local products if API has error
+                    if (!products || products.length === 0) {
+                        setBestsellerList([]);
+                    } else if (activeBestsellerTab === "all") {
+                        setBestsellerList(products.slice(0, 10));
+                    } else {
+                        const filtered = products.filter(
+                            (p) => String(p.category?.id || p.categoryId) === String(activeBestsellerTab)
+                        );
+                        setBestsellerList(filtered.length > 0 ? filtered.slice(0, 10) : products.slice(0, 10));
+                    }
+                }
+            })
+            .finally(() => {
+                if (isMounted) setLoadingBestsellers(false);
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [activeBestsellerTab, products]);
 
     // Tự động gán sản phẩm đầu tiên khi có dữ liệu
     const activeBestsellerId = selectedBestsellerId || bestsellerList[0]?.id || null;
 
     // Chi tiết sản phẩm đang được chọn bên phải
     const activeBestseller = useMemo(() => {
-        return bestsellerList.find((p) => String(p.id) === String(activeBestsellerId)) || null;
+        return bestsellerList.find((p) => String(p.id) === String(activeBestsellerId)) || bestsellerList[0] || null;
     }, [bestsellerList, activeBestsellerId]);
 
     // Trạng thái đánh giá cho sản phẩm bestseller đang chọn
@@ -347,6 +387,40 @@ export const useHome = () => {
         return null;
     };
 
+    // Dữ liệu cho phần Xu hướng mua sắm phản hồi theo từng tab
+    const trendingProducts = useMemo(() => {
+        if (!products || products.length === 0) return [];
+
+        if (activeTrendTab === "hot") {
+            // Sách Hot - Giảm sốc: sắp xếp giảm giá cao nhất
+            return [...products]
+                .sort((a, b) => getDiscountPercent(b) - getDiscountPercent(a))
+                .slice(0, 10);
+        }
+
+        if (activeTrendTab === "bestseller") {
+            // Bestseller ngoại văn: lọc sách tiếng Anh / ngoại văn
+            const foreign = products.filter((p) => {
+                const lang = (p.language || "").toLowerCase();
+                const cat = (p.category?.name || "").toLowerCase();
+                return (
+                    lang.includes("anh") ||
+                    lang.includes("english") ||
+                    lang.includes("ngoại") ||
+                    cat.includes("ngoại văn") ||
+                    cat.includes("foreign")
+                );
+            });
+            if (foreign.length >= 4) {
+                return foreign.slice(0, 10);
+            }
+            return [...products].reverse().slice(0, 10);
+        }
+
+        // Tab "all": Xu hướng theo ngày
+        return products.slice(0, 10);
+    }, [activeTrendTab, products]);
+
     const handleClearFilters = () => {
         setSearchParams({});
         setSelectedCategory("");
@@ -419,6 +493,63 @@ export const useHome = () => {
         navigate(`/catalog?publisher=${encodeURIComponent(publisherName)}`);
     };
 
+    // Xử lý click các thẻ khuyến mãi/banner nổi bật trang chủ
+    const handlePromoCardClick = useCallback((type) => {
+        if (type === "manga") {
+            const matchedCat = (categories || []).find((c) => {
+                const name = (c?.name || "").trim().toLowerCase();
+                return (
+                    name.includes("manga") ||
+                    name.includes("truyện") ||
+                    name.includes("comic") ||
+                    name.includes("light novel") ||
+                    name.includes("thiếu nhi")
+                );
+            });
+            if (matchedCat) {
+                navigate(`/catalog?categoryId=${matchedCat.id}`);
+                return;
+            }
+            const hasTruyen = (products || []).some((p) =>
+                (p?.name || "").toLowerCase().includes("truyện")
+            );
+            if (hasTruyen) {
+                navigate(`/catalog?keyword=${encodeURIComponent("truyện")}`);
+            } else {
+                navigate("/catalog");
+            }
+            return;
+        }
+
+        if (type === "biz") {
+            const matchedCat = (categories || []).find((c) => {
+                const name = (c?.name || "").trim().toLowerCase();
+                return name.includes("kinh tế") || name.includes("quản trị");
+            });
+            if (matchedCat) {
+                navigate(`/catalog?categoryId=${matchedCat.id}`);
+            } else {
+                navigate(`/catalog?keyword=${encodeURIComponent("kinh tế")}`);
+            }
+            return;
+        }
+
+        if (type === "lit") {
+            const matchedCat = (categories || []).find((c) => {
+                const name = (c?.name || "").trim().toLowerCase();
+                return name.includes("văn học");
+            });
+            if (matchedCat) {
+                navigate(`/catalog?categoryId=${matchedCat.id}`);
+            } else {
+                navigate(`/catalog?keyword=${encodeURIComponent("văn học")}`);
+            }
+            return;
+        }
+
+        navigate("/catalog");
+    }, [categories, products, navigate]);
+
     return {
         addToCart,
         keyword,
@@ -441,6 +572,7 @@ export const useHome = () => {
         fetchProducts,
         activeTrendTab,
         setActiveTrendTab,
+        trendingProducts,
         activeBestsellerTab,
         setActiveBestsellerTab,
         timeLeft,
@@ -461,7 +593,9 @@ export const useHome = () => {
         bestsellerReviews,
         bestsellerRating,
         loadingBestsellerReviews,
+        loadingBestsellers,
         publishers,
-        handlePublisherClick
+        handlePublisherClick,
+        handlePromoCardClick,
     };
 };
