@@ -89,14 +89,54 @@ export const useCatalog = () => {
         }
     }, [page, selectedCategory, keyword, minPrice, maxPrice, selectedPublishers]);
 
+    const [activePromotions, setActivePromotions] = useState([]);
+
+    const fetchActivePromotions = useCallback(async () => {
+        try {
+            const response = await api.get("/promotions/active");
+            setActivePromotions(response.data || []);
+        } catch (e) {
+            console.error("Lỗi lấy khuyến mãi:", e);
+        }
+    }, []);
+
     useEffect(() => {
         fetchCategories();
         fetchPublishers();
-    }, []);
+        fetchActivePromotions();
+    }, [fetchActivePromotions]);
 
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
+
+    const promoProductMap = useMemo(() => {
+        const map = new Map();
+        if (activePromotions && activePromotions.length > 0) {
+            activePromotions.forEach((promo) => {
+                if (promo.applicableProducts && promo.applicableProducts.length > 0) {
+                    promo.applicableProducts.forEach((p) => {
+                        let discount = 0;
+                        if (promo.discountType === "PERCENT") {
+                            discount = Number(promo.discountValue) || 0;
+                        } else if (promo.discountType === "FIXED") {
+                            discount = p.price ? Math.round(((Number(promo.discountValue) || 0) / p.price) * 100) : 0;
+                        }
+                        const pId = String(p.id);
+                        if (map.has(pId)) {
+                            const existing = map.get(pId);
+                            if (discount > existing.promotionDiscountPercent) {
+                                map.set(pId, { ...p, promotionDiscountPercent: discount });
+                            }
+                        } else {
+                            map.set(pId, { ...p, promotionDiscountPercent: discount });
+                        }
+                    });
+                }
+            });
+        }
+        return map;
+    }, [activePromotions]);
 
     // Danh sách toàn bộ NXB có trong hệ thống
     const availablePublishers = useMemo(() => {
@@ -131,6 +171,21 @@ export const useCatalog = () => {
             return true;
         });
     }, [products, selectedPublishers, selectedPriceRanges]);
+
+    const enrichedProducts = useMemo(() => {
+        if (!filteredProducts || filteredProducts.length === 0) return [];
+        if (promoProductMap.size === 0) return filteredProducts;
+        return filteredProducts.map((p) => {
+            const promo = promoProductMap.get(String(p.id));
+            if (promo) {
+                return {
+                    ...p,
+                    promotionDiscountPercent: promo.promotionDiscountPercent,
+                };
+            }
+            return p;
+        });
+    }, [filteredProducts, promoProductMap]);
 
     const handleSearch = (e) => {
         if (e && e.preventDefault) e.preventDefault();
@@ -269,7 +324,7 @@ export const useCatalog = () => {
         setMaxPrice,
         selectedPriceRanges,
         togglePriceRange,
-        products: filteredProducts,
+        products: enrichedProducts,
         page,
         setPage,
         totalPages,

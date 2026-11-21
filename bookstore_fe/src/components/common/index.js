@@ -7,3 +7,5 @@ export { BookCard, BookCardSkeleton } from './BookCard';
 export { default as EmptyState } from './EmptyState/EmptyState';
 export { default as Chatbot } from './chatbot/Chatbot';
 export { default as ErrorBoundary } from './ErrorBoundary/ErrorBoundary';
+export { default as ProtectedRoute } from './ProtectedRoute/ProtectedRoute';
+export { default as Unauthorized } from './Unauthorized/Unauthorized';

@@ -42,72 +42,33 @@ export const useNavbar = () => {
         }
     }, [location]);
 
-    // Gợi ý top 10 sách bestseller thực tế từ database thay vì danh sách tĩnh hardcode
+    const [trendingKeywords, setTrendingKeywords] = useState([]);
+    const [loadingTrending, setLoadingTrending] = useState(false);
+
+    // Lấy top 10 sách bestseller thực tế từ DB để hiển thị gợi ý tìm kiếm
     useEffect(() => {
         let isMounted = true;
         setLoadingTrending(true);
-
-        const fetchTrending = async () => {
-            try {
-                // 1. Thử gọi API bestsellers
-                let books = [];
-                try {
-                    const res = await productService.getBestsellers({ limit: 10 });
-                    if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-                        books = res.data;
-                    }
-                } catch {
-                    // API bestsellers chưa có hoặc lỗi
-                }
-
-                // 2. Fallback sang danh sách sách đã duyệt (Active) thực tế trong database
-                if (books.length === 0) {
-                    try {
-                        const activeRes = await productService.getApprovedProducts();
-                        if (activeRes && activeRes.data && Array.isArray(activeRes.data) && activeRes.data.length > 0) {
-                            books = activeRes.data;
-                        }
-                    } catch {
-                        // Fallback tiếp tục
-                    }
-                }
-
-                // 3. Fallback sang searchProducts thông thường
-                if (books.length === 0) {
-                    try {
-                        const searchRes = await productService.getProducts({ size: 10 });
-                        const content = searchRes?.data?.content || (Array.isArray(searchRes?.data) ? searchRes.data : []);
-                        if (content && content.length > 0) {
-                            books = content;
-                        }
-                    } catch {
-                        // Bỏ qua
-                    }
-                }
-
-                if (isMounted && books.length > 0) {
-                    const titles = [];
-                    const seen = new Set();
-                    for (const book of books) {
-                        const name = (book?.name || "").trim();
-                        if (name && !seen.has(name.toLowerCase())) {
-                            seen.add(name.toLowerCase());
-                            titles.push(name);
-                            if (titles.length >= 10) break;
-                        }
-                    }
+        productService
+            .getBestsellers({ limit: 10 })
+            .then((res) => {
+                if (isMounted) {
+                    const data = Array.isArray(res.data) ? res.data : [];
+                    const titles = data
+                        .map((p) => p.name?.trim())
+                        .filter(Boolean)
+                        .slice(0, 10);
                     if (titles.length > 0) {
                         setTrendingKeywords(titles);
                     }
                 }
-            } catch (err) {
-                console.error("Lỗi khi tải gợi ý sách bestseller:", err);
-            } finally {
+            })
+            .catch((err) => {
+                console.error("Lỗi khi tải từ khóa gợi ý bán chạy:", err);
+            })
+            .finally(() => {
                 if (isMounted) setLoadingTrending(false);
-            }
-        };
-
-        fetchTrending();
+            });
 
         return () => {
             isMounted = false;
