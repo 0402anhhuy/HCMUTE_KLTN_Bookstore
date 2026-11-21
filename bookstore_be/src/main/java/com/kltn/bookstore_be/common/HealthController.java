@@ -16,7 +16,7 @@ public class HealthController {
                 "message", "HCMUTE Bookstore Backend API is running"));
     }
 
-    @GetMapping("/api/health")
+    @GetMapping("/api/v1/health")
     public ResponseEntity<?> health() {
         return ResponseEntity.ok(Map.of(
                 "status", "UP",

@@ -22,7 +22,7 @@ import com.kltn.bookstore_be.ordering.domain.Coupon;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/coupons")
+@RequestMapping("/api/v1/coupons")
 @RequiredArgsConstructor
 public class CouponController {
 

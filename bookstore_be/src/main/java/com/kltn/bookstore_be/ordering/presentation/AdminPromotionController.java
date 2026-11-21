@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin/promotions")
+@RequestMapping("/api/v1/admin/promotions")
 @RequiredArgsConstructor
 public class AdminPromotionController {
 

@@ -42,9 +42,6 @@ export const useNavbar = () => {
         }
     }, [location]);
 
-    const [trendingKeywords, setTrendingKeywords] = useState([]);
-    const [loadingTrending, setLoadingTrending] = useState(false);
-
     // Lấy top 10 sách bestseller thực tế từ DB để hiển thị gợi ý tìm kiếm
     useEffect(() => {
         let isMounted = true;
