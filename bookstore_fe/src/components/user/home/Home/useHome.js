@@ -390,6 +390,63 @@ export const useHome = () => {
         navigate(`/catalog?publisher=${encodeURIComponent(publisherName)}`);
     };
 
+    // Xử lý click các thẻ khuyến mãi/banner nổi bật trang chủ
+    const handlePromoCardClick = useCallback((type) => {
+        if (type === "manga") {
+            const matchedCat = (categories || []).find((c) => {
+                const name = (c?.name || "").trim().toLowerCase();
+                return (
+                    name.includes("manga") ||
+                    name.includes("truyện") ||
+                    name.includes("comic") ||
+                    name.includes("light novel") ||
+                    name.includes("thiếu nhi")
+                );
+            });
+            if (matchedCat) {
+                navigate(`/catalog?categoryId=${matchedCat.id}`);
+                return;
+            }
+            const hasTruyen = (products || []).some((p) =>
+                (p?.name || "").toLowerCase().includes("truyện")
+            );
+            if (hasTruyen) {
+                navigate(`/catalog?keyword=${encodeURIComponent("truyện")}`);
+            } else {
+                navigate("/catalog");
+            }
+            return;
+        }
+
+        if (type === "biz") {
+            const matchedCat = (categories || []).find((c) => {
+                const name = (c?.name || "").trim().toLowerCase();
+                return name.includes("kinh tế") || name.includes("quản trị");
+            });
+            if (matchedCat) {
+                navigate(`/catalog?categoryId=${matchedCat.id}`);
+            } else {
+                navigate(`/catalog?keyword=${encodeURIComponent("kinh tế")}`);
+            }
+            return;
+        }
+
+        if (type === "lit") {
+            const matchedCat = (categories || []).find((c) => {
+                const name = (c?.name || "").trim().toLowerCase();
+                return name.includes("văn học");
+            });
+            if (matchedCat) {
+                navigate(`/catalog?categoryId=${matchedCat.id}`);
+            } else {
+                navigate(`/catalog?keyword=${encodeURIComponent("văn học")}`);
+            }
+            return;
+        }
+
+        navigate("/catalog");
+    }, [categories, products, navigate]);
+
     return {
         addToCart,
         keyword,
@@ -433,6 +490,7 @@ export const useHome = () => {
         bestsellerRating,
         loadingBestsellerReviews,
         publishers,
-        handlePublisherClick
+        handlePublisherClick,
+        handlePromoCardClick,
     };
 };
