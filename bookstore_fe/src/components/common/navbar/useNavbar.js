@@ -23,6 +23,8 @@ export const useNavbar = () => {
     const [activeLevel1Id, setActiveLevel1Id] = useState(null);
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [trendingKeywords, setTrendingKeywords] = useState([]);
+    const [loadingTrending, setLoadingTrending] = useState(false);
 
     const searchBoxRef = useRef(null);
     const categoryMenuRef = useRef(null);
