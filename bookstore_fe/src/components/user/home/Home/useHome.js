@@ -4,6 +4,7 @@ import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
+import { getProductDiscountPercent, getProductOriginalPrice } from "@/utils/productPricing";
 
 // Import local image assets
 import matNguCover from "@/assets/mat_ngu_cuoc_doi.png";
@@ -299,17 +300,14 @@ export const useHome = (options = {}) => {
 
     const enrichedProducts = useMemo(() => {
         if (!products || products.length === 0) return [];
-        if (promoProductMap.size === 0) return products;
         return products.map((p) => {
             const promo = promoProductMap.get(String(p.id));
-            if (promo) {
-                return {
-                    ...p,
-                    promotionDiscountPercent: promo.promotionDiscountPercent,
-                    promotionTitle: promo.promotionTitle,
-                };
-            }
-            return p;
+            const disc = promo ? promo.promotionDiscountPercent : getProductDiscountPercent(p);
+            return {
+                ...p,
+                promotionDiscountPercent: disc,
+                promotionTitle: promo?.promotionTitle,
+            };
         });
     }, [products, promoProductMap]);
 
@@ -322,9 +320,12 @@ export const useHome = (options = {}) => {
             }
         }
 
-        // If no active promotion programs created by Admin, return empty list
-        return [];
-    }, [promoProductMap]);
+        // Priority 2: Các sản phẩm có mức giảm giá tốt nhất để luôn có flash sale sinh động
+        const saleItems = enrichedProducts
+            .filter((p) => (Number(p.promotionDiscountPercent) || 0) > 0)
+            .slice(0, FLASH_SALE_LIMIT);
+        return saleItems;
+    }, [promoProductMap, enrichedProducts]);
 
     const flashSaleTotalPages = Math.max(
         1,
@@ -537,24 +538,11 @@ export const useHome = (options = {}) => {
 
     // Hàm tính % giảm giá thực tế từ dữ liệu khuyến mãi/sản phẩm (không dùng số giả lập)
     const getDiscountPercent = (product) => {
-        if (!product) return 0;
-        if (product.promotionDiscountPercent !== undefined && product.promotionDiscountPercent !== null) {
-            return Number(product.promotionDiscountPercent) || 0;
-        }
-        if (product.discountPercent) {
-            return Number(product.discountPercent) || 0;
-        }
-        return 0;
+        return getProductDiscountPercent(product);
     };
 
     const getOriginalPrice = (product) => {
-        if (!product || !product.price) return null;
-        if (product.originalPrice) return product.originalPrice;
-        const discount = getDiscountPercent(product);
-        if (discount > 0) {
-            return Math.round(product.price / (1 - discount / 100));
-        }
-        return null;
+        return getProductOriginalPrice(product);
     };
 
     // Dữ liệu cho phần Xu hướng mua sắm phản hồi theo từng tab
