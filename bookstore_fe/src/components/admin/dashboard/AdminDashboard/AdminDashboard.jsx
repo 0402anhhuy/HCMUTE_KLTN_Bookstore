@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, Bell, ShieldCheck, Menu, X } from "lucide-react";
+import { LogOut, ShieldCheck, Menu, X } from "lucide-react";
 import { useAdminDashboard } from "./useAdminDashboard";
 
 import { AdminHome } from "@/components/admin/home";
@@ -128,14 +128,6 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="admin-dashboard-header-right">
-                        <button
-                            type="button"
-                            className="admin-dashboard-bell-btn"
-                            aria-label="Thông báo"
-                        >
-                            <Bell size={19} />
-                            <span className="admin-dashboard-bell-dot" />
-                        </button>
                         <div className="admin-dashboard-user-profile">
                             <div className="admin-dashboard-avatar-box">
                                 {user?.avatar ? (

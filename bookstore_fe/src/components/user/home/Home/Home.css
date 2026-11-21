@@ -991,6 +991,15 @@
     border-radius: 0;
 }
 
+/* Gợi ý đang tải trong cột danh sách (tránh cột trống không phản hồi) */
+.bestseller-loading-hint {
+    padding: 24px 12px;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+}
+
 /* Dual Container */
 .bestseller-dual-container {
     display: grid;

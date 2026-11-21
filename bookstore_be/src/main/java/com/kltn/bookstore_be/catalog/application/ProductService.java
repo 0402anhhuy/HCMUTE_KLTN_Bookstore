@@ -35,13 +35,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
+
+    // Cache kết quả bestseller trong bộ nhớ (mỗi tab 1 entry), TTL ngắn để vẫn cập nhật theo đơn hàng
+    private static final long BESTSELLERS_CACHE_TTL_MS = 60_000L;
+    private final Map<String, CachedBestsellers> bestsellersCache = new ConcurrentHashMap<>();
+
+    private record CachedBestsellers(List<Product> products, long timestamp) {}
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -74,8 +87,17 @@ public class ProductService {
 
     public List<Product> getBestsellers(Long categoryId, int limit) {
         int targetLimit = (limit <= 0) ? 10 : limit;
+
+        // Cache ngắn hạn: endpoint này được gọi ở navbar + trang chủ + mỗi lần đổi tab,
+        // trong khi dữ liệu bán chạy chỉ thay đổi khi có đơn hàng mới -> 60s là đủ tươi.
+        String cacheKey = categoryId + ":" + targetLimit;
+        CachedBestsellers cached = bestsellersCache.get(cacheKey);
+        if (cached != null && System.currentTimeMillis() - cached.timestamp() < BESTSELLERS_CACHE_TTL_MS) {
+            return new ArrayList<>(cached.products());
+        }
+
         List<Product> results = new ArrayList<>();
-        List<Long> seenProductIds = new ArrayList<>();
+        Set<Long> seenProductIds = new HashSet<>();
 
         List<ProductSalesProjection> salesList;
         if (categoryId != null) {
@@ -89,14 +111,25 @@ public class ProductService {
             );
         }
 
-        if (salesList != null) {
+        // Lấy toàn bộ sản phẩm bán chạy bằng 1 query thay vì N query findById (N+1)
+        if (salesList != null && !salesList.isEmpty()) {
+            List<Long> orderedIds = salesList.stream()
+                    .map(ProductSalesProjection::getProductId)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            Map<Long, Product> productById = orderedIds.isEmpty()
+                    ? Collections.emptyMap()
+                    : productRepository.findByStatusAndIdIn(Product.ProductStatus.ACTIVE, orderedIds)
+                            .stream()
+                            .collect(Collectors.toMap(Product::getId, p -> p, (a, b) -> a));
+
             for (ProductSalesProjection proj : salesList) {
                 Long pId = proj.getProductId();
-                productRepository.findById(pId).ifPresent(p -> {
-                    p.setSoldCount(proj.getTotalSold() != null ? proj.getTotalSold() : 0L);
-                    results.add(p);
-                    seenProductIds.add(pId);
-                });
+                Product product = productById.get(pId);
+                if (product == null || !seenProductIds.add(pId)) continue;
+                product.setSoldCount(proj.getTotalSold() != null ? proj.getTotalSold() : 0L);
+                results.add(product);
             }
         }
 
@@ -116,10 +149,9 @@ public class ProductService {
 
             if (fallbackList != null) {
                 for (Product fb : fallbackList) {
-                    if (!seenProductIds.contains(fb.getId())) {
+                    if (seenProductIds.add(fb.getId())) {
                         fb.setSoldCount(0L);
                         results.add(fb);
-                        seenProductIds.add(fb.getId());
                         if (results.size() >= targetLimit) {
                             break;
                         }
@@ -128,7 +160,9 @@ public class ProductService {
             }
         }
 
-        return results;
+        List<Product> toReturn = new ArrayList<>(results);
+        bestsellersCache.put(cacheKey, new CachedBestsellers(toReturn, System.currentTimeMillis()));
+        return toReturn;
     }
 
     public List<Long> getAllCategoryAndDescendantIds(Long rootCategoryId) {

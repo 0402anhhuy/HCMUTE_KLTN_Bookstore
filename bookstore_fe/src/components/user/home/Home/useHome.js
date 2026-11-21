@@ -15,6 +15,26 @@ import quanLyCover from "@/assets/quan_ly_cam_xuc.png";
 const FLASH_SALE_SLOT_HOURS = 6;
 const FLASH_SALE_LIMIT = 10;
 
+// Cache dùng chung cho toàn bộ phiên (module-level) để lần mount sau (quay lại trang chủ)
+// hiển thị ngay dữ liệu cũ trong lúc chờ API, không bắt người dùng nhìn màn hình trống
+const CACHE_TTL = 5 * 60 * 1000; // 5 phút
+const bestsellersCache = new Map(); // key: tab ("all" hoặc categoryId) -> { data, ts }
+const productsCache = new Map(); // key: query string -> { data, ts }
+
+function readCache(cache, key) {
+    const entry = cache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.ts > CACHE_TTL) {
+        cache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+function writeCache(cache, key, data) {
+    cache.set(key, { data, ts: Date.now() });
+}
+
 function getNextFlashSaleEndTime(date = new Date()) {
     const endsAt = new Date(date);
     const nextSlot =
@@ -40,7 +60,13 @@ function getSeededScore(product, seed) {
     return (id * 9301 + seed * 49297) % 233280;
 }
 
-export const useHome = () => {
+export const useHome = (options = {}) => {
+    const {
+        // Cho phép dùng chung bộ lọc theo URL: khởi tạo từ query params (trang Catalog)
+        // hoặc giữ trạng thái cục bộ (trang chủ)
+        syncFiltersWithUrl = false,
+    } = options;
+
     const { addToCart } = useApp();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -48,14 +74,36 @@ export const useHome = () => {
 
     // Search/Filter states
     const [categories, setCategories] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState("");
-    const [minPrice, setMinPrice] = useState("");
-    const [maxPrice, setMaxPrice] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState(
+        () => (syncFiltersWithUrl ? searchParams.get("categoryId") || "" : ""),
+    );
+    // Theo dõi danh sách NXB đang chọn (Catalog truyền qua option onChangePublishers)
+    const [selectedPublishers, setSelectedPublishers] = useState(
+        () =>
+            syncFiltersWithUrl && searchParams.get("publisher")
+                ? [searchParams.get("publisher")]
+                : [],
+    );
+    const [minPrice, setMinPrice] = useState(
+        () => (syncFiltersWithUrl ? searchParams.get("minPrice") || "" : ""),
+    );
+    const [maxPrice, setMaxPrice] = useState(
+        () => (syncFiltersWithUrl ? searchParams.get("maxPrice") || "" : ""),
+    );
 
     // Pagination & Loading states
     const [products, setProducts] = useState([]);
-    const [page, setPage] = useState(0);
-    const [loading, setLoading] = useState(true);
+    const [totalElements, setTotalElements] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [page, setPage] = useState(
+        () => (syncFiltersWithUrl ? Number(searchParams.get("page")) || 0 : 0),
+    );
+    // Khởi tạo từ cache nếu có -> lần đầu vào trang không phải chờ API mới có dữ liệu
+    const [loading, setLoading] = useState(() =>
+        syncFiltersWithUrl
+            ? true
+            : readCache(productsCache, "default") === null,
+    );
 
     const [activeTrendTab, setActiveTrendTab] = useState("all");
     const [activePromotions, setActivePromotions] = useState([]);
@@ -111,28 +159,73 @@ export const useHome = () => {
     }, []);
 
     const fetchProducts = useCallback(async () => {
-        setLoading(true);
-        try {
-            const hasActiveFilters =
-                !!keyword.trim() ||
-                !!selectedCategory ||
-                !!minPrice ||
-                !!maxPrice;
-            let url = `/products?page=${page}&size=${hasActiveFilters ? 12 : 30}`;
-            if (keyword.trim())
-                url += `&keyword=${encodeURIComponent(keyword)}`;
-            if (selectedCategory) url += `&categoryId=${selectedCategory}`;
-            if (minPrice) url += `&minPrice=${minPrice}`;
-            if (maxPrice) url += `&maxPrice=${maxPrice}`;
+        const hasActiveFilters =
+            !!keyword.trim() ||
+            !!selectedCategory ||
+            !!minPrice ||
+            !!maxPrice ||
+            selectedPublishers.length > 0;
+        const size = hasActiveFilters ? 12 : 30;
+        let url = `/products?page=${page}&size=${size}`;
+        if (keyword.trim())
+            url += `&keyword=${encodeURIComponent(keyword)}`;
+        if (selectedCategory) url += `&categoryId=${selectedCategory}`;
+        if (minPrice) url += `&minPrice=${minPrice}`;
+        if (maxPrice) url += `&maxPrice=${maxPrice}`;
+        selectedPublishers.forEach((pub) => {
+            if (pub) url += `&publisher=${encodeURIComponent(pub)}`;
+        });
 
+        const cacheKey = hasActiveFilters ? null : "default";
+        const cached = cacheKey ? readCache(productsCache, cacheKey) : null;
+
+        // Stale-while-revalidate: có cache thì hiện ngay, rồi vẫn gọi API để làm mới ngầm
+        if (cached) {
+            setProducts(cached);
+            setLoading(false);
+        } else {
+            setLoading(true);
+        }
+
+        try {
             const response = await api.get(url);
-            setProducts(response.data?.content || []);
+            const data = response.data?.content || [];
+            if (cacheKey) writeCache(productsCache, cacheKey, data);
+            setProducts(data);
+            setTotalElements(response.data?.totalElements ?? data.length);
+            setTotalPages(Math.max(1, response.data?.totalPages ?? 1));
         } catch (e) {
             console.error("Failed to load products:", e);
         } finally {
             setLoading(false);
         }
-    }, [page, selectedCategory, keyword, minPrice, maxPrice]);
+
+        // Đồng bộ bộ lọc lên URL để link chia sẻ/tải lại vẫn giữ đúng kết quả lọc
+        if (syncFiltersWithUrl) {
+            const next = new URLSearchParams();
+            if (keyword.trim()) next.set("keyword", keyword.trim());
+            if (selectedCategory) next.set("categoryId", selectedCategory);
+            if (minPrice) next.set("minPrice", minPrice);
+            if (maxPrice) next.set("maxPrice", maxPrice);
+            if (selectedPublishers.length > 0)
+                next.set("publisher", selectedPublishers[0]);
+            if (page > 0) next.set("page", String(page));
+            const nextStr = next.toString();
+            if (nextStr !== searchParams.toString()) {
+                setSearchParams(next, { replace: true });
+            }
+        }
+    }, [
+        page,
+        selectedCategory,
+        keyword,
+        minPrice,
+        maxPrice,
+        selectedPublishers,
+        syncFiltersWithUrl,
+        searchParams,
+        setSearchParams,
+    ]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -258,24 +351,62 @@ export const useHome = () => {
 
     // Thêm state vào trong hook useHome:
     const [selectedBestsellerId, setSelectedBestsellerId] = useState(null);
-    const [bestsellerList, setBestsellerList] = useState([]);
-    const [loadingBestsellers, setLoadingBestsellers] = useState(false);
+    const [bestsellerList, setBestsellerList] = useState(
+        () => readCache(bestsellersCache, "all") || []
+    );
+    const [loadingBestsellers, setLoadingBestsellers] = useState(
+        () => readCache(bestsellersCache, "all") === null
+    );
+    // Tab mà `bestsellerList` đang chứa dữ liệu (null = chưa áp dụng gì)
+    const [bestsellerTabApplied, setBestsellerTabApplied] = useState(() =>
+        readCache(bestsellersCache, "all") ? "all" : null
+    );
+
+    // Dùng ref thay vì đưa `products` vào dependency: khi products thay đổi (load lại trang)
+    // effect không được tự chạy lại -> từng tab được gọi API đúng 1 lần
+    const productsRef = useRef(products);
+    useEffect(() => {
+        productsRef.current = products;
+    }, [products]);
+
+    const applyBestsellerFallback = useCallback((tab) => {
+        const localProducts = productsRef.current || [];
+        if (localProducts.length === 0) {
+            setBestsellerList([]);
+        } else if (tab === "all") {
+            setBestsellerList(localProducts.slice(0, 10));
+        } else {
+            const filtered = localProducts.filter(
+                (p) => String(p.category?.id || p.categoryId) === String(tab)
+            );
+            setBestsellerList(
+                filtered.length > 0 ? filtered.slice(0, 10) : localProducts.slice(0, 10)
+            );
+        }
+    }, []);
 
     // Lấy danh sách Top 10 Bestseller theo tab danh mục thực tế từ backend
+    // (Dữ liệu cache được áp dụng ngay trong handler đổi tab, effect chỉ lo gọi API khi cần)
     useEffect(() => {
+        const tab = activeBestsellerTab;
+        // Nếu state đã chứa đúng dữ liệu tab này rồi hoặc đã có cache thì không làm gì
+        if (bestsellerTabApplied === tab) return;
+        if (readCache(bestsellersCache, tab)) return;
+
         let isMounted = true;
-        setLoadingBestsellers(true);
-        setSelectedBestsellerId(null);
+        // setLoadingBestsellers(true) đã được gọi ngay trong handler đổi tab (hoặc state khởi tạo)
 
         const params = { limit: 10 };
-        if (activeBestsellerTab && activeBestsellerTab !== "all") {
-            params.categoryId = activeBestsellerTab;
+        if (tab && tab !== "all") {
+            params.categoryId = tab;
         }
 
         productService.getBestsellers(params)
             .then((res) => {
                 if (isMounted) {
                     const data = Array.isArray(res.data) ? res.data : [];
+                    writeCache(bestsellersCache, tab, data);
+                    setBestsellerTabApplied(tab);
                     setBestsellerList(data);
                 }
             })
@@ -283,16 +414,7 @@ export const useHome = () => {
                 console.error("Lỗi khi tải danh sách bán chạy:", err);
                 if (isMounted) {
                     // Fallback to local products if API has error
-                    if (!products || products.length === 0) {
-                        setBestsellerList([]);
-                    } else if (activeBestsellerTab === "all") {
-                        setBestsellerList(products.slice(0, 10));
-                    } else {
-                        const filtered = products.filter(
-                            (p) => String(p.category?.id || p.categoryId) === String(activeBestsellerTab)
-                        );
-                        setBestsellerList(filtered.length > 0 ? filtered.slice(0, 10) : products.slice(0, 10));
-                    }
+                    applyBestsellerFallback(tab);
                 }
             })
             .finally(() => {
@@ -302,7 +424,58 @@ export const useHome = () => {
         return () => {
             isMounted = false;
         };
-    }, [activeBestsellerTab, products]);
+    }, [activeBestsellerTab, bestsellerTabApplied, applyBestsellerFallback]);
+
+    // Đổi tab: dùng luôn dữ liệu cache (nếu có) ngay trong event click -> không phải chờ API
+    const handleBestsellerTabChange = useCallback((tab) => {
+        const tabId = String(tab);
+        setActiveBestsellerTab(tabId);
+        setSelectedBestsellerId(null);
+
+        const cached = readCache(bestsellersCache, tabId);
+        if (cached) {
+            setBestsellerTabApplied(tabId);
+            setBestsellerList(cached);
+            setLoadingBestsellers(false);
+        } else {
+            // Chưa có cache -> hiện ngay trạng thái đang tải cho tới khi API trả về
+            setLoadingBestsellers(true);
+        }
+    }, []);
+
+    // Prefetch trước bestseller của các tab danh mục ngay sau khi có danh sách categories,
+    // nhờ đó lần bấm tab đầu tiên cũng không phải chờ API (chỉ tải 1 lần, có cache + TTL)
+    const prefetchedTabsRef = useRef(new Set());
+    useEffect(() => {
+        if (!categories || categories.length === 0) return;
+
+        const timers = [];
+        categories.slice(0, 8).forEach((cat, index) => {
+            const tabId = String(cat.id);
+            if (prefetchedTabsRef.current.has(tabId)) return;
+            prefetchedTabsRef.current.add(tabId);
+
+            if (readCache(bestsellersCache, tabId)) return;
+
+            // Giãn cách nhẹ giữa các request để không dồn tải backend cùng lúc
+            timers.push(
+                window.setTimeout(() => {
+                    productService
+                        .getBestsellers({ limit: 10, categoryId: tabId })
+                        .then((res) => {
+                            const data = Array.isArray(res.data) ? res.data : [];
+                            writeCache(bestsellersCache, tabId, data);
+                        })
+                        .catch(() => {
+                            // Bỏ qua: nếu lỗi thì sẽ tải lại khi người dùng thực sự bấm tab
+                            prefetchedTabsRef.current.delete(tabId);
+                        });
+                }, 500 + index * 400)
+            );
+        });
+
+        return () => timers.forEach((t) => window.clearTimeout(t));
+    }, [categories]);
 
     // Tự động gán sản phẩm đầu tiên khi có dữ liệu
     const activeBestsellerId = selectedBestsellerId || bestsellerList[0]?.id || null;
@@ -318,10 +491,7 @@ export const useHome = () => {
     const reviewsCacheRef = useRef(new Map());
 
     useEffect(() => {
-        if (!activeBestseller?.id) {
-            setBestsellerReviews([]);
-            return;
-        }
+        if (!activeBestseller?.id) return;
 
         const productId = activeBestseller.id;
         if (reviewsCacheRef.current.has(productId)) {
@@ -481,6 +651,31 @@ export const useHome = () => {
         navigate(`/catalog?publisher=${encodeURIComponent(publisherName)}`);
     };
 
+    // Chọn/bỏ chọn NXB trong bộ lọc (dùng chung cho trang chủ và trang Catalog)
+    const togglePublisher = useCallback((publisherName) => {
+        setSelectedPublishers((prev) =>
+            prev.includes(publisherName)
+                ? prev.filter((item) => item !== publisherName)
+                : [...prev, publisherName],
+        );
+        setPage(0);
+    }, []);
+
+    // Đồng bộ bộ lọc từ bên ngoài (Catalog dùng state riêng cho khoảng giá/NXB)
+    const applyExternalFilters = useCallback(({ publishers: pubs, min, max }) => {
+        if (pubs !== undefined) {
+            const list = Array.isArray(pubs) ? pubs : pubs ? [pubs] : [];
+            setSelectedPublishers((prev) =>
+                prev.length === list.length && prev.every((x, i) => x === list[i])
+                    ? prev
+                    : list,
+            );
+        }
+        if (min !== undefined) setMinPrice(min);
+        if (max !== undefined) setMaxPrice(max);
+        setPage(0);
+    }, []);
+
     // Xử lý click các thẻ khuyến mãi/banner nổi bật trang chủ
     const handlePromoCardClick = useCallback((type) => {
         if (type === "manga") {
@@ -549,6 +744,13 @@ export const useHome = () => {
         setMaxPrice,
         products: enrichedProducts,
         setPage,
+        page,
+        totalElements,
+        totalPages,
+        selectedPublishers,
+        setSelectedPublishers,
+        togglePublisher,
+        applyExternalFilters,
         loading,
         categoryTree,
         isSearchActive,
@@ -563,6 +765,7 @@ export const useHome = () => {
         trendingProducts,
         activeBestsellerTab,
         setActiveBestsellerTab,
+        handleBestsellerTabChange,
         timeLeft,
         flashSaleProducts,
         visibleFlashSaleProducts,

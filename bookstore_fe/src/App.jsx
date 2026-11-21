@@ -41,16 +41,21 @@ function AppContent() {
         path.startsWith("/admin") && user?.role === "ADMIN";
     const hideLayout = isAuthPage || isManagerAuthorized || isAdminAuthorized;
 
+    // Trang hiện tại có phải khu vực quản trị không (bỏ hậu tố như /admin/...)
+    const isAdminPage = path === "/admin" || path.startsWith("/admin/");
+    const isManagerPage = path === "/manager" || path.startsWith("/manager/");
+    const isStaffArea = isAdminPage || isManagerPage;
+
     useEffect(() => {
         if (appLoading) return;
         if (user) {
-            if (user.role === 'ADMIN' && !isAdminPage) {
+            if (user.role === 'ADMIN' && !isStaffArea) {
                 navigate('/admin', { replace: true });
-            } else if (user.role === 'MANAGER' && !isManagerPage) {
+            } else if (user.role === 'MANAGER' && !isStaffArea) {
                 navigate('/manager', { replace: true });
             }
         }
-    }, [user, appLoading, isAdminPage, isManagerPage, navigate]);
+    }, [user, appLoading, isStaffArea, navigate]);
 
     // Cuộn lên đầu trang mỗi khi chuyển route, khắc phục lỗi bị giữ scroll ở chân trang footer trên mobile
     useEffect(() => {

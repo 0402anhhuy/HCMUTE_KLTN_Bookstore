@@ -3,7 +3,6 @@ import {
     Sparkles,
     Plus,
     Package,
-    FileText,
     Edit2,
     Search,
     X,
@@ -26,7 +25,6 @@ import "./AdminPromotions.css";
 const AdminPromotions = () => {
     const {
         showToast,
-        promotions,
         loading,
         isAddModalOpen,
         setIsAddModalOpen,
@@ -260,7 +258,7 @@ const AdminPromotions = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredPromotions.map((promo, index) => {
+                                {filteredPromotions.map((promo) => {
                                     const status = getStatusStyle(promo.status);
                                     const isExpanded = expandedPromoId === promo.id;
                                     const discountLabel =

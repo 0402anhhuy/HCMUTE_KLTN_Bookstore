@@ -411,8 +411,8 @@ class ProductServiceTest {
             when(proj2.getTotalSold()).thenReturn(8L);
 
             when(orderItemRepository.findTopSellingProducts(any())).thenReturn(List.of(proj1, proj2));
-            when(productRepository.findById(2L)).thenReturn(Optional.of(p2));
-            when(productRepository.findById(1L)).thenReturn(Optional.of(p1));
+            // Service lấy toàn bộ sản phẩm bán chạy bằng 1 query (tránh N+1)
+            when(productRepository.findByStatusAndIdIn(eq(Product.ProductStatus.ACTIVE), any())).thenReturn(List.of(p1, p2));
 
             List<Product> result = productService.getBestsellers(null, 10);
 

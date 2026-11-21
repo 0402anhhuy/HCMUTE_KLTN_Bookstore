@@ -63,18 +63,18 @@ public class SecurityConfig {
                         }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/", "/api/health").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/products/**").permitAll()
-                        .requestMatchers("/api/categories/**").permitAll()
-                        .requestMatchers("/api/promotions/**").permitAll()
-                        .requestMatchers("/api/coupons/**").permitAll()
-                        .requestMatchers("/api/reviews/product/**").permitAll()
+                        .requestMatchers("/", "/api/v1/health").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/products/**").permitAll()
+                        .requestMatchers("/api/v1/categories/**").permitAll()
+                        .requestMatchers("/api/v1/promotions/**").permitAll()
+                        .requestMatchers("/api/v1/coupons/**").permitAll()
+                        .requestMatchers("/api/v1/reviews/product/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/api/upload").permitAll()
+                        .requestMatchers("/api/v1/upload").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "MANAGER")
                         .anyRequest().authenticated());
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

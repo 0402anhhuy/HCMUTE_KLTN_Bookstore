@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/shippers")
+@RequestMapping("/api/v1/shippers")
 public class ShipperController {
 
     private final ShipperRepository shipperRepository;
