@@ -17,6 +17,8 @@ import {
     Star,
     Lock,
     Sparkles,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react";
 import { GREETING, SUGGESTED_QUESTION_COUNT } from "./chatbotData";
 import { useChatbot } from "./useChatbot";
@@ -51,6 +53,7 @@ const Chatbot = () => {
 
     const [draft, setDraft] = useState("");
     const [showAllQuestions, setShowAllQuestions] = useState(false);
+    const [isSuggestionsHidden, setIsSuggestionsHidden] = useState(false);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
 
@@ -190,48 +193,82 @@ const Chatbot = () => {
 
                     {/* Câu hỏi gợi ý */}
                     <div className="chatbot-suggestions">
-                        <div className="chatbot-suggestions-label">
-                            {showAllQuestions
-                                ? "Tất cả chủ đề hỗ trợ"
-                                : "Câu hỏi thường gặp"}
-                        </div>
-                        <div className="chatbot-suggestions-list">
-                            {(showAllQuestions
-                                ? allQuestions
-                                : suggestions
-                            ).map((item) => {
-                                const Icon = TOPIC_ICONS[item.icon] || Tag;
-                                return (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        className="chatbot-suggestion-chip"
-                                        onClick={() =>
-                                            handleSuggestionClick(item)
-                                        }
-                                        disabled={isTyping}
-                                    >
-                                        <Icon
-                                            size={14}
-                                            className="chatbot-suggestion-icon"
-                                        />
-                                        <span>{item.question}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        {remainingTopics.length > 0 && (
+                        <div className="chatbot-suggestions-header">
+                            <span className="chatbot-suggestions-label">
+                                {showAllQuestions
+                                    ? "Tất cả chủ đề hỗ trợ"
+                                    : "Câu hỏi thường gặp"}
+                            </span>
                             <button
                                 type="button"
-                                className="chatbot-see-all-btn"
-                                onClick={() =>
-                                    setShowAllQuestions((prev) => !prev)
+                                className="chatbot-suggestions-close-btn"
+                                onClick={() => {
+                                    if (showAllQuestions) {
+                                        setShowAllQuestions(false);
+                                    } else {
+                                        setIsSuggestionsHidden((prev) => !prev);
+                                    }
+                                }}
+                                title={
+                                    showAllQuestions
+                                        ? "Thu gọn chủ đề hỗ trợ"
+                                        : isSuggestionsHidden
+                                          ? "Hiển thị câu hỏi thường gặp"
+                                          : "Ẩn câu hỏi thường gặp"
                                 }
+                                aria-label="Đóng hoặc thu gọn gợi ý"
                             >
-                                {showAllQuestions
-                                    ? "Thu gọn"
-                                    : `Xem tất cả ${allQuestions.length} câu hỏi`}
+                                {showAllQuestions ? (
+                                    <X size={15} />
+                                ) : isSuggestionsHidden ? (
+                                    <ChevronUp size={15} />
+                                ) : (
+                                    <ChevronDown size={15} />
+                                )}
                             </button>
+                        </div>
+                        {!isSuggestionsHidden && (
+                            <>
+                                <div className="chatbot-suggestions-list">
+                                    {(showAllQuestions
+                                        ? allQuestions
+                                        : suggestions
+                                    ).map((item) => {
+                                        const Icon = TOPIC_ICONS[item.icon] || Tag;
+                                        return (
+                                            <button
+                                                key={item.id}
+                                                type="button"
+                                                className="chatbot-suggestion-chip"
+                                                onClick={() => {
+                                                    setShowAllQuestions(false);
+                                                    handleSuggestionClick(item);
+                                                }}
+                                                disabled={isTyping}
+                                            >
+                                                <Icon
+                                                    size={14}
+                                                    className="chatbot-suggestion-icon"
+                                                />
+                                                <span>{item.question}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {remainingTopics.length > 0 && (
+                                    <button
+                                        type="button"
+                                        className="chatbot-see-all-btn"
+                                        onClick={() =>
+                                            setShowAllQuestions((prev) => !prev)
+                                        }
+                                    >
+                                        {showAllQuestions
+                                            ? "Thu gọn"
+                                            : `Xem tất cả ${allQuestions.length} câu hỏi`}
+                                    </button>
+                                )}
+                            </>
                         )}
                     </div>
 
