@@ -1495,7 +1495,6 @@
 .home-publisher-box {
     width: 92px;
     height: 72px;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid rgba(10, 66, 45, 0.12);
     border-radius: 12px;
     display: flex;
