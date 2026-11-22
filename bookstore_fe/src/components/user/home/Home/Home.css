@@ -1533,7 +1533,6 @@
 }
 
 .home-publisher-box.highlight {
-    background: linear-gradient(135deg, #0a422d 0%, #0d583c 100%);
     border-color: #0a422d;
     box-shadow: 0 4px 14px rgba(10, 66, 45, 0.2);
 }
