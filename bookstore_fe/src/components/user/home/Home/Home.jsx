@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { formatCategoryLabel } from "@/utils/categoryTree";
 import heroBooks from "@/assets/hero_books.png";
-import publisherPlaceholder from "/publishers/placeholder.svg";
+import publisherPlaceholder from "@/assets/publisher_placeholder.svg";
 import { useHome } from "./useHome";
 import "./Home.css";
 import { RecommendationSection, CarouselArrow } from "@/components/common";
