@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/products/**").permitAll()
                         .requestMatchers("/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/publishers/**").permitAll()
                         .requestMatchers("/api/v1/promotions/**").permitAll()
                         .requestMatchers("/api/v1/coupons/**").permitAll()
                         .requestMatchers("/api/v1/reviews/product/**").permitAll()

@@ -66,7 +66,25 @@ export const AppProvider = ({ children }) => {
         const savedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
         const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (savedUser && token) {
-            setUser(JSON.parse(savedUser));
+            try {
+                const parsed = JSON.parse(savedUser);
+                // Bỏ qua dữ liệu hỏng (thiếu object) để tránh crash khi render
+                if (parsed && typeof parsed === "object") {
+                    setUser(parsed);
+                    // Bổ sung fullName nếu thiếu (vd: session cũ chỉ lưu { email })
+                    if (!parsed.fullName && parsed.email) {
+                        api.get("/users/profile")
+                            .then((res) => updateUser(res.data || {}))
+                            .catch(() => {});
+                    }
+                } else {
+                    localStorage.removeItem("user");
+                    sessionStorage.removeItem("user");
+                }
+            } catch {
+                localStorage.removeItem("user");
+                sessionStorage.removeItem("user");
+            }
         }
         setLoading(false);
     }, []);
