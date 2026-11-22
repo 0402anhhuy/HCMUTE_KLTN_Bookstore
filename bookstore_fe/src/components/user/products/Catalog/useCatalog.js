@@ -47,13 +47,21 @@ export const useCatalog = () => {
 
     // ===== Danh sách toàn bộ NXB =====
     const availablePublishers = useMemo(() => {
-        const list = (publishers || []).map((p) => p.name);
+        const list = (publishers || [])
+            .filter((p) => p && p.name)
+            .map((p) => ({ id: p.id ?? p.name, name: p.name }));
         if (list.length > 0) return list;
-        const set = new Set();
+
+        const seen = new Set();
+        const fallback = [];
         products.forEach((p) => {
-            if (p.publisher) set.add(p.publisher.trim());
+            const name = p?.publisherInfo?.name ?? p?.publisher;
+            if (name && !seen.has(name)) {
+                seen.add(name);
+                fallback.push({ id: p?.publisherInfo?.id ?? name, name });
+            }
         });
-        return Array.from(set);
+        return fallback;
     }, [publishers, products]);
 
     // ===== Khoảng giá dạng checkbox =====
@@ -93,12 +101,15 @@ export const useCatalog = () => {
     };
 
     // ===== NXB =====
+    // Nhận vào object { id, name } (hoặc id/tên dạng chuỗi) và lưu id vào state
     const togglePublisher = useCallback(
         (pub) => {
+            const key = String(pub?.id ?? pub?.name ?? pub ?? "");
+            if (!key) return;
             setSelectedPublishers((prev) =>
-                prev.includes(pub)
-                    ? prev.filter((item) => item !== pub)
-                    : [...prev, pub],
+                prev.includes(key)
+                    ? prev.filter((item) => item !== key)
+                    : [...prev, key],
             );
             setPage(0);
         },

@@ -345,20 +345,26 @@ const Catalog = () => {
                         ))}
 
                         {/* Chips Nhà Xuất Bản */}
-                        {selectedPublishers.map((pub) => (
-                            <div key={pub} className="catalog-filter-chip">
-                                <span>NXB: {pub}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => togglePublisher(pub)}
-                                    className="chip-remove-btn"
-                                    title={`Xóa lọc NXB ${pub}`}
-                                    aria-label={`Xóa lọc NXB ${pub}`}
-                                >
-                                    <X size={13} />
-                                </button>
-                            </div>
-                        ))}
+                        {selectedPublishers.map((pubId) => {
+                            const label =
+                                availablePublishers.find(
+                                    (p) => String(p.id) === String(pubId),
+                                )?.name ?? pubId;
+                            return (
+                                <div key={pubId} className="catalog-filter-chip">
+                                    <span>NXB: {label}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => togglePublisher(pubId)}
+                                        className="chip-remove-btn"
+                                        title={`Xóa lọc NXB ${label}`}
+                                        aria-label={`Xóa lọc NXB ${label}`}
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                </div>
+                            );
+                        })}
 
                         {/* Nút Xóa Tất Cả */}
                         <button
@@ -485,20 +491,20 @@ const Catalog = () => {
                                 <div className="catalog-checkbox-list">
                                     {availablePublishers.map((pub, idx) => (
                                         <label
-                                            key={idx}
+                                            key={pub.id ?? idx}
                                             className="catalog-checkbox-label"
                                         >
                                             <input
                                                 type="checkbox"
                                                 checked={selectedPublishers.includes(
-                                                    pub,
+                                                    String(pub.id),
                                                 )}
                                                 onChange={() =>
                                                     togglePublisher(pub)
                                                 }
                                                 className="catalog-filter-input-checkbox"
                                             />
-                                            <span>{pub}</span>
+                                            <span>{pub.name}</span>
                                         </label>
                                     ))}
                                 </div>

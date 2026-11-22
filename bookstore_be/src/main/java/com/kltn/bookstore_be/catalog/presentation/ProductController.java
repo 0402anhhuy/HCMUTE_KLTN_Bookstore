@@ -44,6 +44,7 @@ import lombok.RequiredArgsConstructor;
 public class ProductController {
 
     private final ProductService productService;
+    private final PublisherService publisherService;
     private final UserService userService;
     private final FavoriteProductRepository favoriteProductRepository;
 
@@ -77,8 +78,12 @@ public class ProductController {
     }
 
     @GetMapping("/publishers")
-    public ResponseEntity<List<String>> getPublishers() {
-        return ResponseEntity.ok(productService.getDistinctPublishers());
+    public ResponseEntity<?> getPublishers() {
+        try {
+            return ResponseEntity.ok(publisherService.getPublishers());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/bestsellers")

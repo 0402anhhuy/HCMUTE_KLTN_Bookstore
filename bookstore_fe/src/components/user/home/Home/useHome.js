@@ -77,7 +77,9 @@ export const useHome = (options = {}) => {
     const [selectedCategory, setSelectedCategory] = useState(
         () => (syncFiltersWithUrl ? searchParams.get("categoryId") || "" : ""),
     );
-    // Theo dõi danh sách NXB đang chọn (Catalog truyền qua option onChangePublishers)
+    // Theo dõi danh sách NXB đang chọn.
+    // Lưu dạng chuỗi id (vd: "3", "7") để gửi thẳng xuống API `?publisher=`
+    // (backend lọc theo publisher_id). Giá trị cũ dạng tên vẫn được backend chấp nhận.
     const [selectedPublishers, setSelectedPublishers] = useState(
         () =>
             syncFiltersWithUrl && searchParams.get("publisher")
@@ -126,10 +128,10 @@ export const useHome = (options = {}) => {
 
     const fetchPublishers = useCallback(async () => {
         try {
-            const response = await api.get("/products/publishers");
-            if (Array.isArray(response.data) && response.data.length > 0) {
-                setRawPublishers(response.data);
-            }
+            // GET /api/v1/publishers -> [{ id, name, shortName, slug, logoUrl, ... }]
+            const response = await api.get("/publishers");
+            const data = Array.isArray(response.data) ? response.data : [];
+            setRawPublishers(data.filter(Boolean));
         } catch (e) {
             console.error("Failed to load publishers:", e);
         }
@@ -172,8 +174,8 @@ export const useHome = (options = {}) => {
         if (selectedCategory) url += `&categoryId=${selectedCategory}`;
         if (minPrice) url += `&minPrice=${minPrice}`;
         if (maxPrice) url += `&maxPrice=${maxPrice}`;
-        selectedPublishers.forEach((pub) => {
-            if (pub) url += `&publisher=${encodeURIComponent(pub)}`;
+        selectedPublishers.forEach((pubId) => {
+            if (pubId) url += `&publisher=${encodeURIComponent(pubId)}`;
         });
 
         const cacheKey = hasActiveFilters ? null : "default";
@@ -627,36 +629,62 @@ export const useHome = (options = {}) => {
         [categories],
     );
 
-    // Danh sách nhà xuất bản / đối tác tải động từ database:
+    // Danh sách nhà xuất bản / đối tác tải động từ database.
+    // Hỗ trợ cả 2 dạng response từ API:
+    //   - cũ:  ["NXB Kim Đồng", "NXB Trẻ", ...]                      (chỉ có tên)
+    //   - mới: [{ id, name, logoUrl, slug?, ... }, ...]               (bảng publisher)
     const publishers = useMemo(() => {
-        const list = rawPublishers.length > 0
-            ? rawPublishers
-            : Array.from(new Set(products.map((p) => p.publisher).filter(Boolean)));
+        const source = Array.isArray(rawPublishers) ? rawPublishers : [];
+        const normalized = source.map((item) =>
+            typeof item === "string"
+                ? { id: null, name: item, logoUrl: "" }
+                : {
+                      id: item?.id ?? null,
+                      name: item?.name ?? item?.publisherName ?? "",
+                      // Đọc từ API; nếu backend chưa có thì để rỗng -> dùng placeholder
+                      logoUrl: item?.logoUrl ?? item?.logo ?? "",
+                  },
+        );
 
-        return list.map((name, index) => {
-            const cleanShort = name
-                .replace(/^(NXB|Nhà xuất bản)\s+/i, "")
-                .trim()
-                .toUpperCase();
-            return {
-                id: `pub-${index}`,
-                name: name.trim(),
-                shortName: cleanShort || name.trim().toUpperCase(),
-                highlight: index === 0,
-            };
-        });
+        // Fallback: suy ra danh sách NXB từ sản phẩm khi API chưa trả về gì
+        const viewed = normalized.length > 0
+            ? normalized
+            : Array.from(
+                  new Set(products.map((p) => p.publisher).filter(Boolean)),
+              ).map((name) => ({ id: null, name, logoUrl: "" }));
+
+        return viewed
+            .filter((pub) => pub.name && pub.name.trim())
+            .map((pub, index) => {
+                const name = pub.name.trim();
+                const cleanShort = name
+                    .replace(/^(NXB|Nhà xuất bản)\s+/i, "")
+                    .trim()
+                    .toUpperCase();
+                return {
+                    id: pub.id ?? `pub-${index}`,
+                    name,
+                    shortName: cleanShort || name.toUpperCase(),
+                    highlight: index === 0,
+                    logoUrl: pub.logoUrl || "",
+                };
+            });
     }, [rawPublishers, products]);
 
-    const handlePublisherClick = (publisherName) => {
-        navigate(`/catalog?publisher=${encodeURIComponent(publisherName)}`);
+    const handlePublisherClick = (publisher) => {
+        // Ưu tiên điều hướng theo id; nếu NXB chưa có trong bảng publishers thì dùng tên
+        const key = publisher?.id ?? publisher?.name ?? publisher;
+        navigate(`/catalog?publisher=${encodeURIComponent(key)}`);
     };
 
     // Chọn/bỏ chọn NXB trong bộ lọc (dùng chung cho trang chủ và trang Catalog)
-    const togglePublisher = useCallback((publisherName) => {
+    const togglePublisher = useCallback((publisher) => {
+        const key = String(publisher?.id ?? publisher?.name ?? publisher ?? "");
+        if (!key) return;
         setSelectedPublishers((prev) =>
-            prev.includes(publisherName)
-                ? prev.filter((item) => item !== publisherName)
-                : [...prev, publisherName],
+            prev.includes(key)
+                ? prev.filter((item) => item !== key)
+                : [...prev, key],
         );
         setPage(0);
     }, []);

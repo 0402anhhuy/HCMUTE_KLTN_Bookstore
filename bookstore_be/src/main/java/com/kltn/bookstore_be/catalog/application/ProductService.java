@@ -35,8 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,12 +60,17 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final PublisherRepository publisherRepository;
     private final StockMovementRepository stockMovementRepository;
     private final OrderItemRepository orderItemRepository;
     private final AuditLogService auditLogService;
     private final NotificationService notificationService;
 
     public Page<Product> searchProducts(String keyword, Long categoryId, List<String> publishers, String language, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+        return searchProducts(keyword, categoryId, toPublisherIds(publishers), language, minPrice, maxPrice, pageable);
+    }
+
+    public Page<Product> searchProducts(String keyword, Long categoryId, Collection<Long> publisherIds, String language, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
         List<Long> categoryIds = null;
         if (categoryId != null) {
             categoryIds = getAllCategoryAndDescendantIds(categoryId);
@@ -71,14 +78,35 @@ public class ProductService {
                 categoryIds = null;
             }
         }
-        if (publishers != null && publishers.isEmpty()) {
-            publishers = null;
+        List<Long> filterIds = (publisherIds == null || publisherIds.isEmpty())
+                ? null
+                : new ArrayList<>(new LinkedHashSet<>(publisherIds));
+        return productRepository.searchProducts(keyword, categoryIds, filterIds, language, minPrice, maxPrice, pageable);
+    }
+
+    private List<Long> toPublisherIds(List<String> publishers) {
+        if (publishers == null || publishers.isEmpty()) {
+            return null;
         }
-        return productRepository.searchProducts(keyword, categoryIds, publishers, language, minPrice, maxPrice, pageable);
+        List<Long> ids = new ArrayList<>();
+        for (String raw : publishers) {
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            String token = raw.trim();
+            if (token.matches("\\d+")) {
+                ids.add(Long.valueOf(token));
+                continue;
+            }
+            publisherRepository.findByNameIgnoreCase(token)
+                    .map(Publisher::getId)
+                    .ifPresent(ids::add);
+        }
+        return ids.isEmpty() ? null : ids;
     }
 
     public Page<Product> searchProducts(String keyword, Long categoryId, String language, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
-        return searchProducts(keyword, categoryId, null, language, minPrice, maxPrice, pageable);
+        return searchProducts(keyword, categoryId, (List<Long>) null, language, minPrice, maxPrice, pageable);
     }
 
     public List<String> getDistinctPublishers() {
@@ -242,6 +270,7 @@ public class ProductService {
             throw new RuntimeException("Sản phẩm chỉ nên gắn vào category cấp lá (segment 3)");
         }
         product.setCategory(category);
+        product.setPublisherEntity(resolvePublisher(product.getPublisherId(), product.getPublisher()));
         product.setImageUrls(normalizeImageUrls(product));
         Product saved = productRepository.save(product);
         if (saved.getStatus() == Product.ProductStatus.ACTIVE) {
@@ -266,6 +295,7 @@ public class ProductService {
             throw new RuntimeException("Sản phẩm chỉ nên gắn vào category cấp lá (segment 3)");
         }
         product.setCategory(category);
+        product.setPublisherEntity(resolvePublisher(updatedDetails.getPublisherId(), updatedDetails.getPublisher()));
         return getProduct(updatedDetails, product, oldStatus);
     }
 
@@ -273,6 +303,10 @@ public class ProductService {
     public Product updateProduct(Long id, Product updatedDetails) {
         Product product = getProductById(id);
         Product.ProductStatus oldStatus = product.getStatus();
+        Publisher resolvedPublisher = resolvePublisher(updatedDetails.getPublisherId(), updatedDetails.getPublisher());
+        if (resolvedPublisher != null) {
+            product.setPublisherEntity(resolvedPublisher);
+        }
         return getProduct(updatedDetails, product, oldStatus);
     }
 
@@ -280,7 +314,6 @@ public class ProductService {
     private Product getProduct(Product updatedDetails, Product product, Product.ProductStatus oldStatus) {
         product.setName(updatedDetails.getName());
         product.setAuthor(updatedDetails.getAuthor());
-        product.setPublisher(updatedDetails.getPublisher());
         product.setTranslator(updatedDetails.getTranslator());
         product.setIsbn(updatedDetails.getIsbn());
         product.setSupplierName(updatedDetails.getSupplierName());
@@ -306,6 +339,25 @@ public class ProductService {
             );
         }
         return saved;
+    }
+
+    @Transactional
+    public Publisher resolvePublisher(Long publisherId, String publisherName) {
+        if (publisherId != null) {
+            return publisherRepository.findById(publisherId)
+                    .orElseThrow(() -> new RuntimeException("Nhà xuất bản không tồn tại: " + publisherId));
+        }
+        if (publisherName == null || publisherName.isBlank()) {
+            return null;
+        }
+        String name = publisherName.trim();
+        return publisherRepository.findByNameIgnoreCase(name)
+                .orElseGet(() -> publisherRepository.save(Publisher.builder()
+                        .name(name)
+                        .slug(PublisherService.slugify(name))
+                        .shortName(PublisherService.shortNameOf(name))
+                        .active(true)
+                        .build()));
     }
 
     private List<String> normalizeImageUrls(Product source) {
