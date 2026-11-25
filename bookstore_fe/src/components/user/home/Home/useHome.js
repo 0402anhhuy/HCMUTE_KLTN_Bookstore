@@ -83,7 +83,7 @@ export const useHome = (options = {}) => {
     const [selectedPublishers, setSelectedPublishers] = useState(
         () =>
             syncFiltersWithUrl && searchParams.get("publisher")
-                ? [searchParams.get("publisher")]
+                ? searchParams.getAll("publisher")
                 : [],
     );
     const [minPrice, setMinPrice] = useState(
@@ -210,7 +210,9 @@ export const useHome = (options = {}) => {
             if (minPrice) next.set("minPrice", minPrice);
             if (maxPrice) next.set("maxPrice", maxPrice);
             if (selectedPublishers.length > 0)
-                next.set("publisher", selectedPublishers[0]);
+                selectedPublishers.forEach((pubId) =>
+                    next.append("publisher", pubId),
+                );
             if (page > 0) next.set("page", String(page));
             const nextStr = next.toString();
             if (nextStr !== searchParams.toString()) {
@@ -584,12 +586,13 @@ export const useHome = (options = {}) => {
     const handleClearFilters = () => {
         setSearchParams({});
         setSelectedCategory("");
+        // Phải reset cả NXB, nếu không chip "Xóa tất cả" xoá trên URL nhưng state vẫn giữ NXB
+        setSelectedPublishers([]);
         setMinPrice("");
         setMaxPrice("");
         setPage(0);
-        setTimeout(() => {
-            fetchProducts();
-        }, 50);
+        // Không cần gọi fetchProducts thủ công: các state vừa reset sẽ kích hoạt effect tải lại.
+        // Gọi thủ công bằng closure cũ dễ đem kết quả đang lọc NXB về đè lên kết quả mới.
     };
 
     const openProductDetail = (product) => {
@@ -622,7 +625,11 @@ export const useHome = (options = {}) => {
     };
 
     const isSearchActive =
-        !!keyword || !!selectedCategory || !!minPrice || !!maxPrice;
+        !!keyword ||
+        !!selectedCategory ||
+        !!minPrice ||
+        !!maxPrice ||
+        selectedPublishers.length > 0;
 
     const categoryTree = useMemo(
         () => buildCategoryTree(categories),
