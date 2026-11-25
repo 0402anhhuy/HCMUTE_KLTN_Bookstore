@@ -41,11 +41,15 @@ public class Category {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "image_url")
+    @Builder.Default
+    private String imageUrl = "";
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (imageUrl == null) {
+            imageUrl = "";
+        }
     }
 }
