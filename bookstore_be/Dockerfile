@@ -6,10 +6,6 @@ WORKDIR /app
 COPY settings-docker.xml /root/.m2/settings.xml
 
 COPY pom.xml .
-RUN for i in 1 2 3; do \
-      mvn -s /root/.m2/settings.xml dependency:go-offline -B && exit 0; \
-      echo "Maven go-offline failed ($i/3), retrying in 10s..."; sleep 10; \
-    done; exit 1
 COPY src src
 
 # Copy application.properties.example if application.properties is missing (since it's in .gitignore)
@@ -17,7 +13,7 @@ RUN if [ ! -f src/main/resources/application.properties ]; then \
       cp src/main/resources/application.properties.example src/main/resources/application.properties; \
     fi
 
-RUN mvn -s /root/.m2/settings.xml package -DskipTests -B
+RUN mvn -s /root/.m2/settings.xml package -DskipTests -B -Dmaven.artifact.threads=1
 
 # Run stage
 FROM eclipse-temurin:21-jre-alpine
