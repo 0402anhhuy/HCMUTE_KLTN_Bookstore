@@ -14,6 +14,16 @@
           </snapshots>
         </repository>
         <repository>
+          <id>gcs-central-eu</id>
+          <url>https://maven-central-eu.storage-download.googleapis.com/maven2/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+        <repository>
           <id>central-fallback</id>
           <url>https://repo1.maven.org/maven2/</url>
           <releases>
@@ -28,6 +38,16 @@
         <pluginRepository>
           <id>central</id>
           <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+          <id>gcs-central-eu</id>
+          <url>https://maven-central-eu.storage-download.googleapis.com/maven2/</url>
           <releases>
             <enabled>true</enabled>
           </releases>
