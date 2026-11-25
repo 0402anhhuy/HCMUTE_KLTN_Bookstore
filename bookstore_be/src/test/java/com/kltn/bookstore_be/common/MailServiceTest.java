@@ -44,12 +44,71 @@ class MailServiceTest {
     }
 
     private MailService createMailService(String fromEmail, String apiKey, String senderEmail) {
+        return createMailService(fromEmail, apiKey, senderEmail, "", "");
+    }
+
+    private MailService createMailService(
+            String fromEmail,
+            String apiKey,
+            String senderEmail,
+            String appsScriptUrl,
+            String appsScriptSecret) {
         return new MailService(
                 mailSender,
                 restClientBuilder.build(),
                 fromEmail,
-                new MailService.BrevoConfig(apiKey, MailService.DEFAULT_BREVO_API_URL, senderEmail, "Bookstore")
+                new MailService.BrevoConfig(apiKey, MailService.DEFAULT_BREVO_API_URL, senderEmail, "Bookstore"),
+                new MailService.AppsScriptConfig(appsScriptUrl, appsScriptSecret)
         );
+    }
+
+    @Test
+    @DisplayName("Gửi OTP qua Google Apps Script HTTP Webhook khi có cấu hình URL")
+    void sendOtpEmail_usesAppsScriptWhenUrlConfigured() {
+        String appsScriptUrl = "https://script.google.com/macros/s/test-deploy-id/exec";
+        MailService appsScriptMailService = createMailService(
+                "noreply@bookstore.com",
+                "",
+                "",
+                appsScriptUrl,
+                "my-secret"
+        );
+
+        mockServer.expect(requestTo(appsScriptUrl))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.to").value("user@example.com"))
+                .andExpect(jsonPath("$.subject").value(containsString("OTP")))
+                .andExpect(jsonPath("$.body").value(containsString("777888")))
+                .andExpect(jsonPath("$.secret").value("my-secret"))
+                .andRespond(withSuccess("{\"ok\":true}", MediaType.APPLICATION_JSON));
+
+        appsScriptMailService.sendOtpEmail("user@example.com", "777888", "Đăng ký tài khoản");
+
+        mockServer.verify();
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    @DisplayName("Fallback sang SMTP khi Google Apps Script trả về lỗi ok=false")
+    void sendOtpEmail_fallsBackWhenAppsScriptReturnsErrorJson() {
+        String appsScriptUrl = "https://script.google.com/macros/s/test-deploy-id/exec";
+        MailService appsScriptMailService = createMailService(
+                "noreply@bookstore.com",
+                "",
+                "",
+                appsScriptUrl,
+                "wrong-secret"
+        );
+
+        mockServer.expect(requestTo(appsScriptUrl))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("{\"ok\":false,\"error\":\"Unauthorized\"}", MediaType.APPLICATION_JSON));
+
+        assertDoesNotThrow(() -> appsScriptMailService.sendOtpEmail("user@example.com", "777888", "Đăng ký tài khoản"));
+
+        mockServer.verify();
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
     }
 
     @Test

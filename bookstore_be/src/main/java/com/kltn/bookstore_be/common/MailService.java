@@ -4,7 +4,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
@@ -12,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -23,8 +26,11 @@ public class MailService {
     private final RestClient restClient;
     private final String fromEmail;
     private final BrevoConfig brevoConfig;
+    private final AppsScriptConfig appsScriptConfig;
 
     record BrevoConfig(String apiKey, String apiUrl, String senderEmail, String senderName) {}
+
+    record AppsScriptConfig(String url, String secret) {}
 
     private record BrevoSender(String email, String name) {}
 
@@ -36,6 +42,12 @@ public class MailService {
             String subject,
             String textContent) {}
 
+    private record AppsScriptEmailRequest(
+            String to,
+            String subject,
+            String body,
+            String secret) {}
+
     @Autowired
     public MailService(
             ObjectProvider<JavaMailSender> mailSenderProvider,
@@ -44,14 +56,17 @@ public class MailService {
             @Value("${mail.brevo.api-key:}") String brevoApiKey,
             @Value("${mail.brevo.api-url:" + DEFAULT_BREVO_API_URL + "}") String brevoApiUrl,
             @Value("${mail.brevo.sender-email:}") String brevoSenderEmail,
-            @Value("${mail.brevo.sender-name:Bookstore}") String brevoSenderName) {
+            @Value("${mail.brevo.sender-name:Bookstore}") String brevoSenderName,
+            @Value("${mail.apps-script.url:}") String appsScriptUrl,
+            @Value("${mail.apps-script.secret:}") String appsScriptSecret) {
         this(
                 mailSenderProvider != null ? mailSenderProvider.getIfAvailable() : null,
                 buildRestClient(restClientBuilderProvider != null
                         ? restClientBuilderProvider.getIfAvailable(RestClient::builder)
                         : RestClient.builder()),
                 fromEmail,
-                new BrevoConfig(brevoApiKey, brevoApiUrl, brevoSenderEmail, brevoSenderName)
+                new BrevoConfig(brevoApiKey, brevoApiUrl, brevoSenderEmail, brevoSenderName),
+                new AppsScriptConfig(appsScriptUrl, appsScriptSecret)
         );
     }
 
@@ -59,17 +74,22 @@ public class MailService {
             JavaMailSender mailSender,
             RestClient restClient,
             String fromEmail,
-            BrevoConfig brevoConfig) {
+            BrevoConfig brevoConfig,
+            AppsScriptConfig appsScriptConfig) {
         this.mailSender = mailSender;
         this.restClient = restClient;
         this.fromEmail = fromEmail;
         this.brevoConfig = brevoConfig;
+        this.appsScriptConfig = appsScriptConfig;
     }
 
     private static RestClient buildRestClient(RestClient.Builder builder) {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(5000);
-        requestFactory.setReadTimeout(5000);
+        HttpClient httpClient = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofSeconds(8));
         return builder.requestFactory(requestFactory).build();
     }
 
@@ -84,15 +104,45 @@ public class MailService {
         System.out.println("TYPE: " + type);
         System.out.println("==================================================\n");
 
-        if (StringUtils.hasText(brevoConfig.apiKey())) {
-            if (sendViaBrevo(toEmail, subject, body)) {
-                return;
-            }
-        } else {
-            System.out.println("BREVO_API_KEY is not configured; falling back to SMTP.");
+        if (StringUtils.hasText(appsScriptConfig.url()) && sendViaAppsScript(toEmail, subject, body)) {
+            return;
+        }
+
+        if (StringUtils.hasText(brevoConfig.apiKey()) && sendViaBrevo(toEmail, subject, body)) {
+            return;
         }
 
         sendViaSmtp(toEmail, subject, body);
+    }
+
+    private boolean sendViaAppsScript(String toEmail, String subject, String body) {
+        String secret = appsScriptConfig.secret() != null ? appsScriptConfig.secret() : "";
+        AppsScriptEmailRequest payload = new AppsScriptEmailRequest(toEmail, subject, body, secret);
+
+        try {
+            ResponseEntity<String> response = restClient.post()
+                    .uri(appsScriptConfig.url().trim())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .toEntity(String.class);
+
+            String responseBody = response.getBody();
+            if (responseBody != null && (responseBody.contains("\"ok\":false") || responseBody.contains("\"ok\": false"))) {
+                System.err.println("Google Apps Script rejected email request: " + responseBody);
+                return false;
+            }
+            if (responseBody != null && responseBody.toLowerCase().contains("<html")) {
+                System.err.println("Google Apps Script returned HTML instead of JSON. Ensure Web App access is set to 'Anyone'.");
+                return false;
+            }
+            System.out.println("Sent OTP email via Google Apps Script to: " + toEmail);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Could not send email via Google Apps Script: " + e.getMessage());
+            return false;
+        }
     }
 
     private boolean sendViaBrevo(String toEmail, String subject, String body) {
