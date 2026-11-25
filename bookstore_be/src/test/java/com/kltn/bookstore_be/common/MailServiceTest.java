@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient;
 import java.util.Objects;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -63,6 +64,7 @@ class MailServiceTest {
                 .andExpect(jsonPath("$.sender.email").value("sender@bookstore.com"))
                 .andExpect(jsonPath("$.sender.name").value("Bookstore"))
                 .andExpect(jsonPath("$.to[0].email").value("user@example.com"))
+                .andExpect(content().string(not(containsString("\"name\":null"))))
                 .andExpect(jsonPath("$.subject").value(containsString("OTP")))
                 .andExpect(jsonPath("$.textContent").value(containsString("654321")))
                 .andRespond(withSuccess("{\"messageId\":\"<test@brevo>\"}", MediaType.APPLICATION_JSON));

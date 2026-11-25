@@ -26,15 +26,13 @@ public class MailService {
 
     record BrevoConfig(String apiKey, String apiUrl, String senderEmail, String senderName) {}
 
-    private record BrevoContact(String email, String name) {
-        private BrevoContact(String email) {
-            this(email, null);
-        }
-    }
+    private record BrevoSender(String email, String name) {}
+
+    private record BrevoRecipient(String email) {}
 
     private record BrevoEmailRequest(
-            BrevoContact sender,
-            List<BrevoContact> to,
+            BrevoSender sender,
+            List<BrevoRecipient> to,
             String subject,
             String textContent) {}
 
@@ -86,8 +84,12 @@ public class MailService {
         System.out.println("TYPE: " + type);
         System.out.println("==================================================\n");
 
-        if (StringUtils.hasText(brevoConfig.apiKey()) && sendViaBrevo(toEmail, subject, body)) {
-            return;
+        if (StringUtils.hasText(brevoConfig.apiKey())) {
+            if (sendViaBrevo(toEmail, subject, body)) {
+                return;
+            }
+        } else {
+            System.out.println("BREVO_API_KEY is not configured; falling back to SMTP.");
         }
 
         sendViaSmtp(toEmail, subject, body);
@@ -103,8 +105,8 @@ public class MailService {
         String targetUrl = StringUtils.hasText(brevoConfig.apiUrl()) ? brevoConfig.apiUrl() : DEFAULT_BREVO_API_URL;
 
         BrevoEmailRequest payload = new BrevoEmailRequest(
-                new BrevoContact(senderEmail, senderName),
-                List.of(new BrevoContact(toEmail)),
+                new BrevoSender(senderEmail, senderName),
+                List.of(new BrevoRecipient(toEmail)),
                 subject,
                 body
         );
@@ -118,6 +120,7 @@ public class MailService {
                     .body(payload)
                     .retrieve()
                     .toBodilessEntity();
+            System.out.println("Sent OTP email via Brevo HTTP API to: " + toEmail);
             return true;
         } catch (Exception e) {
             System.err.println("Could not send email via Brevo HTTP API: " + e.getMessage());
