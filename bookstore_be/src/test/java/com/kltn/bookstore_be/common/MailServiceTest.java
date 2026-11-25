@@ -5,19 +5,25 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 
 import java.util.Objects;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @ExtendWith(MockitoExtension.class)
 class MailServiceTest {
@@ -25,16 +31,50 @@ class MailServiceTest {
     @Mock
     private JavaMailSender mailSender;
 
-    @InjectMocks
+    private RestClient.Builder restClientBuilder;
+    private MockRestServiceServer mockServer;
     private MailService mailService;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(mailService, "fromEmail", "noreply@bookstore.com");
+        restClientBuilder = RestClient.builder();
+        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
+        mailService = createMailService("noreply@bookstore.com", "", "");
+    }
+
+    private MailService createMailService(String fromEmail, String apiKey, String senderEmail) {
+        return new MailService(
+                mailSender,
+                restClientBuilder.build(),
+                fromEmail,
+                new MailService.BrevoConfig(apiKey, MailService.DEFAULT_BREVO_API_URL, senderEmail, "Bookstore")
+        );
     }
 
     @Test
-    @DisplayName("Gửi OTP thành công qua JavaMailSender")
+    @DisplayName("Gửi OTP qua Brevo HTTP API khi có cấu hình API key")
+    void sendOtpEmail_usesBrevoHttpApiWhenApiKeyConfigured() {
+        MailService brevoMailService = createMailService("noreply@bookstore.com", "xkeysib-test-key", "sender@bookstore.com");
+
+        mockServer.expect(requestTo(MailService.DEFAULT_BREVO_API_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("api-key", "xkeysib-test-key"))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.sender.email").value("sender@bookstore.com"))
+                .andExpect(jsonPath("$.sender.name").value("Bookstore"))
+                .andExpect(jsonPath("$.to[0].email").value("user@example.com"))
+                .andExpect(jsonPath("$.subject").value(containsString("OTP")))
+                .andExpect(jsonPath("$.textContent").value(containsString("654321")))
+                .andRespond(withSuccess("{\"messageId\":\"<test@brevo>\"}", MediaType.APPLICATION_JSON));
+
+        brevoMailService.sendOtpEmail("user@example.com", "654321", "Đăng ký tài khoản");
+
+        mockServer.verify();
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    @DisplayName("Gửi OTP thành công qua JavaMailSender khi chưa cấu hình Brevo API key")
     void sendOtpEmail_success() {
         mailService.sendOtpEmail("user@example.com", "123456", "Đăng ký tài khoản");
 
@@ -55,5 +95,45 @@ class MailServiceTest {
 
         assertDoesNotThrow(() -> mailService.sendOtpEmail("user@example.com", "123456", "Đăng ký tài khoản"));
         verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    @DisplayName("Brevo dùng spring.mail.username làm sender khi chưa cấu hình brevo.sender-email")
+    void sendOtpEmail_brevoFallsBackToFromEmailWhenSenderEmailBlank() {
+        MailService brevoMailService = createMailService("fallback-sender@bookstore.com", "xkeysib-test-key", "");
+
+        mockServer.expect(requestTo(MailService.DEFAULT_BREVO_API_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(jsonPath("$.sender.email").value("fallback-sender@bookstore.com"))
+                .andRespond(withSuccess("{\"messageId\":\"<test@brevo>\"}", MediaType.APPLICATION_JSON));
+
+        brevoMailService.sendOtpEmail("user@example.com", "999888", "Khôi phục mật khẩu");
+
+        mockServer.verify();
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    @DisplayName("Fallback sang SMTP khi Brevo HTTP API lỗi và không ném ngoại lệ")
+    void sendOtpEmail_fallsBackToSmtpWhenBrevoFails() {
+        MailService brevoMailService = createMailService("noreply@bookstore.com", "xkeysib-test-key", "sender@bookstore.com");
+
+        mockServer.expect(requestTo(MailService.DEFAULT_BREVO_API_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withServerError());
+
+        assertDoesNotThrow(() -> brevoMailService.sendOtpEmail("user@example.com", "112233", "Đăng ký tài khoản"));
+
+        mockServer.verify();
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    @DisplayName("Không gọi SMTP khi chưa cấu hình email người gửi")
+    void sendOtpEmail_skipsSmtpWhenFromEmailBlank() {
+        MailService unconfiguredMailService = createMailService("", "", "");
+
+        assertDoesNotThrow(() -> unconfiguredMailService.sendOtpEmail("user@example.com", "112233", "Đăng ký tài khoản"));
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
     }
 }
