@@ -1,9 +1,8 @@
 # Build stage
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
-COPY mvnw .
-COPY .mvn .mvn
 COPY pom.xml .
+RUN mvn dependency:go-offline -B || true
 COPY src src
 
 # Copy application.properties.example if application.properties is missing (since it's in .gitignore)
@@ -11,8 +10,7 @@ RUN if [ ! -f src/main/resources/application.properties ]; then \
       cp src/main/resources/application.properties.example src/main/resources/application.properties; \
     fi
 
-RUN chmod +x ./mvnw
-RUN ./mvnw package -DskipTests
+RUN mvn package -DskipTests -B
 
 # Run stage
 FROM eclipse-temurin:21-jre-alpine

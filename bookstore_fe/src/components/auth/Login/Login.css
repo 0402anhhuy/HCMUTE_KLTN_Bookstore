@@ -351,6 +351,14 @@
     color: #4b5563;
     font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.login-btn-resend-otp:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #f9fafb;
+    color: #9ca3af;
 }
 
 .login-resend-inline-box {
@@ -360,9 +368,19 @@
 }
 
 .login-resend-inline-link {
+    background: none;
+    border: none;
+    padding: 0;
     color: #0056c6;
     cursor: pointer;
     font-weight: 600;
+    font-size: inherit;
+}
+
+.login-resend-inline-link:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    color: #9ca3af;
 }
 
 /* ================= MOBILE RESPONSIVE STYLES ================= */
