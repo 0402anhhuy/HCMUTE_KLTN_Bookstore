@@ -183,6 +183,18 @@ class ProductServiceTest {
         }
 
         @Test
+        @DisplayName("Tạo danh mục không truyền imageUrl - mặc định chuỗi rỗng không null")
+        void createCategory_defaultsNonNullImageUrl() {
+            when(categoryRepository.findByName("Khoa học")).thenReturn(Optional.empty());
+            when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            Category result = productService.createCategory("Khoa học");
+
+            assertNotNull(result.getImageUrl());
+            assertEquals("", result.getImageUrl());
+        }
+
+        @Test
         @DisplayName("Tạo danh mục đã tồn tại - ném exception")
         void createCategory_existingName_throwsException() {
             when(categoryRepository.findByName("Văn học")).thenReturn(Optional.of(sampleCategory));
