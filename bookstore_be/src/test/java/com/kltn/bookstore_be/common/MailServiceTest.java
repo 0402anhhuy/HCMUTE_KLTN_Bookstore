@@ -18,7 +18,6 @@ import org.springframework.web.client.RestClient;
 import java.util.Objects;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -28,6 +27,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 @ExtendWith(MockitoExtension.class)
 class MailServiceTest {
+
+    private static final String APPS_SCRIPT_URL = "https://script.google.com/macros/s/test-deploy-id/exec";
 
     @Mock
     private JavaMailSender mailSender;
@@ -43,21 +44,11 @@ class MailServiceTest {
         mailService = createMailService("noreply@bookstore.com", "", "");
     }
 
-    private MailService createMailService(String fromEmail, String apiKey, String senderEmail) {
-        return createMailService(fromEmail, apiKey, senderEmail, "", "");
-    }
-
-    private MailService createMailService(
-            String fromEmail,
-            String apiKey,
-            String senderEmail,
-            String appsScriptUrl,
-            String appsScriptSecret) {
+    private MailService createMailService(String fromEmail, String appsScriptUrl, String appsScriptSecret) {
         return new MailService(
                 mailSender,
                 restClientBuilder.build(),
                 fromEmail,
-                new MailService.BrevoConfig(apiKey, MailService.DEFAULT_BREVO_API_URL, senderEmail, "Bookstore"),
                 new MailService.AppsScriptConfig(appsScriptUrl, appsScriptSecret)
         );
     }
@@ -65,16 +56,9 @@ class MailServiceTest {
     @Test
     @DisplayName("Gửi OTP qua Google Apps Script HTTP Webhook khi có cấu hình URL")
     void sendOtpEmail_usesAppsScriptWhenUrlConfigured() {
-        String appsScriptUrl = "https://script.google.com/macros/s/test-deploy-id/exec";
-        MailService appsScriptMailService = createMailService(
-                "noreply@bookstore.com",
-                "",
-                "",
-                appsScriptUrl,
-                "my-secret"
-        );
+        MailService appsScriptMailService = createMailService("noreply@bookstore.com", APPS_SCRIPT_URL, "my-secret");
 
-        mockServer.expect(requestTo(appsScriptUrl))
+        mockServer.expect(requestTo(APPS_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.to").value("user@example.com"))
@@ -92,16 +76,9 @@ class MailServiceTest {
     @Test
     @DisplayName("Fallback sang SMTP khi Google Apps Script trả về lỗi ok=false")
     void sendOtpEmail_fallsBackWhenAppsScriptReturnsErrorJson() {
-        String appsScriptUrl = "https://script.google.com/macros/s/test-deploy-id/exec";
-        MailService appsScriptMailService = createMailService(
-                "noreply@bookstore.com",
-                "",
-                "",
-                appsScriptUrl,
-                "wrong-secret"
-        );
+        MailService appsScriptMailService = createMailService("noreply@bookstore.com", APPS_SCRIPT_URL, "wrong-secret");
 
-        mockServer.expect(requestTo(appsScriptUrl))
+        mockServer.expect(requestTo(APPS_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess("{\"ok\":false,\"error\":\"Unauthorized\"}", MediaType.APPLICATION_JSON));
 
@@ -112,30 +89,22 @@ class MailServiceTest {
     }
 
     @Test
-    @DisplayName("Gửi OTP qua Brevo HTTP API khi có cấu hình API key")
-    void sendOtpEmail_usesBrevoHttpApiWhenApiKeyConfigured() {
-        MailService brevoMailService = createMailService("noreply@bookstore.com", "xkeysib-test-key", "sender@bookstore.com");
+    @DisplayName("Fallback sang SMTP khi Google Apps Script gặp lỗi HTTP 500")
+    void sendOtpEmail_fallsBackToSmtpWhenAppsScriptHttpFails() {
+        MailService appsScriptMailService = createMailService("noreply@bookstore.com", APPS_SCRIPT_URL, "my-secret");
 
-        mockServer.expect(requestTo(MailService.DEFAULT_BREVO_API_URL))
+        mockServer.expect(requestTo(APPS_SCRIPT_URL))
                 .andExpect(method(HttpMethod.POST))
-                .andExpect(header("api-key", "xkeysib-test-key"))
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.sender.email").value("sender@bookstore.com"))
-                .andExpect(jsonPath("$.sender.name").value("Bookstore"))
-                .andExpect(jsonPath("$.to[0].email").value("user@example.com"))
-                .andExpect(content().string(not(containsString("\"name\":null"))))
-                .andExpect(jsonPath("$.subject").value(containsString("OTP")))
-                .andExpect(jsonPath("$.textContent").value(containsString("654321")))
-                .andRespond(withSuccess("{\"messageId\":\"<test@brevo>\"}", MediaType.APPLICATION_JSON));
+                .andRespond(withServerError());
 
-        brevoMailService.sendOtpEmail("user@example.com", "654321", "Đăng ký tài khoản");
+        assertDoesNotThrow(() -> appsScriptMailService.sendOtpEmail("user@example.com", "112233", "Đăng ký tài khoản"));
 
         mockServer.verify();
-        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
     }
 
     @Test
-    @DisplayName("Gửi OTP thành công qua JavaMailSender khi chưa cấu hình Brevo API key")
+    @DisplayName("Gửi OTP thành công qua JavaMailSender khi chưa cấu hình Apps Script URL")
     void sendOtpEmail_success() {
         mailService.sendOtpEmail("user@example.com", "123456", "Đăng ký tài khoản");
 
@@ -155,37 +124,6 @@ class MailServiceTest {
         doThrow(new MailSendException("SMTP connection timed out")).when(mailSender).send(any(SimpleMailMessage.class));
 
         assertDoesNotThrow(() -> mailService.sendOtpEmail("user@example.com", "123456", "Đăng ký tài khoản"));
-        verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
-    }
-
-    @Test
-    @DisplayName("Brevo dùng spring.mail.username làm sender khi chưa cấu hình brevo.sender-email")
-    void sendOtpEmail_brevoFallsBackToFromEmailWhenSenderEmailBlank() {
-        MailService brevoMailService = createMailService("fallback-sender@bookstore.com", "xkeysib-test-key", "");
-
-        mockServer.expect(requestTo(MailService.DEFAULT_BREVO_API_URL))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(jsonPath("$.sender.email").value("fallback-sender@bookstore.com"))
-                .andRespond(withSuccess("{\"messageId\":\"<test@brevo>\"}", MediaType.APPLICATION_JSON));
-
-        brevoMailService.sendOtpEmail("user@example.com", "999888", "Khôi phục mật khẩu");
-
-        mockServer.verify();
-        verify(mailSender, never()).send(any(SimpleMailMessage.class));
-    }
-
-    @Test
-    @DisplayName("Fallback sang SMTP khi Brevo HTTP API lỗi và không ném ngoại lệ")
-    void sendOtpEmail_fallsBackToSmtpWhenBrevoFails() {
-        MailService brevoMailService = createMailService("noreply@bookstore.com", "xkeysib-test-key", "sender@bookstore.com");
-
-        mockServer.expect(requestTo(MailService.DEFAULT_BREVO_API_URL))
-                .andExpect(method(HttpMethod.POST))
-                .andRespond(withServerError());
-
-        assertDoesNotThrow(() -> brevoMailService.sendOtpEmail("user@example.com", "112233", "Đăng ký tài khoản"));
-
-        mockServer.verify();
         verify(mailSender, times(1)).send(any(SimpleMailMessage.class));
     }
 

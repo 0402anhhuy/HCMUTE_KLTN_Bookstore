@@ -35,12 +35,6 @@ spring.mail.properties.mail.smtp.connectiontimeout=5000
 spring.mail.properties.mail.smtp.timeout=5000
 spring.mail.properties.mail.smtp.writetimeout=5000
 
-# Brevo HTTP Email API Configuration (Optional)
-mail.brevo.api-key=${BREVO_API_KEY:}
-mail.brevo.api-url=${BREVO_API_URL:https://api.brevo.com/v3/smtp/email}
-mail.brevo.sender-email=${BREVO_SENDER_EMAIL:}
-mail.brevo.sender-name=${BREVO_SENDER_NAME:Bookstore}
-
 # Google Apps Script HTTP Mail Configuration (Free Gmail via HTTPS 443)
 mail.apps-script.url=${MAIL_APPS_SCRIPT_URL:}
 mail.apps-script.secret=${MAIL_APPS_SCRIPT_SECRET:}
