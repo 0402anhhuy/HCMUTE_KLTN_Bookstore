@@ -33,6 +33,9 @@ class ProductServiceTest {
     private CategoryRepository categoryRepository;
 
     @Mock
+    private PublisherRepository publisherRepository;
+
+    @Mock
     private StockMovementRepository stockMovementRepository;
 
     @Mock
@@ -132,16 +135,19 @@ class ProductServiceTest {
             org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
             org.springframework.data.domain.Page<Product> page = new org.springframework.data.domain.PageImpl<>(
                     List.of(sampleProduct));
+            Publisher kimDong = Publisher.builder().id(7L).name("NXB Kim Đồng").build();
             when(categoryRepository.findByParentCategoryId(1L)).thenReturn(List.of());
-            when(productRepository.searchProducts(eq("Doraemon"), any(), eq(List.of("Kim Đồng")), isNull(), any(), any(), eq(pageable)))
+            when(publisherRepository.findByNameIgnoreCase("Kim Đồng")).thenReturn(java.util.Optional.of(kimDong));
+            when(productRepository.searchProducts(eq("Doraemon"), any(), eq(List.of(7L)), isNull(), any(), any(), eq(pageable)))
                     .thenReturn(page);
 
+            // Client cũ gửi tên NXB -> service đổi sang publisher_id
             org.springframework.data.domain.Page<Product> result = productService.searchProducts("Doraemon", 1L,
                     List.of("Kim Đồng"), null, BigDecimal.ZERO, BigDecimal.valueOf(50000), pageable);
 
             assertNotNull(result);
             assertEquals(1, result.getTotalElements());
-            verify(productRepository).searchProducts(eq("Doraemon"), any(), eq(List.of("Kim Đồng")), isNull(), any(), any(),
+            verify(productRepository).searchProducts(eq("Doraemon"), any(), eq(List.of(7L)), isNull(), any(), any(),
                     eq(pageable));
         }
 

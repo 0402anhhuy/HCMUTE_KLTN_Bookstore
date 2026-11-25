@@ -19,6 +19,8 @@ import com.kltn.bookstore_be.common.*;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,7 +47,51 @@ public class Product {
 
     private String author;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "publisher_id")
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private Publisher publisherEntity;
+
+    @Transient
     private String publisher;
+
+    @Transient
+    private Long publisherId;
+
+    @JsonProperty("publisher")
+    public String getPublisher() {
+        return publisherEntity != null ? publisherEntity.getName() : publisher;
+    }
+
+    @JsonProperty("publisher")
+    public void setPublisher(String publisherName) {
+        this.publisher = publisherName;
+    }
+
+    @JsonProperty("publisherId")
+    public Long getPublisherId() {
+        return publisherEntity != null ? publisherEntity.getId() : publisherId;
+    }
+
+    @JsonProperty("publisherId")
+    public void setPublisherId(Long publisherId) {
+        this.publisherId = publisherId;
+    }
+
+    @JsonProperty("publisherInfo")
+    public PublisherInfo getPublisherInfo() {
+        return publisherEntity == null ? null : new PublisherInfo(
+                publisherEntity.getId(),
+                publisherEntity.getName(),
+                publisherEntity.getShortName(),
+                publisherEntity.getSlug(),
+                publisherEntity.getLogoUrl()
+        );
+    }
+
+    public record PublisherInfo(Long id, String name, String shortName, String slug, String logoUrl) {
+    }
 
     private String translator;
 

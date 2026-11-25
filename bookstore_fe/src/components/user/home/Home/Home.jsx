@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
     Filter,
     BookOpen,
@@ -19,9 +19,10 @@ import {
 } from "lucide-react";
 import { formatCategoryLabel } from "@/utils/categoryTree";
 import heroBooks from "@/assets/hero_books.png";
+import publisherPlaceholder from "@/assets/publisher_placeholder.svg";
 import { useHome } from "./useHome";
 import "./Home.css";
-import { RecommendationSection } from "@/components/common";
+import { RecommendationSection, CarouselArrow } from "@/components/common";
 import { useNavigate } from "react-router-dom";
 
 // Hàm loại bỏ tiêu đề sách bị lặp lại ở đầu phần mô tả sản phẩm
@@ -40,6 +41,31 @@ const formatCleanDescription = (description, bookName) => {
 };
 
 const Home = () => {
+    // Điều khiển slider "Nhà xuất bản & Đối tác" bằng nút prev/next
+    const publishersSliderRef = useRef(null);
+    const [canScrollPublishersPrev, setCanScrollPublishersPrev] =
+        useState(false);
+    const [canScrollPublishersNext, setCanScrollPublishersNext] =
+        useState(false);
+
+    const updatePublishersScrollState = useCallback(() => {
+        const el = publishersSliderRef.current;
+        if (!el) return;
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        setCanScrollPublishersPrev(el.scrollLeft > 4);
+        setCanScrollPublishersNext(el.scrollLeft < maxScroll - 4);
+    }, []);
+
+    const scrollPublishers = (direction) => {
+        const el = publishersSliderRef.current;
+        if (!el) return;
+        const amount = Math.max(el.clientWidth * 0.8, 220);
+        el.scrollBy({
+            left: direction === "prev" ? -amount : amount,
+            behavior: "smooth",
+        });
+    };
+
     const {
         addToCart,
         keyword,
@@ -89,6 +115,23 @@ const Home = () => {
 
     const navigate = useNavigate();
     const [isBestsellerDescExpanded, setIsBestsellerDescExpanded] = useState(false);
+
+    // Theo dõi trạng thái cuộn của slider để bật/tắt nút prev/next
+    useEffect(() => {
+        const el = publishersSliderRef.current;
+        if (!el) return undefined;
+
+        updatePublishersScrollState();
+        el.addEventListener("scroll", updatePublishersScrollState, {
+            passive: true,
+        });
+        window.addEventListener("resize", updatePublishersScrollState);
+
+        return () => {
+            el.removeEventListener("scroll", updatePublishersScrollState);
+            window.removeEventListener("resize", updatePublishersScrollState);
+        };
+    }, [updatePublishersScrollState, loading, publishers]);
 
     const renderCategoryTree = (nodes, depth = 0) =>
         nodes.map((node) => {
@@ -232,14 +275,14 @@ const Home = () => {
                                 <div className="home-category-tree-scroll">
                                     {publishers.slice(0, 15).map((pub) => {
                                         const active = selectedPublishers.includes(
-                                            pub.name,
+                                            String(pub.id),
                                         );
                                         return (
                                             <button
                                                 key={pub.id}
                                                 type="button"
                                                 onClick={() =>
-                                                    togglePublisher(pub.name)
+                                                    togglePublisher(pub)
                                                 }
                                                 className={`home-category-node-btn ${active ? "selected" : ""}`}
                                             >
@@ -975,30 +1018,70 @@ const Home = () => {
                                     <Building2 size={20} color="#0a422d" /> Nhà xuất bản & Đối tác
                                 </h3>
                             </div>
-                            <div className="home-publishers-slider">
-                                {publishers.map((pub) => (
+                            <div className="home-publishers-carousel">
+                                <CarouselArrow
+                                    direction="prev"
+                                    onClick={() => scrollPublishers("prev")}
+                                    disabled={!canScrollPublishersPrev}
+                                    ariaLabel="Xem nhà xuất bản trước"
+                                    className="home-publishers-arrow"
+                                />
+                                <div
+                                    className={`home-publishers-viewport ${canScrollPublishersPrev ? "can-scroll-prev" : ""} ${canScrollPublishersNext ? "can-scroll-next" : ""}`}
+                                >
                                     <div
-                                        key={pub.id}
-                                        className="home-publisher-item"
-                                        onClick={() =>
-                                            handlePublisherClick(pub.name)
-                                        }
+                                        className="home-publishers-slider"
+                                        ref={publishersSliderRef}
                                     >
-                                        <div
-                                            className={`home-publisher-box ${pub.highlight ? "highlight" : ""}`}
-                                        >
-                                            <div className="home-publisher-crest">
-                                                <Building2 size={16} />
+                                        {publishers.map((pub) => (
+                                            <div
+                                                key={pub.id}
+                                                className="home-publisher-item"
+                                                onClick={() =>
+                                                    handlePublisherClick(pub)
+                                                }
+                                            >
+                                                <div
+                                                    className={`home-publisher-box ${pub.highlight ? "highlight" : ""}`}
+                                                >
+                                                    <img
+                                                        src={
+                                                            pub.logoUrl ||
+                                                            publisherPlaceholder
+                                                        }
+                                                        alt={`Logo ${pub.name}`}
+                                                        className={`home-publisher-logo-img ${pub.logoUrl ? "" : "is-placeholder"}`}
+                                                        loading="lazy"
+                                                        onError={(e) => {
+                                                            // Ảnh thật lỗi -> quay về placeholder
+                                                            if (
+                                                                e.currentTarget
+                                                                    .src !==
+                                                                publisherPlaceholder
+                                                            ) {
+                                                                e.currentTarget.src =
+                                                                    publisherPlaceholder;
+                                                                e.currentTarget.classList.add(
+                                                                    "is-placeholder",
+                                                                );
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span className="home-publisher-label">
+                                                    {pub.name}
+                                                </span>
                                             </div>
-                                            <span className="home-publisher-brand-name">
-                                                {pub.shortName}
-                                            </span>
-                                        </div>
-                                        <span className="home-publisher-label">
-                                            {pub.name}
-                                        </span>
+                                        ))}
                                     </div>
-                                ))}
+                                </div>
+                                <CarouselArrow
+                                    direction="next"
+                                    onClick={() => scrollPublishers("next")}
+                                    disabled={!canScrollPublishersNext}
+                                    ariaLabel="Xem nhà xuất bản tiếp theo"
+                                    className="home-publishers-arrow"
+                                />
                             </div>
                         </div>
                     )}

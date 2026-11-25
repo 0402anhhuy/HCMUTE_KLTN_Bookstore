@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,9 @@ import com.kltn.bookstore_be.catalog.domain.Category;
 import com.kltn.bookstore_be.catalog.domain.CategoryRepository;
 import com.kltn.bookstore_be.catalog.domain.Product;
 import com.kltn.bookstore_be.catalog.domain.ProductRepository;
+import com.kltn.bookstore_be.catalog.domain.Publisher;
+import com.kltn.bookstore_be.catalog.domain.PublisherRepository;
+import com.kltn.bookstore_be.catalog.application.PublisherService;
 import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.identity.domain.UserRepository;
 import com.kltn.bookstore_be.ordering.domain.Coupon;
@@ -31,22 +35,28 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final PublisherRepository publisherRepository;
     private final CouponRepository couponRepository;
     private final PromotionRepository promotionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
     public DataSeeder(UserRepository userRepository,
             CategoryRepository categoryRepository,
             ProductRepository productRepository,
+            PublisherRepository publisherRepository,
             CouponRepository couponRepository,
             PromotionRepository promotionRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.publisherRepository = publisherRepository;
         this.couponRepository = couponRepository;
         this.promotionRepository = promotionRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -55,6 +65,7 @@ public class DataSeeder implements CommandLineRunner {
 
         seedUsers();
         seedCatalog();
+        seedPublishers();
         seedCoupons();
 
         System.out.println("===> DataSeeder checks completed successfully!");
@@ -110,6 +121,8 @@ public class DataSeeder implements CommandLineRunner {
         if (productRepository.count() == 0) {
             promotionRepository.deleteAll();
 
+            // Catalog mới: mọi sản phẩm bên dưới đều gắn nhà xuất bản qua publisher_id
+            seedPublishers();
             Category scienceCat = categoryRepository.save(Category.builder().name("Khoa học").build());
             Category businessCat = categoryRepository.save(Category.builder().name("Kinh tế & Chính trị").build());
 
@@ -751,6 +764,75 @@ public class DataSeeder implements CommandLineRunner {
                     // p26, p27, p28, p29, p30,
                     //p31, p32, p33, p34
             ).stream().map(this::applyDefaultBookMetadata).toList());
+        }
+    }
+
+    /**
+     * Tạo sẵn bản ghi nhà xuất bản từ danh sách NXB đang có trong sản phẩm,
+     * sau đó gán {@code product.publisher_id} cho các sản phẩm còn thiếu.
+     * Logo để trống (frontend hiển thị placeholder) để quản trị cập nhật sau
+     * qua PUT /api/v1/publishers/{id} hoặc bảng {@code publishers} trong DB.
+     */
+    private void seedPublishers() {
+        System.out.println("===> Seeding/Checking Publishers...");
+        for (String name : productRepository.findDistinctPublishers()) {
+            if (name == null || name.isBlank()) {
+                continue;
+            }
+            String trimmed = name.trim();
+            if (publisherRepository.existsByNameIgnoreCase(trimmed)) {
+                continue;
+            }
+            publisherRepository.save(Publisher.builder()
+                    .name(trimmed)
+                    .slug(PublisherService.slugify(trimmed))
+                    .shortName(PublisherService.shortNameOf(trimmed))
+                    .active(true)
+                    .build());
+        }
+        linkProductsToPublishers();
+    }
+
+    /**
+     * Backfill cho dữ liệu cũ: nếu bảng products còn cột text {@code publisher}
+     * (tên NXB) thì dùng nó để gán {@code publisher_id}.
+     */
+    private void linkProductsToPublishers() {
+        List<Product> orphans = productRepository.findByPublisherEntityIsNull();
+        if (orphans.isEmpty()) {
+            return;
+        }
+        System.out.println("===> Linking " + orphans.size() + " product(s) to publishers...");
+        for (Product product : orphans) {
+            String legacyName = legacyPublisherName(product.getId());
+            if (legacyName == null || legacyName.isBlank()) {
+                continue;
+            }
+            Publisher publisher = publisherRepository.findByNameIgnoreCase(legacyName.trim())
+                    .orElseGet(() -> publisherRepository.save(Publisher.builder()
+                            .name(legacyName.trim())
+                            .slug(PublisherService.slugify(legacyName))
+                            .shortName(PublisherService.shortNameOf(legacyName))
+                            .active(true)
+                            .build()));
+            product.setPublisherEntity(publisher);
+            productRepository.save(product);
+        }
+    }
+
+    /**
+     * Đọc trực tiếp cột text cũ {@code products.publisher} (nếu còn tồn tại trong DB).
+     * Dùng JDBC thuần vì entity đã bỏ mapping cột này.
+     */
+    private String legacyPublisherName(Long productId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT publisher FROM products WHERE id = ?",
+                    String.class,
+                    productId);
+        } catch (Exception e) {
+            // Cột đã bị xóa hoặc NULL -> bỏ qua
+            return null;
         }
     }
 

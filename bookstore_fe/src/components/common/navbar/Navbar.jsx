@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
     LayoutGrid,
@@ -52,6 +52,14 @@ const Navbar = () => {
         mobileMenuOpen,
         setMobileMenuOpen,
     } = useNavbar();
+
+    const displayUserName = (() => {
+        const name = (user?.fullName || user?.name || user?.email || "")
+            .toString()
+            .trim();
+        if (!name) return "Tài khoản";
+        return name.split(" ").filter(Boolean).pop();
+    })();
 
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef(null);
@@ -340,7 +348,7 @@ const Navbar = () => {
                             setUserMenuOpen((prev) => !prev);
                         }}
                     >
-                        {user ? user.fullName.split(" ").pop() : "Tài khoản"}
+                        {user ? displayUserName : "Tài khoản"}
                     </span>
 
                     <div
