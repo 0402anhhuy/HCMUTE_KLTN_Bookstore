@@ -46,22 +46,40 @@ export const useCatalog = () => {
     const setSearchInput = setSearchDraft;
 
     // ===== Danh sách toàn bộ NXB =====
+    // Lấy tên hiển thị theo bảng publisher, nhưng id luôn là khóa ngoại `product.publisher_id`
+    // để bộ lọc gửi `?publisher=<id>` xuống API.
     const availablePublishers = useMemo(() => {
         const list = (publishers || [])
             .filter((p) => p && p.name)
             .map((p) => ({ id: p.id ?? p.name, name: p.name }));
-        if (list.length > 0) return list;
+        if (list.length === 0) {
+            const seen = new Set();
+            const fallback = [];
+            products.forEach((p) => {
+                const name = p?.publisherInfo?.name ?? p?.publisher;
+                if (name && !seen.has(name)) {
+                    seen.add(name);
+                    fallback.push({
+                        id: p?.publisherInfo?.id ?? p?.publisherId ?? name,
+                        name,
+                    });
+                }
+            });
+            return fallback;
+        }
 
-        const seen = new Set();
-        const fallback = [];
-        products.forEach((p) => {
-            const name = p?.publisherInfo?.name ?? p?.publisher;
-            if (name && !seen.has(name)) {
-                seen.add(name);
-                fallback.push({ id: p?.publisherInfo?.id ?? name, name });
-            }
+        // NXB chưa được gán publisher_id trong bảng publisher -> tra theo tên ở sản phẩm
+        return list.map((pub) => {
+            if (/^\d+$/.test(String(pub.id))) return pub;
+            const match = (products || []).find(
+                (p) =>
+                    p?.publisherInfo?.name === pub.name ||
+                    p?.publisher === pub.name,
+            );
+            const resolvedId =
+                match?.publisherInfo?.id ?? match?.publisherId ?? pub.id;
+            return { ...pub, id: resolvedId };
         });
-        return fallback;
     }, [publishers, products]);
 
     // ===== Khoảng giá dạng checkbox =====
@@ -104,8 +122,20 @@ export const useCatalog = () => {
     // Nhận vào object { id, name } (hoặc id/tên dạng chuỗi) và lưu id vào state
     const togglePublisher = useCallback(
         (pub) => {
-            const key = String(pub?.id ?? pub?.name ?? pub ?? "");
+            let key = String(pub?.id ?? pub?.name ?? pub ?? "");
             if (!key) return;
+            // NXB chỉ có tên (không có id trong bảng publisher) -> quy về id sản phẩm đang hiển thị
+            // để bộ lọc luôn gửi publisher_id đúng khóa ngoại xuống API (backend chỉ nhận id/số)
+            if (!/^\d+$/.test(key)) {
+                const match = (products || []).find(
+                    (p) =>
+                        p?.publisherInfo?.name === key || p?.publisher === key,
+                );
+                const resolvedId = match?.publisherInfo?.id ?? match?.publisherId;
+                if (resolvedId != null && /^\d+$/.test(String(resolvedId))) {
+                    key = String(resolvedId);
+                }
+            }
             setSelectedPublishers((prev) =>
                 prev.includes(key)
                     ? prev.filter((item) => item !== key)
@@ -113,7 +143,7 @@ export const useCatalog = () => {
             );
             setPage(0);
         },
-        [setSelectedPublishers, setPage],
+        [setSelectedPublishers, setPage, products],
     );
 
     // ===== Chip xoá từng bộ lọc =====
@@ -153,6 +183,7 @@ export const useCatalog = () => {
     const handleClearFilters = () => {
         setSelectedPriceRanges([]);
         setSearchDraft(null);
+        // clearAllFilters xoá toàn bộ query (kể cả publisher) và reset state NXB bên trong useHome
         clearAllFilters();
     };
 

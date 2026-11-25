@@ -108,6 +108,9 @@ public class PublisherService {
             }
             publisher.setName(name);
         }
+        if (requested.getShortName() != null) {
+            publisher.setShortName(normalizeOptional(requested.getShortName()));
+        }
         if (requested.getSlug() != null) {
             publisher.setSlug(requested.getSlug().isBlank()
                     ? slugify(publisher.getName())
