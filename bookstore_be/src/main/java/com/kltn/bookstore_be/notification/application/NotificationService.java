@@ -11,7 +11,9 @@ import com.kltn.bookstore_be.notification.domain.Notification;
 import com.kltn.bookstore_be.notification.domain.NotificationRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -78,7 +80,7 @@ public class NotificationService {
                 com.kltn.bookstore_be.notification.infrastructure.NotificationWebSocketHandler.broadcast(json);
             }
         } catch (Exception e) {
-            System.err.println("Failed to broadcast notification: " + e.getMessage());
+            log.warn("Failed to broadcast notification: {}", e.getMessage());
         }
     }
 

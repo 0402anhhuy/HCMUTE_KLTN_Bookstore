@@ -12,6 +12,38 @@ permissions:
   contents: read
 
 jobs:
+  detect-changes:
+    name: Detect Changed Stacks
+    runs-on: ubuntu-latest
+    outputs:
+      fe: ${{ steps.filter.outputs.fe }}
+      be: ${{ steps.filter.outputs.be }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine changed areas
+        id: filter
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "fe=true" >> "$GITHUB_OUTPUT"
+            echo "be=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}")
+          if echo "$CHANGED" | grep -qE '^bookstore_fe/'; then
+            echo "fe=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fe=false" >> "$GITHUB_OUTPUT"
+          fi
+          if echo "$CHANGED" | grep -qE '^(bookstore_be/|\.github/workflows/ci-quality\.yml)'; then
+            echo "be=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "be=false" >> "$GITHUB_OUTPUT"
+          fi
+
   secret-scan:
     name: Secret Scan (Gitleaks)
     runs-on: ubuntu-latest
@@ -28,6 +60,8 @@ jobs:
 
   frontend-quality:
     name: Frontend Lint, Unit Tests & Build
+    needs: detect-changes
+    if: github.event_name == 'push' || needs.detect-changes.outputs.fe == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -56,7 +90,9 @@ jobs:
         run: npm run build
 
   backend-quality:
-    name: Backend Compile, Unit Tests & SpotBugs
+    name: Backend Compile, Tests & SpotBugs
+    needs: detect-changes
+    if: github.event_name == 'push' || needs.detect-changes.outputs.be == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -72,8 +108,8 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Run backend unit tests
-        run: bash ./mvnw -B test -Dtest='!BookstoreBeApplicationTests,!PerformanceSlaBenchmarkTest'
+      - name: Run backend unit & context tests
+        run: bash ./mvnw -B test -Dtest='!PerformanceSlaBenchmarkTest'
 
       - name: Run SpotBugs static analysis
         run: bash ./mvnw -B com.github.spotbugs:spotbugs-maven-plugin:4.8.6.6:spotbugs

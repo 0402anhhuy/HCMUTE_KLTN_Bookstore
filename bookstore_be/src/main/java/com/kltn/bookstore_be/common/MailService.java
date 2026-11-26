@@ -16,13 +16,15 @@ import org.springframework.web.client.RestClient;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
 public class MailService {
 
     private final JavaMailSender mailSender;
-    private final RestClient restClient;
+    private final Supplier<RestClient> restClientSupplier;
+    private RestClient restClient;
     private final String fromEmail;
     private final AppsScriptConfig appsScriptConfig;
 
@@ -43,7 +45,7 @@ public class MailService {
             @Value("${mail.apps-script.secret:}") String appsScriptSecret) {
         this(
                 mailSenderProvider != null ? mailSenderProvider.getIfAvailable() : null,
-                buildRestClient(restClientBuilderProvider != null
+                () -> buildRestClient(restClientBuilderProvider != null
                         ? restClientBuilderProvider.getIfAvailable(RestClient::builder)
                         : RestClient.builder()),
                 fromEmail,
@@ -56,10 +58,26 @@ public class MailService {
             RestClient restClient,
             String fromEmail,
             AppsScriptConfig appsScriptConfig) {
-        this.mailSender = mailSender;
+        this(mailSender, () -> restClient, fromEmail, appsScriptConfig);
         this.restClient = restClient;
+    }
+
+    private MailService(
+            JavaMailSender mailSender,
+            Supplier<RestClient> restClientSupplier,
+            String fromEmail,
+            AppsScriptConfig appsScriptConfig) {
+        this.mailSender = mailSender;
+        this.restClientSupplier = restClientSupplier;
         this.fromEmail = fromEmail;
         this.appsScriptConfig = appsScriptConfig;
+    }
+
+    private synchronized RestClient getRestClient() {
+        if (restClient == null) {
+            restClient = restClientSupplier.get();
+        }
+        return restClient;
     }
 
     private static RestClient buildRestClient(RestClient.Builder builder) {
@@ -91,7 +109,7 @@ public class MailService {
         AppsScriptEmailRequest payload = new AppsScriptEmailRequest(toEmail, subject, body, secret);
 
         try {
-            ResponseEntity<String> response = restClient.post()
+            ResponseEntity<String> response = getRestClient().post()
                     .uri(appsScriptConfig.url().trim())
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)

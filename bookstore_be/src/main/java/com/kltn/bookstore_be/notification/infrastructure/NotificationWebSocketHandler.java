@@ -1,5 +1,6 @@
 package com.kltn.bookstore_be.notification.infrastructure;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -8,6 +9,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Slf4j
 @Component
 public class NotificationWebSocketHandler extends TextWebSocketHandler {
 
@@ -29,8 +31,7 @@ public class NotificationWebSocketHandler extends TextWebSocketHandler {
                 try {
                     session.sendMessage(new TextMessage(message));
                 } catch (IOException e) {
-                    // Log or ignore
-                    System.err.println("Error sending WebSocket message: " + e.getMessage());
+                    log.warn("Error sending WebSocket message: {}", e.getMessage());
                 }
             }
         }

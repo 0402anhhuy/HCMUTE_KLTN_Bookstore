@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +26,7 @@ import com.kltn.bookstore_be.ordering.domain.Coupon;
 import com.kltn.bookstore_be.ordering.domain.CouponRepository;
 import com.kltn.bookstore_be.ordering.domain.PromotionRepository;
 
+@Slf4j
 @Component
 @org.springframework.core.annotation.Order(2)
 public class DataSeeder implements CommandLineRunner {
@@ -61,18 +63,18 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("===> Running DataSeeder checks...");
+        log.info("Running DataSeeder checks...");
 
         seedUsers();
         seedCatalog();
         seedPublishers();
         seedCoupons();
 
-        System.out.println("===> DataSeeder checks completed successfully!");
+        log.info("DataSeeder checks completed successfully!");
     }
 
     private void seedUsers() {
-        System.out.println("===> Seeding/Checking Users...");
+        log.info("Seeding/Checking Users...");
         if (!userRepository.existsByEmail("user@gmail.com")) {
             User normalUser = User.builder()
                     .fullName("Nguyễn Văn Khách")
@@ -114,7 +116,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedCatalog() {
-        System.out.println("===> Seeding/Checking Catalog...");
+        log.info("Seeding/Checking Catalog...");
         // Never replace an existing catalog at application startup. Products can
         // already be referenced by cart items, orders, reviews, and favorites.
         // Seed only a brand-new database, otherwise preserve operational data.
@@ -774,7 +776,7 @@ public class DataSeeder implements CommandLineRunner {
      * qua PUT /api/v1/publishers/{id} hoặc bảng {@code publishers} trong DB.
      */
     private void seedPublishers() {
-        System.out.println("===> Seeding/Checking Publishers...");
+        log.info("Seeding/Checking Publishers...");
         for (String name : productRepository.findDistinctPublishers()) {
             if (name == null || name.isBlank()) {
                 continue;
@@ -802,7 +804,7 @@ public class DataSeeder implements CommandLineRunner {
         if (orphans.isEmpty()) {
             return;
         }
-        System.out.println("===> Linking " + orphans.size() + " product(s) to publishers...");
+        log.info("Linking {} product(s) to publishers...", orphans.size());
         for (Product product : orphans) {
             String legacyName = legacyPublisherName(product.getId());
             if (legacyName == null || legacyName.isBlank()) {
@@ -862,7 +864,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedCoupons() {
-        System.out.println("===> Seeding Coupons...");
+        log.info("Seeding Coupons...");
         if (couponRepository.findByCode("WELCOME10").isEmpty()) {
             Coupon coupon = Coupon.builder()
                     .code("WELCOME10")
