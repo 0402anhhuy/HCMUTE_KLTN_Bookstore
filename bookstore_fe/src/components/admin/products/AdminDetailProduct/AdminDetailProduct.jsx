@@ -3,8 +3,21 @@ import { useAdminDetailProduct } from "./useAdminDetailProduct";
 import "./AdminDetailProduct.css";
 
 const AdminDetailProduct = ({ productId, onBack, loadMainData }) => {
-    const { product, loading, displayImage, handleApprove, handleReject } =
-        useAdminDetailProduct({ productId, onBack, loadMainData });
+    const {
+        product,
+        loading,
+        displayImage,
+        isRejectModalOpen,
+        rejectReason,
+        rejectError,
+        submittingReject,
+        setRejectReason,
+        openRejectModal,
+        closeRejectModal,
+        handleApprove,
+        handleConfirmReject,
+        handleDeactivate,
+    } = useAdminDetailProduct({ productId, onBack, loadMainData });
 
     if (loading) {
         return (
@@ -138,6 +151,12 @@ const AdminDetailProduct = ({ productId, onBack, loadMainData }) => {
                             </div>
                         </div>
 
+                        {isRejected && product.rejectionReason && (
+                            <div className="admin-detail-rejection-banner">
+                                <strong>Lý do từ chối:</strong> {product.rejectionReason}
+                            </div>
+                        )}
+
                         {/* Description Section */}
                         <div className="admin-detail-section-title">Mô tả sản phẩm</div>
                         <div className="admin-detail-product-description">
@@ -191,7 +210,7 @@ const AdminDetailProduct = ({ productId, onBack, loadMainData }) => {
                         <>
                             <button
                                 type="button"
-                                onClick={handleReject}
+                                onClick={openRejectModal}
                                 className="admin-detail-product-btn-reject"
                             >
                                 <X size={16} />
@@ -209,7 +228,7 @@ const AdminDetailProduct = ({ productId, onBack, loadMainData }) => {
                     ) : isActive ? (
                         <button
                             type="button"
-                            onClick={handleReject}
+                            onClick={handleDeactivate}
                             className="admin-detail-product-btn-reject"
                             title="Tạm ẩn sản phẩm khỏi sàn bán"
                         >
@@ -228,6 +247,59 @@ const AdminDetailProduct = ({ productId, onBack, loadMainData }) => {
                     )}
                 </div>
             </div>
+
+            {isRejectModalOpen && (
+                <div className="admin-detail-modal-overlay" role="dialog" aria-modal="true">
+                    <div className="admin-detail-modal">
+                        <div className="admin-detail-modal-header">
+                            <h3>Từ chối duyệt sản phẩm</h3>
+                            <button
+                                type="button"
+                                onClick={closeRejectModal}
+                                className="admin-detail-modal-close"
+                                aria-label="Đóng"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleConfirmReject}>
+                            <div className="admin-detail-modal-body">
+                                <p className="admin-detail-modal-desc">
+                                    Vui lòng nhập lý do từ chối sản phẩm{" "}
+                                    <strong>{product.name}</strong> để Manager chỉnh sửa và gửi duyệt lại.
+                                </p>
+                                <textarea
+                                    rows={4}
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="Ví dụ: Ảnh bìa bị mờ, thiếu thông tin ISBN..."
+                                    className="admin-detail-modal-textarea"
+                                    autoFocus
+                                />
+                                {rejectError && (
+                                    <p className="admin-detail-modal-error">{rejectError}</p>
+                                )}
+                            </div>
+                            <div className="admin-detail-modal-footer">
+                                <button
+                                    type="button"
+                                    onClick={closeRejectModal}
+                                    className="admin-detail-modal-cancel"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submittingReject}
+                                    className="admin-detail-modal-confirm"
+                                >
+                                    {submittingReject ? "Đang gửi..." : "Xác nhận từ chối"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

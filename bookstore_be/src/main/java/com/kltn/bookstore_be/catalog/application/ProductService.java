@@ -326,13 +326,35 @@ public class ProductService {
         product.setPage(updatedDetails.getPage());
         product.setLanguage(updatedDetails.getLanguage());
         product.setImageUrls(normalizeImageUrls(updatedDetails));
-        product.setStatus(updatedDetails.getStatus());
+        Product.ProductStatus targetStatus = updatedDetails.getStatus();
+        String oldReason = product.getRejectionReason();
+        if (targetStatus == Product.ProductStatus.REJECTED) {
+            String reason = updatedDetails.getRejectionReason() != null
+                    ? updatedDetails.getRejectionReason().trim()
+                    : "";
+            if (reason.isEmpty()) {
+                throw new RuntimeException("Lý do từ chối không được để trống");
+            }
+            product.setRejectionReason(reason);
+        } else if (targetStatus == Product.ProductStatus.ACTIVE || targetStatus == Product.ProductStatus.PENDING) {
+            product.setRejectionReason(null);
+        }
+        product.setStatus(targetStatus);
         product.setStockQuantity(updatedDetails.getStockQuantity());
         Product saved = productRepository.save(product);
         if (saved.getStatus() == Product.ProductStatus.ACTIVE && oldStatus != Product.ProductStatus.ACTIVE) {
             notificationService.notifyManagersAndAdmins(
                     "Sản phẩm đã duyệt",
                     "Sách '" + saved.getName() + "' đã được duyệt và hoạt động (ACTIVE).",
+                    Notification.NotificationType.SYSTEM,
+                    "products",
+                    saved.getId()
+            );
+        } else if (saved.getStatus() == Product.ProductStatus.REJECTED
+                && (oldStatus != Product.ProductStatus.REJECTED || !java.util.Objects.equals(oldReason, saved.getRejectionReason()))) {
+            notificationService.notifyManagersAndAdmins(
+                    "Sản phẩm bị từ chối",
+                    "Sách '" + saved.getName() + "' đã bị từ chối. Lý do: " + saved.getRejectionReason(),
                     Notification.NotificationType.SYSTEM,
                     "products",
                     saved.getId()

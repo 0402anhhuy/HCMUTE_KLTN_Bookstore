@@ -158,6 +158,9 @@ public class Product {
     @Column(nullable = false)
     private ProductStatus status;
 
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
