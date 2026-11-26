@@ -351,7 +351,7 @@ const ProductDetail = () => {
                                     className="qty-picker-btn"
                                     aria-label="Giảm số lượng"
                                 >
-                                    -
+                                    <span>-</span>
                                 </button>
                                 <input
                                     type="number"
@@ -381,7 +381,7 @@ const ProductDetail = () => {
                                     disabled={qty >= product.stockQuantity}
                                     aria-label="Tăng số lượng"
                                 >
-                                    +
+                                    <span>+</span>
                                 </button>
                             </div>
                         </div>
