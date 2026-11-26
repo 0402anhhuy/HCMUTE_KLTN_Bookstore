@@ -920,19 +920,46 @@
 /* BookCard Price & Flash Progress */
 .book-card-price-group {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
     margin-bottom: 6px;
-    min-height: 1.6rem;
-    flex-wrap: wrap;
+    min-height: 2.3rem;
     min-width: 0;
     max-width: 100%;
+}
+
+.book-card-original-price-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.2;
 }
 
 .book-card-original-price {
     font-size: 0.78rem;
     color: #9ca3af;
     text-decoration: line-through;
+    font-variant-numeric: tabular-nums;
+}
+
+.book-card-original-price-placeholder {
+    height: 1rem;
+}
+
+.book-card-discount-rate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fee2e2;
+    color: #dc2626;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+    white-space: nowrap;
 }
 
 .book-card-progress-box {
