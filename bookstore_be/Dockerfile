@@ -1,8 +1,10 @@
 # Build stage
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
-COPY mvnw .
-COPY .mvn .mvn
+
+# Route Maven Central through Google's GCS mirror first to avoid 429 rate limits on Render shared IPs
+COPY settings-docker.xml /root/.m2/settings.xml
+
 COPY pom.xml .
 COPY src src
 
@@ -11,12 +13,11 @@ RUN if [ ! -f src/main/resources/application.properties ]; then \
       cp src/main/resources/application.properties.example src/main/resources/application.properties; \
     fi
 
-RUN chmod +x ./mvnw
-RUN ./mvnw package -DskipTests
+RUN mvn -s /root/.m2/settings.xml package -DskipTests -B -Dmaven.artifact.threads=1
 
 # Run stage
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=65.0", "-XX:+UseSerialGC", "-Xss512k", "-jar", "app.jar"]

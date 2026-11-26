@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
+import { prepareEvidenceFileForUpload, validateEvidenceFile } from "./returnUpload";
 
 export const useOrderHistory = () => {
     const { user, showToast, reloadUserProfile } = useApp();
@@ -63,9 +64,14 @@ export const useOrderHistory = () => {
     };
 
     useEffect(() => {
-        if (user) {
-            fetchOrders();
-        }
+        if (!user) return;
+        let active = true;
+        Promise.resolve().then(() => {
+            if (active) fetchOrders();
+        });
+        return () => {
+            active = false;
+        };
     }, [user]);
 
     useEffect(() => {
@@ -79,18 +85,17 @@ export const useOrderHistory = () => {
                     );
                     setOrders(fetchedOrders);
 
-                    const itemPromises = fetchedOrders.map((o) =>
-                        api.get(`/orders/${o.id}`).then((res) => ({
-                            id: o.id,
-                            items: res.data.items,
-                        })),
-                    );
-                    const itemsResponses = await Promise.all(itemPromises);
-                    const newItemsMap = {};
-                    itemsResponses.forEach((res) => {
-                        newItemsMap[res.id] = res.items;
-                    });
-                    setOrderItems(newItemsMap);
+                    if (orderId) {
+                        const detailRes = await api
+                            .get(`/orders/${orderId}`)
+                            .catch(() => null);
+                        if (detailRes?.data?.items) {
+                            setOrderItems((prev) => ({
+                                ...prev,
+                                [orderId]: detailRes.data.items,
+                            }));
+                        }
+                    }
 
                     if (
                         selectedOrderDetail &&
@@ -153,14 +158,23 @@ export const useOrderHistory = () => {
     };
 
     const handleEvidenceUpload = async (e) => {
-        const file = e.target.files[0];
+        const input = e.target;
+        const file = input.files?.[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append("file", file);
+        const validation = validateEvidenceFile(file);
+        if (!validation.valid) {
+            showToast?.(validation.error, "error");
+            input.value = "";
+            return;
+        }
 
         setUploadingImage(true);
         try {
+            const fileToUpload = await prepareEvidenceFileForUpload(file);
+            const formData = new FormData();
+            formData.append("file", fileToUpload);
+
             const response = await api.post("/upload", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
@@ -172,11 +186,16 @@ export const useOrderHistory = () => {
         } catch (err) {
             console.error(err);
             showToast?.(
-                err.response?.data?.error || "Lỗi khi tải ảnh minh chứng!",
+                err.response?.data?.error ||
+                    err.response?.data?.message ||
+                    "Lỗi khi tải ảnh minh chứng!",
                 "error",
             );
         } finally {
             setUploadingImage(false);
+            if (input) {
+                input.value = "";
+            }
         }
     };
 

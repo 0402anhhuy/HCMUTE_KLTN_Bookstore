@@ -1,7 +1,6 @@
 package com.kltn.bookstore_be.common;
 
 import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,12 +27,11 @@ public class CloudinaryService {
         if (cloudinary == null) {
             throw new IllegalStateException("Cloudinary chưa được cấu hình (thiếu cloud-name trong application.properties).");
         }
-        HashMap params = new HashMap<>(ObjectUtils.asMap(
-                "folder", folderName,
-                "use_filename", true,
-                "unique_filename", false,
-                "resource_type", "auto"
-        ));
+        Map<String, Object> params = new HashMap<>();
+        params.put("folder", folderName);
+        params.put("use_filename", true);
+        params.put("unique_filename", false);
+        params.put("resource_type", "auto");
         if (customFilename != null && !customFilename.isBlank()) {
             params.put("public_id", customFilename);
         }

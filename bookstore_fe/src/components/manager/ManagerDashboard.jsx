@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useApp } from '../../context/AppContext';
@@ -31,7 +31,6 @@ const ManagerDashboard = () => {
   const { 
     user, 
     logoutUser, 
-    showToast, 
     notifications, 
     unreadCount, 
     markNotificationRead,
@@ -41,20 +40,21 @@ const ManagerDashboard = () => {
   const [searchParams] = useSearchParams();
 
   // Tab, Sidebar & Notification State
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  // Set active tab based on query param
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
+  const tabParam = searchParams.get('tab');
+  const [prevTabParam, setPrevTabParam] = useState(tabParam);
+  const [activeTab, setActiveTab] = useState(() => tabParam || 'dashboard');
+  if (tabParam !== prevTabParam) {
+    setPrevTabParam(tabParam);
     if (tabParam) {
       setActiveTab(tabParam);
     }
-  }, [searchParams]);
+  }
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Loading & Data State
   const [loading, setLoading] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -62,97 +62,96 @@ const ManagerDashboard = () => {
   const [stockMovements, setStockMovements] = useState([]);
   const [shippers, setShippers] = useState([]);
 
-  // Load all data on mount
-  useEffect(() => {
-    if (user && (user.role === 'MANAGER' || user.role === 'ADMIN')) {
-      loadData();
-    }
-  }, [user]);
-
-  const loadData = async () => {
-    const isInitial = products.length === 0 && orders.length === 0;
-    if (isInitial) {
+  const loadData = useCallback(async () => {
+    if (!hasLoadedOnceRef.current) {
       setLoading(true);
     }
     try {
-      // 1. Fetch categories
-      try {
-        const catRes = await api.get('/categories');
-        setCategories(catRes.data || []);
-      } catch (err) {
-        console.error('Error fetching categories', err);
-      }
+      const [
+        catRes,
+        activeRes,
+        pendingRes,
+        inactiveRes,
+        rejectedRes,
+        orderRes,
+        reviewRes,
+        movementRes,
+        shipperRes
+      ] = await Promise.all([
+        api.get('/categories').catch(() => ({ data: [] })),
+        api.get('/products', { params: { size: 1000 } }).catch(() => ({ data: [] })),
+        api.get('/products/status/PENDING').catch(() => ({ data: [] })),
+        api.get('/products/status/INACTIVE').catch(() => ({ data: [] })),
+        api.get('/products/status/REJECTED').catch(() => ({ data: [] })),
+        api.get('/orders/all').catch(() => ({ data: [] })),
+        api.get('/reviews').catch(() => ({ data: [] })),
+        api.get('/products/stock-movements').catch(() => ({ data: [] })),
+        api.get('/shippers').catch(() => ({ data: [] }))
+      ]);
 
-      // 2. Fetch products
-      try {
-        const [activeRes, pendingRes, inactiveRes, rejectedRes] = await Promise.all([
-          api.get('/products', { params: { size: 1000 } }),
-          api.get('/products/status/PENDING').catch(() => ({ data: [] })),
-          api.get('/products/status/INACTIVE').catch(() => ({ data: [] })),
-          api.get('/products/status/REJECTED').catch(() => ({ data: [] }))
-        ]);
+      setCategories(catRes.data || []);
 
-        const activeList = activeRes.data?.content || (Array.isArray(activeRes.data) ? activeRes.data : []);
-        const pendingList = Array.isArray(pendingRes.data) ? pendingRes.data : [];
-        const inactiveList = Array.isArray(inactiveRes.data) ? inactiveRes.data : [];
-        const rejectedList = Array.isArray(rejectedRes.data) ? rejectedRes.data : [];
+      const activeList = activeRes.data?.content || (Array.isArray(activeRes.data) ? activeRes.data : []);
+      const pendingList = Array.isArray(pendingRes.data) ? pendingRes.data : [];
+      const inactiveList = Array.isArray(inactiveRes.data) ? inactiveRes.data : [];
+      const rejectedList = Array.isArray(rejectedRes.data) ? rejectedRes.data : [];
 
-        const productMap = new Map();
-        [...activeList, ...pendingList, ...inactiveList, ...rejectedList].forEach((p) => {
-          if (p && p.id) productMap.set(p.id, p);
-        });
-        setProducts(Array.from(productMap.values()));
-      } catch (err) {
-        console.error('Error fetching products', err);
-      }
+      const productMap = new Map();
+      [...activeList, ...pendingList, ...inactiveList, ...rejectedList].forEach((p) => {
+        if (p && p.id) productMap.set(p.id, p);
+      });
+      setProducts(Array.from(productMap.values()));
 
-      // 3. Fetch orders
-      try {
-        const orderRes = await api.get('/orders/all');
-        const sortedOrders = (orderRes.data || []).sort((a, b) => b.id - a.id);
-        setOrders(sortedOrders);
-      } catch (err) {
-        console.error('Error fetching orders', err);
-      }
+      const sortedOrders = (orderRes.data || []).sort((a, b) => b.id - a.id);
+      setOrders(sortedOrders);
+      setReviews(reviewRes.data || []);
 
-      // 4. Fetch reviews
-      try {
-        const reviewRes = await api.get('/reviews');
-        setReviews(reviewRes.data || []);
-      } catch (err) {
-        console.error('Error fetching reviews', err);
-      }
-
-      // 5. Fetch real stock movements
-      try {
-        const movementRes = await api.get('/products/stock-movements');
-        const mappedMovements = (movementRes.data || []).map(m => ({
-          id: `GD${m.id}`,
-          date: new Date(m.createdAt).toLocaleDateString('vi-VN'),
-          type: m.movementType,
-          productName: m.product ? m.product.name : 'Sản phẩm',
-          quantity: m.quantity,
-          managerName: m.manager ? m.manager.fullName : 'Hệ thống'
-        }));
-        setStockMovements(mappedMovements);
-      } catch (err) {
-        console.error('Error fetching stock movements', err);
-      }
-
-      // 6. Fetch shippers
-      try {
-        const shipperRes = await api.get('/shippers');
-        setShippers(shipperRes.data || []);
-      } catch (err) {
-        console.error('Error fetching shippers', err);
-      }
+      const mappedMovements = (movementRes.data || []).map(m => ({
+        id: `GD${m.id}`,
+        date: new Date(m.createdAt).toLocaleDateString('vi-VN'),
+        type: m.movementType,
+        productName: m.product ? m.product.name : 'Sản phẩm',
+        quantity: m.quantity,
+        managerName: m.manager ? m.manager.fullName : 'Hệ thống'
+      }));
+      setStockMovements(mappedMovements);
+      setShippers(shipperRes.data || []);
 
     } catch (error) {
       console.error('Error loading manager dashboard data', error);
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load all data on mount
+  useEffect(() => {
+    if (!user?.id || (user.role !== 'MANAGER' && user.role !== 'ADMIN')) return;
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) loadData();
+    });
+    return () => {
+      active = false;
+    };
+  }, [user?.id, user?.role, loadData]);
+
+  useEffect(() => {
+    if (!user?.id || (user.role !== 'MANAGER' && user.role !== 'ADMIN')) return;
+    const handleProductUpdated = () => loadData();
+    const handleOrderUpdated = () => {
+      if (activeTab !== 'orders') {
+        loadData();
+      }
+    };
+    window.addEventListener('product-updated', handleProductUpdated);
+    window.addEventListener('order-updated', handleOrderUpdated);
+    return () => {
+      window.removeEventListener('product-updated', handleProductUpdated);
+      window.removeEventListener('order-updated', handleOrderUpdated);
+    };
+  }, [user?.id, user?.role, activeTab, loadData]);
 
   const handleNotificationClick = (n) => {
     if (!n.read) {

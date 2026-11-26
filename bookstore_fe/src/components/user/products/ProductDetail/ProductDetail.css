@@ -38,7 +38,7 @@ body {
 }
 
 .product-detail-breadcrumb-wrapper .common-breadcrumb-nav {
-    padding: 0;
+    padding: 10px 0 0 0;
     margin: 0 0 6px 0;
 }
 
@@ -801,6 +801,127 @@ body {
 .product-detail-reviews-empty {
     font-size: 0.9rem;
     color: #64748b;
+}
+
+.product-detail-review-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.product-detail-review-filter-chip {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.product-detail-review-filter-chip:hover {
+    border-color: #059669;
+    color: #059669;
+}
+
+.product-detail-review-filter-chip.active {
+    background: #ecfdf5;
+    border-color: #059669;
+    color: #059669;
+}
+
+.product-detail-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.product-detail-review-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.product-detail-review-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-detail-reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.product-detail-reviewer-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.product-detail-reviewer-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.product-detail-review-date {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.product-detail-review-stars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.product-detail-review-comment {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #334155;
+    white-space: pre-line;
+}
+
+.product-detail-review-reply-box {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #ecfdf5;
+    border-left: 3px solid #059669;
+}
+
+.product-detail-review-reply-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #059669;
+    margin-bottom: 3px;
+}
+
+.product-detail-review-reply-text {
+    font-size: 0.85rem;
+    color: #1e293b;
+    line-height: 1.45;
 }
 
 /* ================= SIMILAR PRODUCTS ================= */

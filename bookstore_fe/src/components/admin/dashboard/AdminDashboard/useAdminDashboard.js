@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 export const useAdminDashboard = () => {
-    const { user, loading: appLoading, logoutUser, showToast } = useApp();
+    const { user, logoutUser, showToast } = useApp();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -41,90 +41,66 @@ export const useAdminDashboard = () => {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            try {
-                const userRes = await userService.getTotalUsers();
-                const usersRes = await userService.getUsers();
-                setUsers(usersRes.data || []);
-                setTotalUsers(userRes.data || 0);
-            } catch (err) {
-                console.error("Error loading total users", err);
-            }
+            const [
+                userRes,
+                usersRes,
+                catRes,
+                prodRes,
+                pendingRes,
+                inactiveRes,
+                rejectedRes,
+                orderRes,
+                couponRes,
+                logRes,
+                shipperRes,
+            ] = await Promise.all([
+                userService.getTotalUsers().catch(() => ({ data: 0 })),
+                userService.getUsers().catch(() => ({ data: [] })),
+                categoryService.getCategories().catch(() => ({ data: [] })),
+                productService.getProducts({ size: 1000 }).catch(() => ({ data: [] })),
+                productService.getPendingProducts().catch(() => ({ data: [] })),
+                productService
+                    .getProductsByStatus("INACTIVE")
+                    .catch(() => ({ data: [] })),
+                productService.getRejectedProducts().catch(() => ({ data: [] })),
+                orderService.getOrders().catch(() => ({ data: [] })),
+                couponService.getCoupons().catch(() => ({ data: [] })),
+                auditLogService.getAuditLogs().catch(() => ({ data: [] })),
+                shipperService.getShippers().catch(() => ({ data: [] })),
+            ]);
 
-            try {
-                const catRes = await categoryService.getCategories();
-                setCategories(catRes.data || []);
-            } catch (err) {
-                console.error("Error loading categories", err);
-            }
+            setUsers(usersRes.data || []);
+            setTotalUsers(userRes.data || 0);
+            setCategories(catRes.data || []);
 
-            try {
-                const [prodRes, pendingRes, inactiveRes, rejectedRes] =
-                    await Promise.all([
-                        productService.getProducts({ size: 1000 }),
-                        productService
-                            .getPendingProducts()
-                            .catch(() => ({ data: [] })),
-                        productService
-                            .getProductsByStatus("INACTIVE")
-                            .catch(() => ({ data: [] })),
-                        productService
-                            .getRejectedProducts()
-                            .catch(() => ({ data: [] })),
-                    ]);
-                const activeList =
-                    prodRes.data?.content ||
-                    (Array.isArray(prodRes.data) ? prodRes.data : []);
-                const pendingList = Array.isArray(pendingRes.data)
-                    ? pendingRes.data
-                    : [];
-                const inactiveList = Array.isArray(inactiveRes.data)
-                    ? inactiveRes.data
-                    : [];
-                const rejectedList = Array.isArray(rejectedRes.data)
-                    ? rejectedRes.data
-                    : [];
+            const activeList =
+                prodRes.data?.content ||
+                (Array.isArray(prodRes.data) ? prodRes.data : []);
+            const pendingList = Array.isArray(pendingRes.data)
+                ? pendingRes.data
+                : [];
+            const inactiveList = Array.isArray(inactiveRes.data)
+                ? inactiveRes.data
+                : [];
+            const rejectedList = Array.isArray(rejectedRes.data)
+                ? rejectedRes.data
+                : [];
 
-                const productMap = new Map();
-                [
-                    ...activeList,
-                    ...pendingList,
-                    ...inactiveList,
-                    ...rejectedList,
-                ].forEach((p) => {
-                    if (p && p.id) productMap.set(p.id, p);
-                });
-                setProducts(Array.from(productMap.values()));
-            } catch (err) {
-                console.error("Error loading products", err);
-            }
+            const productMap = new Map();
+            [
+                ...activeList,
+                ...pendingList,
+                ...inactiveList,
+                ...rejectedList,
+            ].forEach((p) => {
+                if (p && p.id) productMap.set(p.id, p);
+            });
+            setProducts(Array.from(productMap.values()));
 
-            try {
-                const orderRes = await orderService.getOrders();
-                setOrders(orderRes.data || []);
-            } catch (err) {
-                console.error("Error loading orders", err);
-            }
-
-            try {
-                const couponRes = await couponService.getCoupons();
-                setCoupons(couponRes.data || []);
-            } catch (err) {
-                console.error("Error loading coupons", err);
-            }
-
-            try {
-                const logRes = await auditLogService.getAuditLogs();
-                setAuditLogs(logRes.data || []);
-            } catch (err) {
-                console.error("Error loading audit logs", err);
-            }
-
-            try {
-                const shipperRes = await shipperService.getShippers();
-                setShippers(shipperRes.data || []);
-            } catch (err) {
-                console.error("Error loading shippers", err);
-            }
+            setOrders(orderRes.data || []);
+            setCoupons(couponRes.data || []);
+            setAuditLogs(logRes.data || []);
+            setShippers(shipperRes.data || []);
         } catch (error) {
             console.error("Error loading admin dashboard data", error);
         } finally {
@@ -139,7 +115,25 @@ export const useAdminDashboard = () => {
             }, 0);
             return () => window.clearTimeout(timer);
         }
-    }, [user, loadData]);
+    }, [user?.id, user?.role, loadData]);
+
+    useEffect(() => {
+        if (user?.role !== "ADMIN") return;
+        let timer;
+        const handleRealtimeRefresh = () => {
+            if (timer) window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+                loadData();
+            }, 250);
+        };
+        window.addEventListener("order-updated", handleRealtimeRefresh);
+        window.addEventListener("product-updated", handleRealtimeRefresh);
+        return () => {
+            if (timer) window.clearTimeout(timer);
+            window.removeEventListener("order-updated", handleRealtimeRefresh);
+            window.removeEventListener("product-updated", handleRealtimeRefresh);
+        };
+    }, [user?.role, loadData]);
 
     const handleLogout = () => {
         logoutUser();

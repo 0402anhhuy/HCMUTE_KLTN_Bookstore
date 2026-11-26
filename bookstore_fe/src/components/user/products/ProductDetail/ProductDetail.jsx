@@ -32,6 +32,11 @@ import {
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
 import { useProductDetail } from "./useProductDetail";
 import ProductDetailSkeleton from "./ProductDetailSkeleton";
+import {
+    filterReviewsByRating,
+    formatReviewDate,
+    getRatingCounts,
+} from "./productReviews";
 import "./ProductDetail.css";
 
 const ProductDetail = () => {
@@ -44,6 +49,8 @@ const ProductDetail = () => {
         loading,
         reviews,
         averageRating,
+        ratingFilter,
+        setRatingFilter,
         activeImageIdx,
         setActiveImageIdx,
         productImages,
@@ -574,16 +581,105 @@ const ProductDetail = () => {
                         </span>
                     </div>
 
-                    <div className="product-detail-reviews-empty">
-                        {reviews.length === 0 ? (
-                            "Chưa có đánh giá nào cho sản phẩm này."
-                        ) : (
-                            <span>
-                                Đã có {reviews.length} nhận xét từ độc giả.
-                            </span>
-                        )}
-                    </div>
+                    {reviews.length === 0 ? (
+                        <div className="product-detail-reviews-empty">
+                            Chưa có đánh giá nào cho sản phẩm này.
+                        </div>
+                    ) : (
+                        <div className="product-detail-review-filter-bar">
+                            {(() => {
+                                const counts = getRatingCounts(reviews);
+                                const options = [
+                                    { label: "Tất cả", count: reviews.length },
+                                    ...[5, 4, 3, 2, 1].map((s) => ({
+                                        label: `${s} sao`,
+                                        count: counts[s],
+                                    })),
+                                ];
+                                return options.map((opt) => (
+                                    <button
+                                        key={opt.label}
+                                        type="button"
+                                        onClick={() => setRatingFilter(opt.label)}
+                                        className={`product-detail-review-filter-chip ${
+                                            ratingFilter === opt.label ? "active" : ""
+                                        }`}
+                                    >
+                                        {opt.label} ({opt.count})
+                                    </button>
+                                ));
+                            })()}
+                        </div>
+                    )}
                 </div>
+
+                {reviews.length > 0 && (() => {
+                    const visibleReviews = filterReviewsByRating(reviews, ratingFilter);
+                    if (visibleReviews.length === 0) {
+                        return (
+                            <div className="product-detail-reviews-empty" style={{ marginTop: "16px" }}>
+                                Chưa có đánh giá nào ở mức {ratingFilter}.
+                            </div>
+                        );
+                    }
+                    return (
+                        <div className="product-detail-reviews-list">
+                            {visibleReviews.map((rev) => {
+                                const reviewerName = rev.user?.fullName || "Độc giả BookStore";
+                                const initials = reviewerName.trim().charAt(0).toUpperCase() || "Đ";
+                                const dateLabel = formatReviewDate(rev.reviewedAt);
+                                return (
+                                    <div key={rev.id} className="product-detail-review-card">
+                                        <div className="product-detail-review-card-header">
+                                            <div className="product-detail-reviewer-info">
+                                                <div className="product-detail-reviewer-avatar">
+                                                    {initials}
+                                                </div>
+                                                <div>
+                                                    <div className="product-detail-reviewer-name">
+                                                        {reviewerName}
+                                                    </div>
+                                                    {dateLabel && (
+                                                        <div className="product-detail-review-date">
+                                                            {dateLabel}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="product-detail-review-stars">
+                                                {[1, 2, 3, 4, 5].map((s) => (
+                                                    <Star
+                                                        key={s}
+                                                        size={14}
+                                                        fill={(rev.rating || 0) >= s ? "#f59e0b" : "none"}
+                                                        stroke={(rev.rating || 0) >= s ? "none" : "#cbd5e1"}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {rev.comment && (
+                                            <p className="product-detail-review-comment">
+                                                {rev.comment}
+                                            </p>
+                                        )}
+
+                                        {rev.reply && (
+                                            <div className="product-detail-review-reply-box">
+                                                <div className="product-detail-review-reply-label">
+                                                    Phản hồi từ BookStore
+                                                </div>
+                                                <div className="product-detail-review-reply-text">
+                                                    {rev.reply}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    );
+                })()}
             </div>
 
             {/* Sản phẩm tương tự */}

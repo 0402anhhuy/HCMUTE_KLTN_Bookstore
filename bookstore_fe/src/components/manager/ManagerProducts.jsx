@@ -306,9 +306,19 @@ const ManagerProducts = ({ products = [], categories = [], loadData }) => {
     }
     if (product.status === 'REJECTED') {
       return (
-        <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-danger-light)', color: 'var(--mgr-danger)', border: '1px solid var(--mgr-danger-border)' }}>
-          Bị từ chối
-        </span>
+        <>
+          <span className="manager-badge" style={{ backgroundColor: 'var(--mgr-danger-light)', color: 'var(--mgr-danger)', border: '1px solid var(--mgr-danger-border)' }}>
+            Bị từ chối
+          </span>
+          {product.rejectionReason && (
+            <div
+              style={{ width: '100%', fontSize: '0.74rem', color: 'var(--mgr-danger)', lineHeight: 1.35 }}
+              title={product.rejectionReason}
+            >
+              Lý do: {product.rejectionReason}
+            </div>
+          )}
+        </>
       );
     }
     return (

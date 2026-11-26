@@ -6,11 +6,10 @@ import {
     SearchX,
     RotateCcw,
     Layers,
-    Tag,
     Building2,
     DollarSign,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useCatalog } from "./useCatalog";
 import {
     RecommendationSection,
@@ -22,11 +21,23 @@ import {
 import { buildCategoryBreadcrumbs } from "@/utils/categoryTree";
 import "./Catalog.css";
 
+const findCategoryAncestors = (nodes, targetId, path = []) => {
+    for (const n of nodes) {
+        if (String(n.id) === String(targetId)) return path;
+        if (n.children && n.children.length) {
+            const res = findCategoryAncestors(n.children, targetId, [
+                ...path,
+                String(n.id),
+            ]);
+            if (res) return res;
+        }
+    }
+    return null;
+};
+
 const Catalog = () => {
     const {
         keyword,
-        searchInput,
-        setSearchInput,
         categories,
         selectedCategory,
         setSelectedCategory,
@@ -38,14 +49,11 @@ const Catalog = () => {
         totalPages,
         loading,
         categoryTree,
-        handleSearch,
         handleClearFilters,
         openProductDetail,
         addToCart,
         formatPrice,
         getProductImage,
-        showMoreCategory,
-        setShowMoreCategory,
         availablePublishers,
         selectedPublishers,
         togglePublisher,
@@ -62,50 +70,29 @@ const Catalog = () => {
     // State đóng mở bộ lọc trên mobile
     const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
-    // Tự động mở rộng các danh mục cha khi chọn 1 danh mục con
-    useEffect(() => {
-        if (!selectedCategory || !categories.length) return;
-        const findAncestors = (nodes, targetId, path = []) => {
-            for (const n of nodes) {
-                if (String(n.id) === String(targetId)) return path;
-                if (n.children && n.children.length) {
-                    const res = findAncestors(n.children, targetId, [
-                        ...path,
-                        String(n.id),
-                    ]);
-                    if (res) return res;
-                }
-            }
-            return null;
-        };
-        const ancestorIds = findAncestors(categoryTree, selectedCategory);
-        if (ancestorIds && ancestorIds.length) {
-            setExpandedNodeIds((prev) => {
-                const updated = { ...prev };
-                ancestorIds.forEach((id) => {
-                    updated[id] = true;
-                });
-                return updated;
-            });
-        }
+    const autoExpandedIds = useMemo(() => {
+        if (!selectedCategory || !categories.length) return {};
+        const ancestorIds = findCategoryAncestors(categoryTree, selectedCategory);
+        if (!ancestorIds || !ancestorIds.length) return {};
+        const map = {};
+        ancestorIds.forEach((id) => {
+            map[id] = true;
+        });
+        return map;
     }, [selectedCategory, categoryTree, categories]);
+
+    const effectiveExpandedNodeIds = useMemo(
+        () => ({ ...autoExpandedIds, ...expandedNodeIds }),
+        [autoExpandedIds, expandedNodeIds],
+    );
 
     const toggleNodeExpand = (nodeId, e) => {
         e.stopPropagation();
         setExpandedNodeIds((prev) => ({
             ...prev,
-            [nodeId]: !prev[nodeId],
+            [nodeId]: !(prev[nodeId] ?? autoExpandedIds[nodeId]),
         }));
     };
-
-    // Lấy tên category đang chọn để hiển thị chip
-    const selectedCategoryNameDisplay = useMemo(() => {
-        if (!selectedCategory) return null;
-        return (
-            categories.find((c) => String(c.id) === String(selectedCategory))
-                ?.name || "Danh mục"
-        );
-    }, [selectedCategory, categories]);
 
     // Lấy danh sách nhãn khoảng giá đang chọn
     const selectedPriceLabels = useMemo(() => {
@@ -226,7 +213,7 @@ const Catalog = () => {
             const isSelected = String(selectedCategory) === String(node.id);
             const hasChildren =
                 Array.isArray(node.children) && node.children.length > 0;
-            const isExpanded = Boolean(expandedNodeIds[String(node.id)]);
+            const isExpanded = Boolean(effectiveExpandedNodeIds[String(node.id)]);
 
             return (
                 <div key={node.id} className="catalog-tree-node-wrapper">

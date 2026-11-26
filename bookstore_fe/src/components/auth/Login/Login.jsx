@@ -21,11 +21,14 @@ const Login = () => {
         showPassword,
         setShowPassword,
         loading,
+        resendLoading,
+        resendCooldown,
         message,
         error,
         resetStep,
         handleLoginSubmit,
         handleForgotSubmit,
+        handleResendForgotOtp,
         handleResetSubmit,
         handleVerifyOtpStep,
         switchView,
@@ -39,6 +42,13 @@ const Login = () => {
     const isActive2 = view === "reset" && resetStep === "otp";
 
     const isActive3 = view === "reset" && resetStep === "new_password";
+
+    const isResendDisabled = loading || resendLoading || resendCooldown > 0;
+    const resendLabel = resendLoading
+        ? "Đang gửi..."
+        : resendCooldown > 0
+          ? `Gửi lại (${resendCooldown}s)`
+          : "Gửi lại";
 
     return (
         <div className="auth-container animate-fade-in auth-page">
@@ -325,21 +335,24 @@ const Login = () => {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={handleForgotSubmit}
+                                        onClick={handleResendForgotOtp}
+                                        disabled={isResendDisabled}
                                         className="login-btn-resend-otp"
                                     >
-                                        Gửi lại
+                                        {resendLabel}
                                     </button>
                                 </div>
 
                                 <div className="login-resend-inline-box">
                                     Không nhận được?{" "}
-                                    <span
+                                    <button
+                                        type="button"
                                         className="login-resend-inline-link"
-                                        onClick={handleForgotSubmit}
+                                        disabled={isResendDisabled}
+                                        onClick={handleResendForgotOtp}
                                     >
-                                        Gửi lại
-                                    </span>
+                                        {resendLabel}
+                                    </button>
                                 </div>
 
                                 <div className="login-back-btn-row">

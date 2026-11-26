@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import {
-    ShieldAlert,
     User,
     MapPin,
     Heart,
@@ -39,6 +38,7 @@ const Profile = () => {
         loading,
         highlightFavorites,
         handleProfileSubmit,
+        handleResetForm,
         getInitials,
         activeTab,
         setActiveTab,
@@ -69,11 +69,6 @@ const Profile = () => {
             style: "currency",
             currency: "VND",
         }).format(amount || 0);
-    };
-
-    const handleResetForm = () => {
-        setFullName(user?.fullName || "");
-        setPhone(user?.phone || "");
     };
 
     return (

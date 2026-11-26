@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -7,7 +7,6 @@ import {
     Trash2,
     ArrowLeft,
     Ticket,
-    Gift,
     Truck,
     Info,
     X,
@@ -32,7 +31,6 @@ const Cart = () => {
         clearCart,
         user,
         couponCode,
-        setCouponCode,
         usePoints,
         setUsePoints,
         selectedItemIds,
@@ -58,6 +56,7 @@ const Cart = () => {
         couponSearchInput,
         setCouponSearchInput,
         handleApplyCouponFromModal,
+        getCartItemPricing,
     } = useCart();
 
     const [showMoreDiscounts, setShowMoreDiscounts] = useState(false);
@@ -288,9 +287,8 @@ const Cart = () => {
                             const stockQty = prod.stockQuantity ?? 100;
                             const isOutOfStock = stockQty === 0;
                             const price = Number(prod.price) || 0;
-                            const originalPrice =
-                                prod.originalPrice ||
-                                Math.round(price * 1.25);
+                            const { discountPercent, originalPrice } =
+                                getCartItemPricing(prod);
                             const imgUrl =
                                 prod.imageUrls?.[0] || prod.imageUrl;
                             const prodId = prod.id;
@@ -335,9 +333,14 @@ const Cart = () => {
                                             <span className="current-price">
                                                 {formatPrice(price)}
                                             </span>
-                                            <span className="old-price">
-                                                {formatPrice(originalPrice)}
-                                            </span>
+                                            {originalPrice &&
+                                                discountPercent > 0 && (
+                                                    <span className="old-price">
+                                                        {formatPrice(
+                                                            originalPrice,
+                                                        )}
+                                                    </span>
+                                                )}
                                         </div>
                                         {isOutOfStock && (
                                             <div className="cart-product-warning">

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import { Fragment, useState, useRef, useEffect, useMemo } from "react";
 import { Search, ChevronDown, ChevronRight, X, Check, Filter } from "lucide-react";
 import { buildCategoryTree, flattenCategoryTree } from "@/utils/categoryTree";
 import "./CategorySelector.css";
@@ -8,7 +8,6 @@ const CategorySelector = ({
     value = "",
     onChange,
     placeholder = "Tất cả danh mục",
-    allowSelectParent = true,
     align = "left",
     className = "",
     style = {},
@@ -48,46 +47,58 @@ const CategorySelector = ({
         return selectedCategory.name;
     }, [selectedCategory, placeholder]);
 
-    // On open: set initial active columns matching current selection lineage
-    useEffect(() => {
+    const [computedAlign, setComputedAlign] = useState(align);
+
+    const handleToggleOpen = () => {
         if (isOpen) {
-            setSearchQuery("");
-            if (selectedCategory) {
-                const findLineage = (node, targetId, path = []) => {
-                    if (String(node.id) === String(targetId)) return [...path, node];
-                    if (node.children) {
-                        for (const child of node.children) {
-                            const found = findLineage(child, targetId, [...path, node]);
-                            if (found) return found;
-                        }
+            setIsOpen(false);
+            return;
+        }
+        setSearchQuery("");
+        if (selectedCategory) {
+            const findLineage = (node, targetId, path = []) => {
+                if (String(node.id) === String(targetId)) return [...path, node];
+                if (node.children) {
+                    for (const child of node.children) {
+                        const found = findLineage(child, targetId, [...path, node]);
+                        if (found) return found;
                     }
-                    return null;
-                };
-
-                let lineage = null;
-                for (const root of categoryTree) {
-                    lineage = findLineage(root, value);
-                    if (lineage) break;
                 }
+                return null;
+            };
 
-                if (lineage && lineage.length > 0) {
-                    setActiveL1(lineage[0] || null);
-                    setActiveL2(lineage[1] || null);
-                    setActiveL3(lineage[2] || null);
-                    return;
-                }
+            let lineage = null;
+            for (const root of categoryTree) {
+                lineage = findLineage(root, value);
+                if (lineage) break;
             }
 
-            if (categoryTree.length > 0) {
+            if (lineage && lineage.length > 0) {
+                setActiveL1(lineage[0] || null);
+                setActiveL2(lineage[1] || null);
+                setActiveL3(lineage[2] || null);
+            } else if (categoryTree.length > 0) {
                 const l1 = categoryTree[0];
                 const l2 = l1.children?.[0] || null;
-                const l3 = l2?.children?.[0] || null;
                 setActiveL1(l1);
                 setActiveL2(l2);
-                setActiveL3(l3);
+                setActiveL3(l2?.children?.[0] || null);
             }
+        } else if (categoryTree.length > 0) {
+            const l1 = categoryTree[0];
+            const l2 = l1.children?.[0] || null;
+            setActiveL1(l1);
+            setActiveL2(l2);
+            setActiveL3(l2?.children?.[0] || null);
         }
-    }, [isOpen, selectedCategory, value, categoryTree]);
+
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceOnRight = window.innerWidth - rect.left;
+            setComputedAlign(align === "right" || spaceOnRight < 620 ? "right" : "left");
+        }
+        setIsOpen(true);
+    };
 
     // Close on click outside
     useEffect(() => {
@@ -125,21 +136,6 @@ const CategorySelector = ({
         onChange("");
         setIsOpen(false);
     };
-
-    const [computedAlign, setComputedAlign] = useState(align);
-
-    // Smart positioning: Auto-detect viewport boundary on open
-    useEffect(() => {
-        if (isOpen && containerRef.current) {
-            const rect = containerRef.current.getBoundingClientRect();
-            const spaceOnRight = window.innerWidth - rect.left;
-            if (align === "right" || spaceOnRight < 620) {
-                setComputedAlign("right");
-            } else {
-                setComputedAlign("left");
-            }
-        }
-    }, [isOpen, align]);
 
     const hasL4Children = useMemo(() => {
         return Boolean(activeL3 && activeL3.children && activeL3.children.length > 0);
@@ -202,7 +198,7 @@ const CategorySelector = ({
             <div
                 className={`sleek-cat-trigger ${isOpen ? "open" : ""} ${selectedCategory ? "has-value" : ""
                     }`}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggleOpen}
             >
                 <div className="sleek-cat-trigger-left">
                     <Filter size={15} className="sleek-cat-trigger-icon" />
@@ -272,7 +268,7 @@ const CategorySelector = ({
                                         >
                                             <div className="sleek-cat-search-item-path">
                                                 {pathParts.map((part, idx) => (
-                                                    <React.Fragment key={idx}>
+                                                    <Fragment key={idx}>
                                                         {idx > 0 && (
                                                             <span className="sleek-cat-sep">
                                                                 ›
@@ -288,7 +284,7 @@ const CategorySelector = ({
                                                         >
                                                             {part}
                                                         </span>
-                                                    </React.Fragment>
+                                                    </Fragment>
                                                 ))}
                                             </div>
                                             {isSelected && (

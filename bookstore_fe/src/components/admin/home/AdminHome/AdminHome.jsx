@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     Users,
     Package,
@@ -17,12 +17,10 @@ import { exportToCSV } from "@/utils/exportUtils";
 import "./AdminHome.css";
 
 export const AdminHome = ({
-    user,
     users = [],
     userCount = 0,
     products = [],
     orders = [],
-    auditLogs = [],
     setActiveTab = () => {},
     showToast,
 }) => {
@@ -162,7 +160,7 @@ export const AdminHome = ({
                 d.getMonth() + 1 === Number(selectedMonth)
             ) {
                 const day = d.getDate();
-                let weekIdx = 0;
+                let weekIdx;
                 if (day <= 7) weekIdx = 0;
                 else if (day <= 14) weekIdx = 1;
                 else if (day <= 21) weekIdx = 2;

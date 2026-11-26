@@ -20,7 +20,6 @@ import "./AdminCoupons.css";
 
 const AdminCoupons = ({
     coupons = [],
-    promotions = [],
     loadData,
     showToast,
 }) => {

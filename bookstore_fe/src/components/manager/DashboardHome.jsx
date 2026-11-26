@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { 
   Wallet, 
   ShoppingBag, 
@@ -7,13 +7,12 @@ import {
   Calendar, 
   Download, 
   CheckCircle2,
-  CheckCircle,
-  Clock
+  CheckCircle
 } from 'lucide-react';
 import { exportToCSV } from '../../utils/exportUtils';
 import { useApp } from '../../context/AppContext';
 
-const DashboardHome = ({ user, products = [], orders = [] }) => {
+const DashboardHome = ({ orders = [] }) => {
   const { showToast } = useApp();
 
   // 1. Calculations for stats (Real Data)

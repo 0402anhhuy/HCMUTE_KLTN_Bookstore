@@ -21,15 +21,20 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class VNPayUtil {
 
+    private static final Pattern IPV4_PATTERN = Pattern.compile(
+            "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$");
+
     public static String hmacSHA512(final String key, final String data) {
+        if (key == null || data == null) {
+            return "";
+        }
         try {
-            if (key == null || data == null) {
-                throw new NullPointerException();
-            }
             final Mac hmac512 = Mac.getInstance("HmacSHA512");
             byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);
             final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
@@ -41,22 +46,78 @@ public class VNPayUtil {
                 sb.append(String.format("%02x", b & 0xff));
             }
             return sb.toString();
-        } catch (Exception ex) {
+        } catch (GeneralSecurityException ex) {
             return "";
         }
     }
     
-    public static String getIpAddress(jakarta.servlet.http.HttpServletRequest request) {
-        String ipAddress;
-        try {
-            ipAddress = request.getHeader("X-FORWARDED-FOR");
-            if (ipAddress == null) {
-                ipAddress = request.getRemoteAddr();
-            }
-        } catch (Exception e) {
-            ipAddress = "127.0.0.1";
+    /**
+     * Trims a required VNPay configuration property and fails fast if null or blank.
+     */
+    public static String requireNonBlankConfig(String value, String propertyName) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("Thiếu cấu hình VNPay bắt buộc: " + propertyName);
         }
-        return ipAddress;
+        return value.trim();
+    }
+
+    /**
+     * Extract a single valid IPv4 address for VNPay vnp_IpAddr, handling reverse-proxy
+     * comma-separated headers, optional IPv4 ports, and IPv6/IPv6-mapped addresses.
+     */
+    public static String getIpAddress(jakarta.servlet.http.HttpServletRequest request) {
+        if (request == null) {
+            return "127.0.0.1";
+        }
+        try {
+            String[] candidates = {
+                    request.getHeader("X-FORWARDED-FOR"),
+                    request.getHeader("X-Real-IP"),
+                    request.getRemoteAddr()
+            };
+            for (String candidate : candidates) {
+                String ipv4 = extractValidIpv4(candidate);
+                if (ipv4 != null) {
+                    return ipv4;
+                }
+            }
+        } catch (Exception ignored) {
+            // Fallback below when servlet headers cannot be read
+        }
+        return "127.0.0.1";
+    }
+
+    private static String extractValidIpv4(String rawHeader) {
+        if (rawHeader == null || rawHeader.isBlank()) {
+            return null;
+        }
+        for (String part : rawHeader.split(",")) {
+            String ip = normalizeIpv4Candidate(part.trim());
+            if (ip != null && IPV4_PATTERN.matcher(ip).matches()) {
+                return ip;
+            }
+        }
+        return null;
+    }
+
+    private static String normalizeIpv4Candidate(String candidate) {
+        if (candidate.isEmpty() || "unknown".equalsIgnoreCase(candidate)) {
+            return null;
+        }
+        String normalized = candidate;
+        if (normalized.regionMatches(true, 0, "::ffff:", 0, 7)) {
+            normalized = normalized.substring(7);
+        } else if (normalized.regionMatches(true, 0, "0:0:0:0:0:ffff:", 0, 15)) {
+            normalized = normalized.substring(15);
+        }
+        int colonIdx = normalized.indexOf(':');
+        if (colonIdx > 0 && normalized.indexOf(':', colonIdx + 1) < 0) {
+            String portPart = normalized.substring(colonIdx + 1);
+            if (!portPart.isEmpty() && portPart.chars().allMatch(Character::isDigit)) {
+                normalized = normalized.substring(0, colonIdx);
+            }
+        }
+        return normalized;
     }
 
     public static String hashAllFields(Map<String, String> fields, String secretKey) {

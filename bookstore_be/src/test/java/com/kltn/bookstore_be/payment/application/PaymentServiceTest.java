@@ -162,5 +162,51 @@ class PaymentServiceTest {
             verify(orderRepository).save(sampleOrder);
             verify(auditLogService).log(eq(sampleUser), eq("PAYMENT_FAILED"), anyString());
         }
+
+        @Test
+        @DisplayName("HashSecret cấu hình có khoảng trắng thừa - vẫn xác thực chữ ký callback thành công")
+        void processCallback_hashSecretWithWhitespace_verifiesSignature() {
+            ReflectionTestUtils.setField(paymentService, "vnp_HashSecret", " TEST_HASH_SECRET ");
+
+            Map<String, String> params = new HashMap<>();
+            params.put("vnp_TxnRef", "1");
+            params.put("vnp_ResponseCode", "00");
+            params.put("vnp_TransactionNo", "TXN999999");
+
+            String hash = VNPayUtil.hashAllFields(new HashMap<>(params), "TEST_HASH_SECRET");
+            params.put("vnp_SecureHash", hash);
+
+            when(orderRepository.findById(1L)).thenReturn(Optional.of(sampleOrder));
+            when(paymentRepository.findByOrderId(1L)).thenReturn(Optional.of(samplePayment));
+            when(paymentRepository.save(any(Payment.class))).thenReturn(samplePayment);
+
+            boolean result = paymentService.processVNPayCallback(params);
+
+            assertTrue(result);
+        }
+
+        @Test
+        @DisplayName("Callback vnp_SecureHash rỗng - trả về false")
+        void processCallback_blankSecureHash_returnsFalse() {
+            Map<String, String> params = new HashMap<>();
+            params.put("vnp_TxnRef", "1");
+            params.put("vnp_ResponseCode", "00");
+            params.put("vnp_SecureHash", "   ");
+
+            assertFalse(paymentService.processVNPayCallback(params));
+        }
+
+        @Test
+        @DisplayName("HashSecret cấu hình rỗng - từ chối xác thực để tránh bypass chữ ký")
+        void processCallback_blankHashSecret_throwsIllegalStateException() {
+            ReflectionTestUtils.setField(paymentService, "vnp_HashSecret", "   ");
+
+            Map<String, String> params = new HashMap<>();
+            params.put("vnp_TxnRef", "1");
+            params.put("vnp_ResponseCode", "00");
+            params.put("vnp_SecureHash", "any-hash");
+
+            assertThrows(IllegalStateException.class, () -> paymentService.processVNPayCallback(params));
+        }
     }
 }

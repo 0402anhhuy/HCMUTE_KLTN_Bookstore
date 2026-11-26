@@ -6,6 +6,10 @@ export const useAdminDetailProduct = ({ productId, onBack, loadMainData }) => {
     const { showToast } = useApp();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
+    const [rejectError, setRejectError] = useState("");
+    const [submittingReject, setSubmittingReject] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -29,6 +33,7 @@ export const useAdminDetailProduct = ({ productId, onBack, loadMainData }) => {
                 {
                     ...product,
                     status: "ACTIVE",
+                    rejectionReason: null,
                 },
             );
             showToast?.("Đã duyệt sản phẩm thành công", "success");
@@ -40,7 +45,49 @@ export const useAdminDetailProduct = ({ productId, onBack, loadMainData }) => {
         }
     };
 
-    const handleReject = async () => {
+    const openRejectModal = () => {
+        setRejectReason("");
+        setRejectError("");
+        setIsRejectModalOpen(true);
+    };
+
+    const closeRejectModal = () => {
+        if (submittingReject) return;
+        setIsRejectModalOpen(false);
+        setRejectError("");
+    };
+
+    const handleConfirmReject = async (e) => {
+        e?.preventDefault?.();
+        const trimmedReason = rejectReason.trim();
+        if (!trimmedReason) {
+            setRejectError("Vui lòng nhập lý do từ chối sản phẩm.");
+            return;
+        }
+        setSubmittingReject(true);
+        try {
+            await api.put(
+                `/products/${productId}?categoryId=${product?.category?.id}`,
+                {
+                    ...product,
+                    status: "REJECTED",
+                    rejectionReason: trimmedReason,
+                },
+            );
+            showToast?.("Đã từ chối sản phẩm", "success");
+            setIsRejectModalOpen(false);
+            loadMainData?.();
+            onBack?.();
+        } catch (err) {
+            console.error(err);
+            const message = err?.response?.data?.message || "Lỗi khi từ chối sản phẩm";
+            showToast?.(message, "error");
+        } finally {
+            setSubmittingReject(false);
+        }
+    };
+
+    const handleDeactivate = async () => {
         try {
             await api.put(
                 `/products/${productId}?categoryId=${product?.category?.id}`,
@@ -49,12 +96,12 @@ export const useAdminDetailProduct = ({ productId, onBack, loadMainData }) => {
                     status: "INACTIVE",
                 },
             );
-            showToast?.("Đã từ chối sản phẩm", "success");
+            showToast?.("Đã tạm ẩn sản phẩm", "success");
             loadMainData?.();
             onBack?.();
         } catch (err) {
             console.error(err);
-            showToast?.("Lỗi khi từ chối sản phẩm", "error");
+            showToast?.("Lỗi khi cập nhật trạng thái sản phẩm", "error");
         }
     };
 
@@ -77,7 +124,15 @@ export const useAdminDetailProduct = ({ productId, onBack, loadMainData }) => {
         product,
         loading,
         displayImage,
+        isRejectModalOpen,
+        rejectReason,
+        rejectError,
+        submittingReject,
+        setRejectReason,
+        openRejectModal,
+        closeRejectModal,
         handleApprove,
-        handleReject,
+        handleConfirmReject,
+        handleDeactivate,
     };
 };

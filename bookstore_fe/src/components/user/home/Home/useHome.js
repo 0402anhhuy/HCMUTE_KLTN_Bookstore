@@ -4,7 +4,17 @@ import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
-import { getProductDiscountPercent, getProductOriginalPrice } from "@/utils/productPricing";
+import {
+    buildActivePromoDiscountMap,
+    getProductDiscountPercent,
+    getProductOriginalPrice,
+} from "@/utils/productPricing";
+import {
+    buildCatalogSearchParams,
+    buildProductsRequestUrl,
+    hasActiveCatalogFilters,
+    shouldSyncCatalogUrl,
+} from "./catalogFilterUrl";
 
 // Import local image assets
 import matNguCover from "@/assets/mat_ngu_cuoc_doi.png";
@@ -13,7 +23,6 @@ import ngheThuatCover from "@/assets/nghe_thuat_ve.png";
 import quanLyCover from "@/assets/quan_ly_cam_xuc.png";
 
 const FLASH_SALE_SLOT_HOURS = 6;
-const FLASH_SALE_LIMIT = 10;
 
 // Cache dùng chung cho toàn bộ phiên (module-level) để lần mount sau (quay lại trang chủ)
 // hiển thị ngay dữ liệu cũ trong lúc chờ API, không bắt người dùng nhìn màn hình trống
@@ -55,11 +64,6 @@ function getTimeLeft(endTime) {
     return { hours: h, minutes: m, seconds: s };
 }
 
-function getSeededScore(product, seed) {
-    const id = Number(product.id) || 0;
-    return (id * 9301 + seed * 49297) % 233280;
-}
-
 export const useHome = (options = {}) => {
     const {
         // Cho phép dùng chung bộ lọc theo URL: khởi tạo từ query params (trang Catalog)
@@ -70,7 +74,7 @@ export const useHome = (options = {}) => {
     const { addToCart } = useApp();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const keyword = searchParams.get("keyword") || "";
+    const keyword = (searchParams.get("keyword") || "").trim();
 
     // Search/Filter states
     const [categories, setCategories] = useState([]);
@@ -83,7 +87,7 @@ export const useHome = (options = {}) => {
     const [selectedPublishers, setSelectedPublishers] = useState(
         () =>
             syncFiltersWithUrl && searchParams.get("publisher")
-                ? [searchParams.get("publisher")]
+                ? searchParams.getAll("publisher")
                 : [],
     );
     const [minPrice, setMinPrice] = useState(
@@ -160,23 +164,28 @@ export const useHome = (options = {}) => {
         }
     }, []);
 
+    const catalogFilters = useMemo(
+        () => ({
+            page,
+            keyword,
+            selectedCategory,
+            minPrice,
+            maxPrice,
+            selectedPublishers,
+        }),
+        [
+            page,
+            keyword,
+            selectedCategory,
+            minPrice,
+            maxPrice,
+            selectedPublishers,
+        ],
+    );
+
     const fetchProducts = useCallback(async () => {
-        const hasActiveFilters =
-            !!keyword.trim() ||
-            !!selectedCategory ||
-            !!minPrice ||
-            !!maxPrice ||
-            selectedPublishers.length > 0;
-        const size = hasActiveFilters ? 12 : 30;
-        let url = `/products?page=${page}&size=${size}`;
-        if (keyword.trim())
-            url += `&keyword=${encodeURIComponent(keyword)}`;
-        if (selectedCategory) url += `&categoryId=${selectedCategory}`;
-        if (minPrice) url += `&minPrice=${minPrice}`;
-        if (maxPrice) url += `&maxPrice=${maxPrice}`;
-        selectedPublishers.forEach((pubId) => {
-            if (pubId) url += `&publisher=${encodeURIComponent(pubId)}`;
-        });
+        const hasActiveFilters = hasActiveCatalogFilters(catalogFilters);
+        const url = buildProductsRequestUrl(catalogFilters);
 
         const cacheKey = hasActiveFilters ? null : "default";
         const cached = cacheKey ? readCache(productsCache, cacheKey) : null;
@@ -201,33 +210,27 @@ export const useHome = (options = {}) => {
         } finally {
             setLoading(false);
         }
+    }, [catalogFilters]);
 
-        // Đồng bộ bộ lọc lên URL để link chia sẻ/tải lại vẫn giữ đúng kết quả lọc
-        if (syncFiltersWithUrl) {
-            const next = new URLSearchParams();
-            if (keyword.trim()) next.set("keyword", keyword.trim());
-            if (selectedCategory) next.set("categoryId", selectedCategory);
-            if (minPrice) next.set("minPrice", minPrice);
-            if (maxPrice) next.set("maxPrice", maxPrice);
-            if (selectedPublishers.length > 0)
-                next.set("publisher", selectedPublishers[0]);
-            if (page > 0) next.set("page", String(page));
-            const nextStr = next.toString();
-            if (nextStr !== searchParams.toString()) {
-                setSearchParams(next, { replace: true });
-            }
+    const searchParamsRef = useRef(searchParams);
+    useEffect(() => {
+        searchParamsRef.current = searchParams;
+    }, [searchParams]);
+
+    // Đồng bộ bộ lọc lên URL tách riêng khỏi fetchProducts để tránh cập nhật URL
+    // làm đổi dependency của fetchProducts và bắn lại API lần thứ 2.
+    useEffect(() => {
+        const next = buildCatalogSearchParams(catalogFilters);
+        if (
+            shouldSyncCatalogUrl(
+                syncFiltersWithUrl,
+                next,
+                searchParamsRef.current,
+            )
+        ) {
+            setSearchParams(next, { replace: true });
         }
-    }, [
-        page,
-        selectedCategory,
-        keyword,
-        minPrice,
-        maxPrice,
-        selectedPublishers,
-        syncFiltersWithUrl,
-        searchParams,
-        setSearchParams,
-    ]);
+    }, [syncFiltersWithUrl, catalogFilters, setSearchParams]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -260,44 +263,7 @@ export const useHome = (options = {}) => {
     }, [flashSaleEndsAt, fetchActivePromotions]);
 
     const promoProductMap = useMemo(() => {
-        const map = new Map();
-        if (activePromotions && activePromotions.length > 0) {
-            activePromotions.forEach((promo) => {
-                if (promo.applicableProducts && promo.applicableProducts.length > 0) {
-                    promo.applicableProducts.forEach((p) => {
-                        let discount = 0;
-                        if (promo.discountType === "PERCENT") {
-                            discount = Number(promo.discountValue) || 0;
-                        } else if (promo.discountType === "FIXED") {
-                            discount = p.price ? Math.round(((Number(promo.discountValue) || 0) / p.price) * 100) : 0;
-                        }
-
-                        const pId = String(p.id);
-                        if (map.has(pId)) {
-                            const existing = map.get(pId);
-                            if (discount > existing.promotionDiscountPercent) {
-                                map.set(pId, {
-                                    ...p,
-                                    promotionDiscountPercent: discount,
-                                    promotionTitle: promo.title,
-                                    promotionEndDate: promo.endDate,
-                                    promoUsedCount: promo.usedCount || 0,
-                                });
-                            }
-                        } else {
-                            map.set(pId, {
-                                ...p,
-                                promotionDiscountPercent: discount,
-                                promotionTitle: promo.title,
-                                promotionEndDate: promo.endDate,
-                                promoUsedCount: promo.usedCount || 0,
-                            });
-                        }
-                    });
-                }
-            });
-        }
-        return map;
+        return buildActivePromoDiscountMap(activePromotions);
     }, [activePromotions]);
 
     const enrichedProducts = useMemo(() => {
@@ -314,20 +280,12 @@ export const useHome = (options = {}) => {
     }, [products, promoProductMap]);
 
     const flashSaleProducts = useMemo(() => {
-        // Priority 1: Products assigned by Admin in active Promotion programs
-        if (promoProductMap.size > 0) {
-            const uniquePromoProducts = Array.from(promoProductMap.values());
-            if (uniquePromoProducts.length > 0) {
-                return uniquePromoProducts;
-            }
+        // Chỉ hiển thị các sản phẩm thuộc chương trình khuyến mãi đang diễn ra do Admin tạo
+        if (promoProductMap.size === 0) {
+            return [];
         }
-
-        // Priority 2: Các sản phẩm có mức giảm giá tốt nhất để luôn có flash sale sinh động
-        const saleItems = enrichedProducts
-            .filter((p) => (Number(p.promotionDiscountPercent) || 0) > 0)
-            .slice(0, FLASH_SALE_LIMIT);
-        return saleItems;
-    }, [promoProductMap, enrichedProducts]);
+        return Array.from(promoProductMap.values());
+    }, [promoProductMap]);
 
     const flashSaleTotalPages = Math.max(
         1,
@@ -584,12 +542,13 @@ export const useHome = (options = {}) => {
     const handleClearFilters = () => {
         setSearchParams({});
         setSelectedCategory("");
+        // Phải reset cả NXB, nếu không chip "Xóa tất cả" xoá trên URL nhưng state vẫn giữ NXB
+        setSelectedPublishers([]);
         setMinPrice("");
         setMaxPrice("");
         setPage(0);
-        setTimeout(() => {
-            fetchProducts();
-        }, 50);
+        // Không cần gọi fetchProducts thủ công: các state vừa reset sẽ kích hoạt effect tải lại.
+        // Gọi thủ công bằng closure cũ dễ đem kết quả đang lọc NXB về đè lên kết quả mới.
     };
 
     const openProductDetail = (product) => {
@@ -622,7 +581,11 @@ export const useHome = (options = {}) => {
     };
 
     const isSearchActive =
-        !!keyword || !!selectedCategory || !!minPrice || !!maxPrice;
+        !!keyword ||
+        !!selectedCategory ||
+        !!minPrice ||
+        !!maxPrice ||
+        selectedPublishers.length > 0;
 
     const categoryTree = useMemo(
         () => buildCategoryTree(categories),

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
@@ -19,11 +19,21 @@ export const useLogin = () => {
 
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
     // Sub-step for reset flow: 'otp' or 'new_password'
     const [resetStep, setResetStep] = useState("otp");
+
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const timer = setInterval(() => {
+            setResendCooldown((prev) => prev - 1);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [resendCooldown]);
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
@@ -68,29 +78,48 @@ export const useLogin = () => {
         }
     };
 
-    const handleForgotSubmit = async (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-        setLoading(true);
+    const requestPasswordResetOtp = async ({
+        setBusy,
+        defaultMessage,
+        fallbackError,
+        onSuccess,
+    }) => {
+        setBusy(true);
         setError("");
         setMessage("");
         try {
             const response = await api.post("/auth/forgot-password", { email });
-            setMessage(
-                response.data.message ||
-                    "Mã OTP khôi phục mật khẩu đã được gửi về Email.",
-            );
-            setTimeout(() => {
+            setMessage(response.data.message || defaultMessage);
+            setResendCooldown(60);
+            if (onSuccess) onSuccess();
+        } catch (err) {
+            setError(err.response?.data?.error || fallbackError);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const handleForgotSubmit = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        await requestPasswordResetOtp({
+            setBusy: setLoading,
+            defaultMessage: "Mã OTP khôi phục mật khẩu đã được gửi về Email.",
+            fallbackError: "Không tìm thấy tài khoản với email này.",
+            onSuccess: () => {
                 setView("reset");
                 setResetStep("otp");
-            }, 1000);
-        } catch (err) {
-            setError(
-                err.response?.data?.error ||
-                    "Không tìm thấy tài khoản với email này.",
-            );
-        } finally {
-            setLoading(false);
-        }
+            },
+        });
+    };
+
+    const handleResendForgotOtp = async () => {
+        if (resendCooldown > 0 || resendLoading || loading) return;
+        await requestPasswordResetOtp({
+            setBusy: setResendLoading,
+            defaultMessage:
+                "Mã OTP mới đã được gửi tới email. Vui lòng kiểm tra hộp thư.",
+            fallbackError: "Không thể gửi lại mã OTP.",
+        });
     };
 
     const handleResetSubmit = async (e) => {
@@ -141,6 +170,9 @@ export const useLogin = () => {
         setView(targetView);
         setError("");
         setMessage("");
+        if (targetView !== "reset") {
+            setResendCooldown(0);
+        }
     };
 
     const loginAsGuest = () => {
@@ -164,11 +196,14 @@ export const useLogin = () => {
         showPassword,
         setShowPassword,
         loading,
+        resendLoading,
+        resendCooldown,
         message,
         error,
         resetStep,
         handleLoginSubmit,
         handleForgotSubmit,
+        handleResendForgotOtp,
         handleResetSubmit,
         handleVerifyOtpStep,
         switchView,

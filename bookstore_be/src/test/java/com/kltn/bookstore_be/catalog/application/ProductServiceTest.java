@@ -183,6 +183,18 @@ class ProductServiceTest {
         }
 
         @Test
+        @DisplayName("Tạo danh mục không truyền imageUrl - mặc định chuỗi rỗng không null")
+        void createCategory_defaultsNonNullImageUrl() {
+            when(categoryRepository.findByName("Khoa học")).thenReturn(Optional.empty());
+            when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            Category result = productService.createCategory("Khoa học");
+
+            assertNotNull(result.getImageUrl());
+            assertEquals("", result.getImageUrl());
+        }
+
+        @Test
         @DisplayName("Tạo danh mục đã tồn tại - ném exception")
         void createCategory_existingName_throwsException() {
             when(categoryRepository.findByName("Văn học")).thenReturn(Optional.of(sampleCategory));
@@ -285,6 +297,94 @@ class ProductServiceTest {
             productService.updateProduct(1L, updatedDetails);
 
             verify(notificationService).notifyManagersAndAdmins(anyString(), anyString(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Từ chối sản phẩm (REJECTED) không có lý do - ném exception")
+        void updateProduct_rejectWithoutReason_throwsException() {
+            sampleProduct.setStatus(Product.ProductStatus.PENDING);
+
+            Product updatedDetails = Product.builder()
+                    .name("Doraemon Tập 1")
+                    .author("Fujiko F. Fujio")
+                    .publisher("NXB Kim Đồng")
+                    .isbn("978-604-123-456-7")
+                    .description("Mô tả")
+                    .price(BigDecimal.valueOf(25000))
+                    .stockQuantity(100)
+                    .imageUrls(List.of(
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"))
+                    .status(Product.ProductStatus.REJECTED)
+                    .rejectionReason("   ")
+                    .build();
+
+            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+
+            RuntimeException ex = assertThrows(RuntimeException.class,
+                    () -> productService.updateProduct(1L, updatedDetails));
+            assertTrue(ex.getMessage().toLowerCase().contains("lý do từ chối"));
+        }
+
+        @Test
+        @DisplayName("Từ chối sản phẩm (REJECTED) có lý do - lưu lý do và gửi thông báo")
+        void updateProduct_rejectWithReason_savesReasonAndNotifies() {
+            sampleProduct.setStatus(Product.ProductStatus.PENDING);
+
+            Product updatedDetails = Product.builder()
+                    .name("Doraemon Tập 1")
+                    .author("Fujiko F. Fujio")
+                    .publisher("NXB Kim Đồng")
+                    .isbn("978-604-123-456-7")
+                    .description("Mô tả")
+                    .price(BigDecimal.valueOf(25000))
+                    .stockQuantity(100)
+                    .imageUrls(List.of(
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"))
+                    .status(Product.ProductStatus.REJECTED)
+                    .rejectionReason(" Ảnh bìa bị mờ ")
+                    .build();
+
+            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+            when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);
+
+            productService.updateProduct(1L, updatedDetails);
+
+            assertEquals(Product.ProductStatus.REJECTED, sampleProduct.getStatus());
+            assertEquals("Ảnh bìa bị mờ", sampleProduct.getRejectionReason());
+            verify(notificationService).notifyManagersAndAdmins(
+                    eq("Sản phẩm bị từ chối"),
+                    argThat(msg -> msg.contains("Ảnh bìa bị mờ")),
+                    any(),
+                    eq("products"),
+                    eq(1L));
+        }
+
+        @Test
+        @DisplayName("Duyệt lại sản phẩm từng bị từ chối - xóa rejectionReason")
+        void updateProduct_approveRejectedProduct_clearsRejectionReason() {
+            sampleProduct.setStatus(Product.ProductStatus.REJECTED);
+            sampleProduct.setRejectionReason("Thiếu thông tin NXB");
+
+            Product updatedDetails = Product.builder()
+                    .name("Doraemon Tập 1")
+                    .author("Fujiko F. Fujio")
+                    .publisher("NXB Kim Đồng")
+                    .isbn("978-604-123-456-7")
+                    .description("Mô tả")
+                    .price(BigDecimal.valueOf(25000))
+                    .stockQuantity(100)
+                    .imageUrls(List.of(
+                            "https://res.cloudinary.com/diwo0fi2c/image/upload/bookstore-products/kinh-te-chinh-tri/am-muu-cau-ket--Luke-Harding/amck-01.jpg"))
+                    .status(Product.ProductStatus.ACTIVE)
+                    .build();
+
+            when(productRepository.findById(1L)).thenReturn(Optional.of(sampleProduct));
+            when(productRepository.save(any(Product.class))).thenReturn(sampleProduct);
+
+            productService.updateProduct(1L, updatedDetails);
+
+            assertEquals(Product.ProductStatus.ACTIVE, sampleProduct.getStatus());
+            assertNull(sampleProduct.getRejectionReason());
         }
 
         @Test
