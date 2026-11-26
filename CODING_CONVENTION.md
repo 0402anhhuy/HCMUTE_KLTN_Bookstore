@@ -6,15 +6,15 @@ Tài liệu này quy định chuẩn viết mã, cấu trúc module, bảo mật
 
 ## 1. Backend (`bookstore_be` — Java 21 / Spring Boot 4)
 
-### 1.1. Kiến trúc Modular Monolith
-Mã nguồn đặt trong package gốc `com.kltn.bookstore_be`, chia theo các domain nghiệp vụ:
+### 1.1. Kiến trúc DDD (Domain-Driven Design)
+Mã nguồn đặt trong package gốc `com.kltn.bookstore_be`, chia theo các bounded context / domain nghiệp vụ:
 - `audit`, `catalog`, `identity`, `notification`, `ordering`, `payment`, `review`
 - Hạ tầng dùng chung: `common` (dịch vụ email, upload ảnh, xử lý ngoại lệ toàn cục), `config` (Security, WebSocket, CORS).
 
-Mỗi domain tách rõ 4 tầng:
-1. `domain/`: JPA Entity, Enum, Repository interface.
-2. `application/`: Service xử lý nghiệp vụ, Request/Response DTO, Exception nghiệp vụ.
-3. `infrastructure/`: Adapter kỹ thuật (JWT, Mail, Cloudinary, VNPay, Seeder, WebSocket).
+Mỗi domain tách rõ 4 tầng chuẩn DDD:
+1. `domain/`: Domain Entity, Enum / Value Object, Repository interface.
+2. `application/`: Application Service điều phối nghiệp vụ, Request/Response DTO, Exception nghiệp vụ.
+3. `infrastructure/`: Adapter kỹ thuật & tích hợp ngoài (JWT, Mail, Cloudinary, VNPay, Seeder, WebSocket).
 4. `presentation/`: `@RestController` nhận request và trả DTO/ResponseEntity.
 
 ### 1.2. Quy ước đặt tên & cú pháp Java
