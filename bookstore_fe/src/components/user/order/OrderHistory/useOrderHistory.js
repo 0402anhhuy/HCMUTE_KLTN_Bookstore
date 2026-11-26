@@ -79,18 +79,17 @@ export const useOrderHistory = () => {
                     );
                     setOrders(fetchedOrders);
 
-                    const itemPromises = fetchedOrders.map((o) =>
-                        api.get(`/orders/${o.id}`).then((res) => ({
-                            id: o.id,
-                            items: res.data.items,
-                        })),
-                    );
-                    const itemsResponses = await Promise.all(itemPromises);
-                    const newItemsMap = {};
-                    itemsResponses.forEach((res) => {
-                        newItemsMap[res.id] = res.items;
-                    });
-                    setOrderItems(newItemsMap);
+                    if (orderId) {
+                        const detailRes = await api
+                            .get(`/orders/${orderId}`)
+                            .catch(() => null);
+                        if (detailRes?.data?.items) {
+                            setOrderItems((prev) => ({
+                                ...prev,
+                                [orderId]: detailRes.data.items,
+                            }));
+                        }
+                    }
 
                     if (
                         selectedOrderDetail &&
