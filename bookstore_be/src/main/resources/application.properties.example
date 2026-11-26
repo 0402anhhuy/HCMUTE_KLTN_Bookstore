@@ -49,3 +49,8 @@ vnpay.return-url=${VNPAY_RETURN_URL:https://bookstorefe-gilt.vercel.app/payment/
 cloudinary.cloud-name=your_cloudinary_cloud_name
 cloudinary.api-key=your_cloudinary_api_key
 cloudinary.api-secret=your_cloudinary_api_secret
+
+# Multipart Upload Configuration
+spring.servlet.multipart.enabled=true
+spring.servlet.multipart.max-file-size=${SPRING_MULTIPART_MAX_FILE_SIZE:20MB}
+spring.servlet.multipart.max-request-size=${SPRING_MULTIPART_MAX_REQUEST_SIZE:30MB}
