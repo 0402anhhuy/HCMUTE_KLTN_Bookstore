@@ -493,13 +493,22 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    font-weight: 700;
-    font-size: 1.1rem;
+    font-weight: 900;
+    font-size: 15px;
+    line-height: 1;
     color: #374151;
-    display: flex;
+    display: grid;
+    place-items: center;
+    padding: 0 0 2px;
+    transition: all 0.15s ease;
+}
+
+.qty-picker-btn > span {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    line-height: 1;
+    transform: translateY(0.04em);
 }
 
 .qty-picker-btn:hover:not(:disabled) {
@@ -519,6 +528,8 @@ body {
 .qty-picker-val {
     width: 44px;
     height: 32px;
+    line-height: 1;
+    padding: 0 0 2px;
     text-align: center;
     font-weight: 700;
     font-size: 0.95rem;
@@ -526,7 +537,6 @@ body {
     border: none;
     background: transparent;
     padding: 0;
-    -moz-appearance: textfield;
 }
 
 .qty-picker-val::-webkit-outer-spin-button,
@@ -620,10 +630,19 @@ body {
 .trust-badge-item {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 6px;
     font-size: 0.8rem;
     color: #475569;
     font-weight: 600;
+}
+
+.trust-badge-item:nth-child(2) {
+    justify-content: center;
+}
+
+.trust-badge-item:nth-child(3) {
+    justify-content: flex-end;
 }
 
 .trust-badge-icon {
@@ -1254,6 +1273,10 @@ body {
     .product-detail-trust-badges {
         grid-template-columns: 1fr;
         gap: 8px;
+    }
+
+    .trust-badge-item {
+        justify-content: flex-start;
     }
 
     .product-detail-cta-group {
