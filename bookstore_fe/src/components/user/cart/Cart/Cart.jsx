@@ -239,7 +239,9 @@ const Cart = () => {
                             if (isEligible) {
                                 handleApplyCouponFromModal(c.code);
                             } else {
+                                // Chưa đủ điều kiện: đóng modal mã giảm giá và chuyển sang trang sản phẩm để mua thêm
                                 closeCouponModal();
+                                navigate("/catalog");
                             }
                         }}
                         className={`fahasa-coupon-btn ${isEligible ? "eligible" : "buy-more"} ${isSelected ? "active" : ""}`}
