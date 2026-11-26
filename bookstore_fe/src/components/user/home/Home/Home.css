@@ -943,6 +943,10 @@
     font-variant-numeric: tabular-nums;
 }
 
+.book-card-original-price-placeholder {
+    height: 1rem;
+}
+
 .book-card-discount-rate {
     display: inline-flex;
     align-items: center;

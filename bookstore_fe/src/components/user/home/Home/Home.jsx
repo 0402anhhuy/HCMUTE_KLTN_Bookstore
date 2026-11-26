@@ -1147,12 +1147,9 @@ const BookCard = ({
                 Tác giả: {product.author || "Đang cập nhật"}
             </div>
 
-            {/* Giá hiện tại và giá gốc gạch ngang + tag giảm giá */}
+            {/* Giá gốc + tag giảm giá ở trên, giá hiện tại ở dưới */}
             <div className="book-card-price-group tabular-nums">
-                <span className="book-card-price-val">
-                    {formatPrice(product.price)}
-                </span>
-                {hasDiscount && (
+                {hasDiscount ? (
                     <div className="book-card-original-price-row">
                         <span className="book-card-original-price">
                             {formatPrice(computedOriginalPrice)}
@@ -1161,7 +1158,12 @@ const BookCard = ({
                             -{discountPercent}%
                         </span>
                     </div>
+                ) : (
+                    <div className="book-card-original-price-placeholder" />
                 )}
+                <span className="book-card-price-val">
+                    {formatPrice(product.price)}
+                </span>
             </div>
 
             {/* Thanh tiến độ Flash Sale */}

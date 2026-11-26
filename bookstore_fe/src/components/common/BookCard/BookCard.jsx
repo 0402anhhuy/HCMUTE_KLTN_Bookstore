@@ -95,9 +95,6 @@ const BookCard = ({
 
             <div className="book-card-bottom-row">
                 <div className="book-card-price-group">
-                    <span className={`book-card-price tabular-nums ${hasDiscount ? "is-discounted" : ""}`}>
-                        {formatPrice ? formatPrice(product.price) : `${Number(product.price || 0).toLocaleString("vi-VN")} đ`}
-                    </span>
                     {hasDiscount ? (
                         <div className="book-card-original-price-row">
                             <span className="book-card-original-price tabular-nums">
@@ -110,6 +107,9 @@ const BookCard = ({
                     ) : (
                         <div className="book-card-original-price-placeholder" />
                     )}
+                    <span className={`book-card-price tabular-nums ${hasDiscount ? "is-discounted" : ""}`}>
+                        {formatPrice ? formatPrice(product.price) : `${Number(product.price || 0).toLocaleString("vi-VN")} đ`}
+                    </span>
                 </div>
 
                 <button
