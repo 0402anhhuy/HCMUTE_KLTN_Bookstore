@@ -311,7 +311,12 @@ const Cart = () => {
                                         />
                                     </div>
 
-                                    <div className="cart-product-thumb-box">
+                                    <Link
+                                        to={prodId ? `/product/${prodId}` : "#"}
+                                        className="cart-product-thumb-box"
+                                        aria-label={`Xem chi tiết ${prodName}`}
+                                        title={prodName}
+                                    >
                                         {imgUrl ? (
                                             <img
                                                 src={imgUrl}
@@ -323,11 +328,20 @@ const Cart = () => {
                                                 Sách
                                             </span>
                                         )}
-                                    </div>
+                                    </Link>
 
                                     <div className="cart-product-info-col">
                                         <h4 className="cart-product-title">
-                                            {prodName}
+                                            <Link
+                                                to={
+                                                    prodId
+                                                        ? `/product/${prodId}`
+                                                        : "#"
+                                                }
+                                                className="cart-product-title-link"
+                                            >
+                                                {prodName}
+                                            </Link>
                                         </h4>
                                         <div className="cart-product-price-sub">
                                             <span className="current-price">
