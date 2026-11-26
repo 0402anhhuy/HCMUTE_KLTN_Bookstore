@@ -210,7 +210,9 @@ export const AppProvider = ({ children }) => {
             ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-                console.log("WebSocket connected to notification service");
+                if (import.meta.env.DEV) {
+                    console.log("WebSocket connected to notification service");
+                }
             };
 
             ws.onmessage = (event) => {
@@ -236,7 +238,9 @@ export const AppProvider = ({ children }) => {
             };
 
             ws.onclose = () => {
-                console.log("WebSocket disconnected. Reconnecting...");
+                if (import.meta.env.DEV) {
+                    console.log("WebSocket disconnected. Reconnecting...");
+                }
                 reconnectTimeout = setTimeout(connect, 5000);
             };
 

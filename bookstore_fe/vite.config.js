@@ -13,4 +13,30 @@ export default defineConfig({
             "@": path.resolve(__dirname, "./src"),
         },
     },
+    build: {
+        rolldownOptions: {
+            output: {
+                codeSplitting: {
+                    groups: [
+                        {
+                            name: "vendor-react",
+                            test: /node_modules[\\/](react|react-dom|react-router-dom|scheduler)[\\/]/,
+                        },
+                        {
+                            name: "vendor-ui",
+                            test: /node_modules[\\/](lucide-react|@tanstack|axios|@vercel)[\\/]/,
+                        },
+                        {
+                            name: "portal-admin",
+                            test: /src[\\/]components[\\/]admin[\\/]/,
+                        },
+                        {
+                            name: "portal-manager",
+                            test: /src[\\/]components[\\/]manager[\\/]/,
+                        },
+                    ],
+                },
+            },
+        },
+    },
 });
