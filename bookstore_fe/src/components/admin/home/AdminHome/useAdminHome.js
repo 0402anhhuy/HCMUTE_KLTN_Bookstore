@@ -1,12 +1,10 @@
 import { useState, useMemo } from "react";
 
 export const useAdminHome = ({
-    user,
     users = [],
     userCount = 0,
     products = [],
     orders = [],
-    auditLogs = [],
 }) => {
     const [timeRange, setTimeRange] = useState("Tháng"); // "Ngày", "Tháng", "Năm"
 

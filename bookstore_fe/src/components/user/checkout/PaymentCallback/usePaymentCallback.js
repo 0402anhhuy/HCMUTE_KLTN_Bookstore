@@ -11,48 +11,53 @@ export const usePaymentCallback = () => {
     const [orderId, setOrderId] = useState(null);
     const [message, setMessage] = useState("");
 
-    const verifyTransaction = async () => {
-        // Thu thập tất cả query parameters do VNPay trả về
-        const params = {};
-        for (const [key, value] of searchParams.entries()) {
-            params[key] = value;
-        }
-
-        try {
-            const response = await api.get("/payment/vnpay-callback", {
-                params,
-            });
-
-            if (response.data?.status === "success") {
-                setPaymentStatus("success");
-                setOrderId(response.data.orderId);
-                setMessage(
-                    response.data.message ||
-                        "Thanh toán trực tuyến đơn hàng thành công!",
-                );
-                await fetchCart?.();
-            } else {
-                setPaymentStatus("failed");
-                setOrderId(response.data?.orderId);
-                setMessage(
-                    response.data?.message || "Thanh toán không thành công.",
-                );
-            }
-        } catch (error) {
-            setPaymentStatus("failed");
-            setOrderId(params["vnp_TxnRef"] || null);
-            setMessage(
-                error.response?.data?.message ||
-                    "Có lỗi xảy ra khi xác thực giao dịch.",
-            );
-        } finally {
-            setVerifying(false);
-        }
-    };
-
     useEffect(() => {
+        let active = true;
+        const verifyTransaction = async () => {
+            const params = {};
+            for (const [key, value] of searchParams.entries()) {
+                params[key] = value;
+            }
+
+            try {
+                const response = await api.get("/payment/vnpay-callback", {
+                    params,
+                });
+                if (!active) return;
+
+                if (response.data?.status === "success") {
+                    setPaymentStatus("success");
+                    setOrderId(response.data.orderId);
+                    setMessage(
+                        response.data.message ||
+                            "Thanh toán trực tuyến đơn hàng thành công!",
+                    );
+                    await fetchCart?.();
+                } else {
+                    setPaymentStatus("failed");
+                    setOrderId(response.data?.orderId);
+                    setMessage(
+                        response.data?.message || "Thanh toán không thành công.",
+                    );
+                }
+            } catch (error) {
+                if (!active) return;
+                setPaymentStatus("failed");
+                setOrderId(params["vnp_TxnRef"] || null);
+                setMessage(
+                    error.response?.data?.message ||
+                        "Có lỗi xảy ra khi xác thực giao dịch.",
+                );
+            } finally {
+                if (active) setVerifying(false);
+            }
+        };
+
         verifyTransaction();
-    }, []);
+        return () => {
+            active = false;
+        };
+    }, [searchParams, fetchCart]);
 
     return {
         verifying,

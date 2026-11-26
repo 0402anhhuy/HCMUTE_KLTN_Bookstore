@@ -13,9 +13,6 @@ import {
   X, 
   Package, 
   UserCheck, 
-  AlertTriangle,
-  Clock,
-  CheckCircle,
   Truck as TruckIcon
 } from 'lucide-react';
 import api from '../../services/api';
@@ -148,9 +145,6 @@ const ManagerShippers = ({ shippers = [], orders = [], loadData }) => {
   const totalShippers = shippers.length;
   const activeShippers = useMemo(() => {
     return shippers.filter(s => s.status === 'ACTIVE').length;
-  }, [shippers]);
-  const inactiveShippers = useMemo(() => {
-    return shippers.filter(s => s.status === 'INACTIVE').length;
   }, [shippers]);
 
   // Filtered and Paginated Shippers

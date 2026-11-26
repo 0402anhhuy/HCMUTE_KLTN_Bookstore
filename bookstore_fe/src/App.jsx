@@ -8,7 +8,8 @@ import {
     useLocation,
     useNavigate,
 } from "react-router-dom";
-import { AppProvider, useApp } from "./context/AppContext";
+import { useApp } from "./context/AppContext";
+import { AppProvider } from "./context/AppProvider";
 import {
     Navbar,
     Footer,

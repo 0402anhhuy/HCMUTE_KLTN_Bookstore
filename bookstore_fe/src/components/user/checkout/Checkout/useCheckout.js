@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
+import { calculateCouponDiscount, findBestCoupon } from "@/utils/couponDiscount";
 
 const parseAddress = (addrStr, defaultName = "", defaultPhone = "") => {
     if (!addrStr) return { name: defaultName, phone: defaultPhone, address: "" };
@@ -43,18 +44,27 @@ export const useCheckout = () => {
 
     const [selectedAddressIdx, setSelectedAddressIdx] = useState(0);
     const [customAddress, setCustomAddress] = useState("");
-    const [useCustomAddress, setUseCustomAddress] = useState(false);
+    const [useCustomAddress, setUseCustomAddress] = useState(
+        () => !user?.address || savedAddresses.length === 0,
+    );
     const [paymentMethod, setPaymentMethod] = useState("COD");
-    const [couponCode, setCouponCodeState] = useState(initialCoupon);
-    const [couponInput, setCouponInput] = useState(initialCoupon);
-    const isManualCouponRef = useRef(!!initialCoupon);
+    const [rawCouponCode, setRawCouponCode] = useState(initialCoupon);
+    const [rawCouponInput, setRawCouponInput] = useState(initialCoupon);
+    const [hasManualCoupon, setHasManualCoupon] = useState(!!initialCoupon);
+    const [hasEditedCouponInput, setHasEditedCouponInput] = useState(!!initialCoupon);
 
     const setCouponCode = (code, isManual = true) => {
         if (isManual) {
-            isManualCouponRef.current = true;
+            setHasManualCoupon(true);
         }
-        setCouponCodeState(code);
-        setCouponInput(code);
+        setHasEditedCouponInput(true);
+        setRawCouponCode(code);
+        setRawCouponInput(code);
+    };
+
+    const setCouponInput = (val) => {
+        setHasEditedCouponInput(true);
+        setRawCouponInput(val);
     };
 
     const [loading, setLoading] = useState(false);
@@ -64,12 +74,47 @@ export const useCheckout = () => {
     const [usePoints, setUsePoints] = useState(
         searchParams.get("usePoints") === "true",
     );
-    const [bestCoupon, setBestCoupon] = useState(null);
-    const [recipientName, setRecipientName] = useState("");
-    const [recipientPhone, setRecipientPhone] = useState("");
+    const [recipientName, setRecipientName] = useState(() => user?.fullName || "");
+    const [recipientPhone, setRecipientPhone] = useState(() => user?.phone || "");
     const couponVersionRef = useRef("");
 
-    const fetchCoupons = async (notifyChange = false) => {
+    const [prevUserAddressKey, setPrevUserAddressKey] = useState(
+        () => `${user?.id || ""}-${savedAddresses.length}`,
+    );
+    const currentUserAddressKey = `${user?.id || ""}-${savedAddresses.length}`;
+    if (user && currentUserAddressKey !== prevUserAddressKey) {
+        setPrevUserAddressKey(currentUserAddressKey);
+        if (!user.address || savedAddresses.length === 0) {
+            setUseCustomAddress(true);
+            setRecipientName(user.fullName || "");
+            setRecipientPhone(user.phone || "");
+        } else {
+            setUseCustomAddress(false);
+            setSelectedAddressIdx(0);
+        }
+    }
+
+    const [prevSelectionKey, setPrevSelectionKey] = useState(
+        () => `${user?.id || ""}-${useCustomAddress}-${selectedAddressIdx}-${savedAddresses.length}`,
+    );
+    const currentSelectionKey = `${user?.id || ""}-${useCustomAddress}-${selectedAddressIdx}-${savedAddresses.length}`;
+    if (currentSelectionKey !== prevSelectionKey) {
+        setPrevSelectionKey(currentSelectionKey);
+        if (!useCustomAddress && savedAddresses[selectedAddressIdx]) {
+            const parsed = parseAddress(
+                savedAddresses[selectedAddressIdx],
+                user?.fullName,
+                user?.phone,
+            );
+            setRecipientName(parsed.name || user?.fullName || "");
+            setRecipientPhone(parsed.phone || user?.phone || "");
+        } else if (useCustomAddress && user) {
+            if (!recipientName) setRecipientName(user.fullName || "");
+            if (!recipientPhone) setRecipientPhone(user.phone || "");
+        }
+    }
+
+    const fetchCoupons = useCallback(async (notifyChange = false) => {
         try {
             const res = await api.get("/coupons");
             const nextCoupons = res.data || [];
@@ -102,39 +147,20 @@ export const useCheckout = () => {
         } catch (err) {
             console.error("Failed to fetch coupons", err);
         }
-    };
+    }, [showToast]);
 
     useEffect(() => {
-        if (user) {
-            fetchCoupons();
-            const refreshTimer = setInterval(() => fetchCoupons(true), 10000);
-            return () => clearInterval(refreshTimer);
-        }
-    }, [user]);
-
-    useEffect(() => {
-        if (user) {
-            if (!user.address || savedAddresses.length === 0) {
-                setUseCustomAddress(true);
-                setRecipientName(user.fullName || "");
-                setRecipientPhone(user.phone || "");
-            } else {
-                setUseCustomAddress(false);
-                setSelectedAddressIdx(0);
-            }
-        }
-    }, [user, savedAddresses]);
-
-    useEffect(() => {
-        if (!useCustomAddress && savedAddresses[selectedAddressIdx]) {
-            const parsed = parseAddress(savedAddresses[selectedAddressIdx], user?.fullName, user?.phone);
-            setRecipientName(parsed.name || user?.fullName || "");
-            setRecipientPhone(parsed.phone || user?.phone || "");
-        } else if (useCustomAddress && user) {
-            if (!recipientName) setRecipientName(user.fullName || "");
-            if (!recipientPhone) setRecipientPhone(user.phone || "");
-        }
-    }, [selectedAddressIdx, useCustomAddress, savedAddresses, user]);
+        if (!user) return;
+        let active = true;
+        Promise.resolve().then(() => {
+            if (active) fetchCoupons();
+        });
+        const refreshTimer = setInterval(() => fetchCoupons(true), 10000);
+        return () => {
+            active = false;
+            clearInterval(refreshTimer);
+        };
+    }, [user, fetchCoupons]);
 
     useEffect(() => {
         if (productId) {
@@ -159,7 +185,7 @@ export const useCheckout = () => {
             };
             fetchProduct();
         }
-    }, [productId]);
+    }, [productId, showToast]);
 
     const addressOnly = useCustomAddress
         ? customAddress
@@ -321,50 +347,16 @@ export const useCheckout = () => {
 
     const rawShippingFee = getShippingFee(addressOnly, subtotal);
 
-    const calculateDiscount = (coupon, currentSubtotal, rawShipping = 30000) => {
-        if (!coupon) return 0;
-        if (currentSubtotal < coupon.minOrderValue) return 0;
+    const calculateDiscount = calculateCouponDiscount;
 
-        const isExpired = new Date(coupon.endDate) < new Date();
-        const isLimitReached = coupon.usedCount >= coupon.usageLimit;
-        if (coupon.status !== "ACTIVE" || isExpired || isLimitReached) return 0;
+    const bestCoupon = useMemo(
+        () => findBestCoupon(coupons, subtotal, rawShippingFee),
+        [coupons, subtotal, rawShippingFee],
+    );
 
-        if (coupon.discountType === "PERCENT") {
-            let disc = (currentSubtotal * coupon.discountValue) / 100;
-            if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
-                disc = coupon.maxDiscountAmount;
-            }
-            return disc;
-        } else if (coupon.discountType === "FREESHIP") {
-            let val = coupon.discountValue || rawShipping;
-            let disc = Math.min(rawShipping, val);
-            if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
-                disc = coupon.maxDiscountAmount;
-            }
-            return disc;
-        } else {
-            return coupon.discountValue;
-        }
-    };
-
-    useEffect(() => {
-        if (coupons.length > 0 && !isManualCouponRef.current && !couponCode) {
-            let maxDisc = 0;
-            let best = null;
-            coupons.forEach((c) => {
-                const disc = calculateDiscount(c, subtotal, rawShippingFee);
-                if (disc > maxDisc) {
-                    maxDisc = disc;
-                    best = c;
-                }
-            });
-            if (best) {
-                setBestCoupon(best);
-                setCouponCodeState(best.code);
-                setCouponInput(best.code);
-            }
-        }
-    }, [coupons, subtotal, couponCode, rawShippingFee]);
+    const couponCode =
+        rawCouponCode || (!hasManualCoupon && bestCoupon ? bestCoupon.code : "");
+    const couponInput = hasEditedCouponInput ? rawCouponInput : couponCode;
 
     const activeCouponObj = coupons.find((c) => c.code === couponCode);
     const couponDiscount = calculateDiscount(activeCouponObj, subtotal, rawShippingFee);

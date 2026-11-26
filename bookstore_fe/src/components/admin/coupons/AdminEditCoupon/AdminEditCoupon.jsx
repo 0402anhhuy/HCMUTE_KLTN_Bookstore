@@ -3,7 +3,7 @@ import { useAdminEditCoupon } from "./useAdminEditCoupon";
 import "./AdminEditCoupon.css";
 
 const AdminEditCoupon = ({ coupon, onClose, onSave, showToast }) => {
-    const { formData, setFormData, handleChange, handleSubmit } =
+    const { formData, setFormData, handleSubmit } =
         useAdminEditCoupon({ coupon, onSave, showToast });
 
     return (

@@ -1,4 +1,4 @@
-import { MapPin, Edit, Trash2, Check, Plus, Phone, User } from "lucide-react";
+import { MapPin, Edit, Trash2, Check, Plus } from "lucide-react";
 import { useAddressList, parseAddress } from "./useAddressList";
 import "./AddressList.css";
 

@@ -10,23 +10,49 @@ export const useProfile = () => {
     const [highlightFavorites, setHighlightFavorites] = useState(false);
 
     // Profile Form States
-    const [fullName, setFullName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [email, setEmail] = useState("");
+    const [fullName, setFullName] = useState(() => getProfileFormValues(user).fullName);
+    const [phone, setPhone] = useState(() => getProfileFormValues(user).phone);
+    const [email, setEmail] = useState(() => getProfileFormValues(user).email);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState("info");
+    const [activeTab, setActiveTab] = useState(() => {
+        const urlTab = new URLSearchParams(location.search).get("tab");
+        const allowedTabs = ["info", "addresses", "favorites", "coupons", "security"];
+        return urlTab && allowedTabs.includes(urlTab) ? urlTab : "info";
+    });
+    const [prevSearch, setPrevSearch] = useState(location.search);
+    const [prevUser, setPrevUser] = useState(user);
+
+    if (location.search !== prevSearch) {
+        setPrevSearch(location.search);
+        const urlTab = new URLSearchParams(location.search).get("tab");
+        const allowedTabs = ["info", "addresses", "favorites", "coupons", "security"];
+        if (urlTab && allowedTabs.includes(urlTab)) {
+            setActiveTab(urlTab);
+        }
+    }
+
+    const syncFormWithUser = (currentUser) => {
+        const values = getProfileFormValues(currentUser);
+        setFullName(values.fullName);
+        setPhone(values.phone);
+        setEmail(values.email);
+    };
+
+    if (user !== prevUser) {
+        setPrevUser(user);
+        if (user) {
+            syncFormWithUser(user);
+        }
+    }
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const urlTab = params.get("tab");
-        if (urlTab) {
-            const allowedTabs = ["info", "addresses", "favorites", "coupons", "security"];
-            if (allowedTabs.includes(urlTab)) {
-                setActiveTab(urlTab);
-            }
-        }
         if (params.get("tab") === "favorites") {
-            setHighlightFavorites(true);
+            let active = true;
+            const highlightStart = Promise.resolve().then(() => {
+                if (active) setHighlightFavorites(true);
+            });
+            void highlightStart;
             const scrollTimer = setTimeout(() => {
                 const el = document.getElementById("favorite-section");
                 if (el) {
@@ -39,24 +65,12 @@ export const useProfile = () => {
             }, 4000);
 
             return () => {
+                active = false;
                 clearTimeout(scrollTimer);
                 clearTimeout(highlightTimer);
             };
         }
-    }, [location]);
-
-    const syncFormWithUser = (currentUser) => {
-        const values = getProfileFormValues(currentUser);
-        setFullName(values.fullName);
-        setPhone(values.phone);
-        setEmail(values.email);
-    };
-
-    useEffect(() => {
-        if (user) {
-            syncFormWithUser(user);
-        }
-    }, [user]);
+    }, [location.search]);
 
     const handleResetForm = () => {
         if (!user) return;

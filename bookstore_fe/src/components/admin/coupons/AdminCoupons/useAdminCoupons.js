@@ -13,7 +13,7 @@ export const useAdminCoupons = ({ coupons = [], loadData, showToast }) => {
     const [typeFilter, setTypeFilter] = useState("ALL");
 
     // New Coupon Form state
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState(() => ({
         code: "",
         discountPercentage: "",
         discountAmount: "",
@@ -24,7 +24,7 @@ export const useAdminCoupons = ({ coupons = [], loadData, showToast }) => {
             .toISOString()
             .split("T")[0],
         usageLimit: "100",
-    });
+    }));
 
     const formatPrice = (price) => {
         if (!price) return "0 đ";

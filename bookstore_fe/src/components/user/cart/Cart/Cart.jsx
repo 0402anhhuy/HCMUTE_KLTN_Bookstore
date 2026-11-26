@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -7,7 +7,6 @@ import {
     Trash2,
     ArrowLeft,
     Ticket,
-    Gift,
     Truck,
     Info,
     X,
@@ -32,7 +31,6 @@ const Cart = () => {
         clearCart,
         user,
         couponCode,
-        setCouponCode,
         usePoints,
         setUsePoints,
         selectedItemIds,

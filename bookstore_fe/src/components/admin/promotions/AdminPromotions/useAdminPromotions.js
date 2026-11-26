@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { promotionService } from "@/services/promotionService";
 import { useApp } from "@/context/AppContext";
 import { getEffectivePromotionStatus } from "@/utils/productPricing";
@@ -20,7 +20,7 @@ export const useAdminPromotions = () => {
         setExpandedPromoId((prev) => (prev === id ? null : id));
     };
 
-    const loadPromotions = async () => {
+    const loadPromotions = useCallback(async () => {
         setLoading(true);
         try {
             const res = await promotionService.getPromotions();
@@ -52,11 +52,17 @@ export const useAdminPromotions = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
 
     useEffect(() => {
-        loadPromotions();
-    }, []);
+        let active = true;
+        Promise.resolve().then(() => {
+            if (active) loadPromotions();
+        });
+        return () => {
+            active = false;
+        };
+    }, [loadPromotions]);
 
     const formatDateTime = (dateStr) => {
         if (!dateStr) return "";
