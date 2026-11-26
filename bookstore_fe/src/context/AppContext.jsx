@@ -4,8 +4,15 @@ import {
     useEffect,
     useContext,
     useCallback,
+    useMemo,
 } from "react";
 import api from "../services/api";
+import {
+    applyMarkAllNotificationsRead,
+    applyMarkNotificationRead,
+    buildNotificationWsUrl,
+    getRealtimeNotificationActions,
+} from "./notificationRealtime";
 
 const AppContext = createContext();
 
@@ -43,7 +50,10 @@ export const AppProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [cart, setCart] = useState(() => getGuestCart());
     const [notifications, setNotifications] = useState([]);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const unreadCount = useMemo(
+        () => notifications.filter((n) => !n.read).length,
+        [notifications],
+    );
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' | 'info' }
@@ -95,7 +105,6 @@ export const AppProvider = ({ children }) => {
             setUser(null);
             setCart({ items: [] });
             setNotifications([]);
-            setUnreadCount(0);
             showToast(
                 "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.",
                 "error",
@@ -108,7 +117,7 @@ export const AppProvider = ({ children }) => {
 
     // Load cart and notifications when user logs in or is guest
     useEffect(() => {
-        if (user) {
+        if (user?.id) {
             // Sessions created before phone/address were included in the login
             // response need one profile refresh so checkout can prefill them.
             if (!Object.prototype.hasOwnProperty.call(user, "phone")) {
@@ -117,18 +126,20 @@ export const AppProvider = ({ children }) => {
             fetchCart();
             fetchNotifications();
             fetchFavorites();
-        } else {
+        } else if (!user) {
             fetchCart();
         }
-    }, [user]);
+    }, [user?.id]);
 
     // Real-time WebSocket Notifications
     useEffect(() => {
-        if (!user) return;
+        if (!user?.id) return;
 
-        const wsProtocol =
-            window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsUrl = `${wsProtocol}//${window.location.hostname}:8081/ws/notifications`;
+        const wsUrl = buildNotificationWsUrl(
+            import.meta.env.VITE_API_BASE_URL,
+            window.location.protocol,
+            window.location.host,
+        );
 
         let ws;
         let reconnectTimeout;
@@ -143,44 +154,20 @@ export const AppProvider = ({ children }) => {
             ws.onmessage = (event) => {
                 try {
                     const newNotif = JSON.parse(event.data);
-                    const isForCurrentUser =
-                        newNotif.userId === Number(user.id);
-                    const isStaffNotification =
-                        !newNotif.userId &&
-                        (user.role === "MANAGER" || user.role === "ADMIN");
+                    const { shouldDeliver, events } =
+                        getRealtimeNotificationActions(newNotif, user);
 
-                    if (isForCurrentUser || isStaffNotification) {
+                    if (shouldDeliver) {
                         setNotifications((prev) => [newNotif, ...prev]);
-                        if (!newNotif.read) {
-                            setUnreadCount((prev) => prev + 1);
-                        }
                         showToast(
                             newNotif.title + ": " + newNotif.message,
                             "info",
                         );
                     }
 
-                    // Dispatch real-time order status update event for either the specific customer or managers/admins
-                    const isOrderOrReturn =
-                        newNotif.type === "ORDER" || newNotif.type === "RETURN";
-                    if (
-                        isOrderOrReturn &&
-                        newNotif.referenceId &&
-                        (newNotif.referenceType === "orders" ||
-                            newNotif.referenceType === "return_requests")
-                    ) {
-                        const isManagerOrAdmin =
-                            user.role === "MANAGER" || user.role === "ADMIN";
-                        if (isForCurrentUser || isManagerOrAdmin) {
-                            window.dispatchEvent(
-                                new CustomEvent("order-updated", {
-                                    detail: {
-                                        orderId: Number(newNotif.referenceId),
-                                    },
-                                }),
-                            );
-                        }
-                    }
+                    events.forEach(({ name, detail }) => {
+                        window.dispatchEvent(new CustomEvent(name, { detail }));
+                    });
                 } catch (err) {
                     console.error("Error processing websocket message:", err);
                 }
@@ -208,7 +195,7 @@ export const AppProvider = ({ children }) => {
                 clearTimeout(reconnectTimeout);
             }
         };
-    }, [user]);
+    }, [user?.id, user?.role]);
 
     const loginUser = async (token, userData, rememberMe = false) => {
         const storage = rememberMe ? localStorage : sessionStorage;
@@ -460,24 +447,11 @@ export const AppProvider = ({ children }) => {
     const fetchNotifications = async () => {
         if (!user) return;
         try {
-            // Create endpoint on backend or fetch
-            const response = await api.get("/users/profile"); // we can also fetch notifications if we implement it, wait, did we define getNotifications on user?
-            // Wait, let's see. In NotificationService, we have getNotificationsForUser.
-            // But we did not map a controller for notifications yet.
-            // To prevent frontend crash, let's catch it or implement a simple mock or get from profile.
-            // Let's create a notification fetch endpoint.
-            // Wait, let's make it fetch from /notifications if exists, or return an empty array if not.
-            // Let's implement it inside UserController or a new controller or mock it.
-            // Since it's in-app notification, let's mock it to prevent server errors, or fetch.
-            // Let's fetch from '/notifications' which we can easily implement in our backend,
-            // or we can just mock it or ignore if API fails.
             const notifResponse = await api
                 .get("/users/notifications")
                 .catch(() => ({ data: [] }));
-            setNotifications(notifResponse.data || []);
-            setUnreadCount(
-                (notifResponse.data || []).filter((n) => !n.read).length,
-            );
+            const list = notifResponse.data || [];
+            setNotifications(list);
         } catch (e) {
             console.warn(
                 "Notification endpoint not found/configured, fallback to empty list",
@@ -486,26 +460,24 @@ export const AppProvider = ({ children }) => {
     };
 
     const markNotificationRead = async (id) => {
+        setNotifications((prev) =>
+            applyMarkNotificationRead(prev, id).notifications,
+        );
         try {
             await api.put(`/users/notifications/${id}/read`);
+        } catch {
             await fetchNotifications();
-        } catch (e) {
-            // fallback local update
-            setNotifications((prev) =>
-                prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-            );
-            setUnreadCount((prev) => Math.max(0, prev - 1));
         }
     };
 
     const markAllNotificationsAsRead = async () => {
+        setNotifications((prev) =>
+            applyMarkAllNotificationsRead(prev).notifications,
+        );
         try {
             await api.put("/users/notifications/read-all");
+        } catch {
             await fetchNotifications();
-        } catch (e) {
-            // fallback local update
-            setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-            setUnreadCount(0);
         }
     };
 
