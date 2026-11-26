@@ -529,7 +529,6 @@ const Home = () => {
                                         addToCart={addToCart}
                                         formatPrice={formatPrice}
                                         getProductImage={getProductImage}
-                                        showBadge={`-${getDiscountPercent(product)}%`}
                                         originalPrice={getOriginalPrice(product)}
                                         isFlashSale={true}
                                     />
