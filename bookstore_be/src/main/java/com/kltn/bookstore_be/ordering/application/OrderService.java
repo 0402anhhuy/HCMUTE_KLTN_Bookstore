@@ -408,25 +408,28 @@ public class OrderService {
     private String generateVNPayUrl(Order order, HttpServletRequest httpRequest) {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
-        String vnp_OrderInfo = "Thanh toan don hang Bookstore #" + order.getId();
+        String vnp_OrderInfo = "Thanh toan don hang Bookstore " + order.getId();
         String vnp_OrderType = "other";
         String vnp_TxnRef = String.valueOf(order.getId());
         String vnp_IpAddr = VNPayUtil.getIpAddress(httpRequest);
 
-        String vnp_TmnCodeLocal = vnp_TmnCode;
+        String tmnCode = VNPayUtil.requireNonBlankConfig(vnp_TmnCode, "vnpay.tmn-code");
+        String returnUrl = VNPayUtil.requireNonBlankConfig(vnp_ReturnUrl, "vnpay.return-url");
+        String hashSecret = VNPayUtil.requireNonBlankConfig(vnp_HashSecret, "vnpay.hash-secret");
+        String apiUrl = VNPayUtil.requireNonBlankConfig(vnp_ApiUrl, "vnpay.api-url");
         
         long amount = order.getFinalAmount().multiply(BigDecimal.valueOf(100)).longValue();
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
-        vnp_Params.put("vnp_TmnCode", vnp_TmnCodeLocal);
+        vnp_Params.put("vnp_TmnCode", tmnCode);
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
         vnp_Params.put("vnp_CurrCode", "VND");
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
         vnp_Params.put("vnp_OrderType", vnp_OrderType);
         vnp_Params.put("vnp_Locale", "vn");
-        vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
+        vnp_Params.put("vnp_ReturnUrl", returnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
         ZoneId vnZone = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -462,9 +465,9 @@ public class OrderService {
             }
         }
         String queryUrl = query.toString();
-        String vnp_SecureHash = VNPayUtil.hmacSHA512(vnp_HashSecret, hashData.toString());
+        String vnp_SecureHash = VNPayUtil.hmacSHA512(hashSecret, hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
-        return vnp_ApiUrl + "?" + queryUrl;
+        return apiUrl + "?" + queryUrl;
     }
 
     public Order getOrderById(Long id) {
