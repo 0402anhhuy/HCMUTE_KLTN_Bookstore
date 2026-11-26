@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
+import { getProfileFormValues } from "./profileForm";
 
 export const useProfile = () => {
     const { user, updateUser, showToast } = useApp();
@@ -44,13 +45,24 @@ export const useProfile = () => {
         }
     }, [location]);
 
+    const syncFormWithUser = (currentUser) => {
+        const values = getProfileFormValues(currentUser);
+        setFullName(values.fullName);
+        setPhone(values.phone);
+        setEmail(values.email);
+    };
+
     useEffect(() => {
         if (user) {
-            setFullName(user.fullName || "");
-            setPhone(user.phone ?? "");
-            setEmail(user.email || "");
+            syncFormWithUser(user);
         }
     }, [user]);
+
+    const handleResetForm = () => {
+        if (!user) return;
+        syncFormWithUser(user);
+        showToast?.("Đã khôi phục lại thông tin ban đầu.", "success");
+    };
 
     const handleProfileSubmit = async (e) => {
         if (e) e.preventDefault();
@@ -107,6 +119,7 @@ export const useProfile = () => {
         loading,
         highlightFavorites,
         handleProfileSubmit,
+        handleResetForm,
         getInitials,
         activeTab,
         setActiveTab,

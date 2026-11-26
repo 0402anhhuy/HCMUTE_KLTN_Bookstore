@@ -39,6 +39,7 @@ const Profile = () => {
         loading,
         highlightFavorites,
         handleProfileSubmit,
+        handleResetForm,
         getInitials,
         activeTab,
         setActiveTab,
@@ -69,11 +70,6 @@ const Profile = () => {
             style: "currency",
             currency: "VND",
         }).format(amount || 0);
-    };
-
-    const handleResetForm = () => {
-        setFullName(user?.fullName || "");
-        setPhone(user?.phone || "");
     };
 
     return (
