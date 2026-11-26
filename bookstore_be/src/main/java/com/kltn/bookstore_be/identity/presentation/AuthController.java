@@ -88,6 +88,7 @@ public class AuthController {
             userService.updateLastLogin(user);
 
             return ResponseEntity.ok(LoginResponse.builder()
+                    .id(user.getId())
                     .token(jwt)
                     .email(user.getEmail())
                     .fullName(user.getFullName())

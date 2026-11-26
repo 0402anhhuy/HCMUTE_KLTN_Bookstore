@@ -259,6 +259,21 @@ export const AppProvider = ({ children }) => {
         };
     }, [userId, user, showToast]);
 
+    // Ghi nhận phiên đăng nhập ngay khi vừa login. Phải chạy TRƯỚC mọi request
+    // cần xác thực để request interceptor gắn được Bearer token.
+    const persistAuthSession = (token, userData, rememberMe = false) => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("rememberMe");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+        sessionStorage.removeItem("rememberMe");
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("token", token);
+        storage.setItem("user", JSON.stringify(userData));
+        storage.setItem("rememberMe", rememberMe ? "true" : "false");
+    };
+
     const syncGuestCartToBackend = async () => {
         const guestCartObj = getGuestCart();
         if (guestCartObj.items && guestCartObj.items.length > 0) {
@@ -273,17 +288,23 @@ export const AppProvider = ({ children }) => {
                     }
                 }
             }
-            localStorage.removeItem("guestCart");
         }
+        localStorage.removeItem("guestCart");
     };
 
     const loginUser = async (token, userData, rememberMe = false) => {
-        const storage = rememberMe ? localStorage : sessionStorage;
-        storage.setItem("token", token);
-        storage.setItem("user", JSON.stringify(userData));
-        storage.setItem("rememberMe", rememberMe ? "true" : "false");
+        persistAuthSession(token, userData, rememberMe);
         await syncGuestCartToBackend();
-        setUser(userData);
+        setUser((prev) => ({ ...prev, ...userData }));
+        // Đồng bộ ngay giỏ hàng server vừa nhận thay vì phải tải lại trang
+        if (userData?.id) {
+            try {
+                const response = await api.get("/cart");
+                setCart({ items: response.data.items || [] });
+            } catch (error) {
+                console.error("Failed to fetch cart after login:", error);
+            }
+        }
     };
 
     const logoutUser = () => {
