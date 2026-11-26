@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -7,7 +7,6 @@ import {
     Trash2,
     ArrowLeft,
     Ticket,
-    Gift,
     Truck,
     Info,
     X,
@@ -32,7 +31,6 @@ const Cart = () => {
         clearCart,
         user,
         couponCode,
-        setCouponCode,
         usePoints,
         setUsePoints,
         selectedItemIds,
@@ -241,7 +239,9 @@ const Cart = () => {
                             if (isEligible) {
                                 handleApplyCouponFromModal(c.code);
                             } else {
+                                // Chưa đủ điều kiện: đóng modal mã giảm giá và chuyển sang trang sản phẩm để mua thêm
                                 closeCouponModal();
+                                navigate("/catalog");
                             }
                         }}
                         className={`fahasa-coupon-btn ${isEligible ? "eligible" : "buy-more"} ${isSelected ? "active" : ""}`}
@@ -313,7 +313,12 @@ const Cart = () => {
                                         />
                                     </div>
 
-                                    <div className="cart-product-thumb-box">
+                                    <Link
+                                        to={prodId ? `/product/${prodId}` : "#"}
+                                        className="cart-product-thumb-box"
+                                        aria-label={`Xem chi tiết ${prodName}`}
+                                        title={prodName}
+                                    >
                                         {imgUrl ? (
                                             <img
                                                 src={imgUrl}
@@ -325,11 +330,20 @@ const Cart = () => {
                                                 Sách
                                             </span>
                                         )}
-                                    </div>
+                                    </Link>
 
                                     <div className="cart-product-info-col">
                                         <h4 className="cart-product-title">
-                                            {prodName}
+                                            <Link
+                                                to={
+                                                    prodId
+                                                        ? `/product/${prodId}`
+                                                        : "#"
+                                                }
+                                                className="cart-product-title-link"
+                                            >
+                                                {prodName}
+                                            </Link>
                                         </h4>
                                         <div className="cart-product-price-sub">
                                             <span className="current-price">

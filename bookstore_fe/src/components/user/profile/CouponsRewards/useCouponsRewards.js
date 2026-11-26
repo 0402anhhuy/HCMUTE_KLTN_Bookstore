@@ -9,22 +9,24 @@ export const useCouponsRewards = () => {
     const [copiedCode, setCopiedCode] = useState(null);
 
     useEffect(() => {
-        if (user) {
-            fetchCoupons();
-        }
+        if (!user) return;
+        let active = true;
+        Promise.resolve().then(async () => {
+            if (!active) return;
+            setLoading(true);
+            try {
+                const res = await api.get("/orders/coupons");
+                if (active) setCoupons(res.data || []);
+            } catch (err) {
+                console.error("Error fetching user coupons", err);
+            } finally {
+                if (active) setLoading(false);
+            }
+        });
+        return () => {
+            active = false;
+        };
     }, [user]);
-
-    const fetchCoupons = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get("/orders/coupons");
-            setCoupons(res.data || []);
-        } catch (err) {
-            console.error("Error fetching user coupons", err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleCopy = (code) => {
         navigator.clipboard.writeText(code);

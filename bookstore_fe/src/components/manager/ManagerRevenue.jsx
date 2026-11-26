@@ -4,7 +4,6 @@ import {
   Wallet, 
   CreditCard, 
   CheckCircle, 
-  Calendar, 
   Download, 
   FileText, 
   FileSpreadsheet, 
@@ -363,7 +362,7 @@ const ManagerRevenue = ({ user, orders = [] }) => {
               const pct = maxVal > 0 ? (item.value / maxVal) * 100 : 0;
               const barHeight = Math.max((pct * 1.6), 12);
               
-              let displayVal = "";
+              let displayVal;
               if (item.value >= 1000000) {
                 displayVal = `${(item.value / 1000000).toFixed(1)}M`;
               } else if (item.value >= 1000) {

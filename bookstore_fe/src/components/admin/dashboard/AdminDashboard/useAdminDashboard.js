@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 export const useAdminDashboard = () => {
-    const { user, loading: appLoading, logoutUser, showToast } = useApp();
+    const { user, logoutUser, showToast } = useApp();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 

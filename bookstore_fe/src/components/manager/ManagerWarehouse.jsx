@@ -9,9 +9,7 @@ import {
   ChevronLeft, 
   ChevronRight, 
   X, 
-  BookOpen, 
-  Package, 
-  UserCheck
+  BookOpen
 } from "lucide-react";
 import api from "../../services/api";
 import { useApp } from "../../context/AppContext";

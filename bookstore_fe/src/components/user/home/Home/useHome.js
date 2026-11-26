@@ -64,11 +64,6 @@ function getTimeLeft(endTime) {
     return { hours: h, minutes: m, seconds: s };
 }
 
-function getSeededScore(product, seed) {
-    const id = Number(product.id) || 0;
-    return (id * 9301 + seed * 49297) % 233280;
-}
-
 export const useHome = (options = {}) => {
     const {
         // Cho phép dùng chung bộ lọc theo URL: khởi tạo từ query params (trang Catalog)

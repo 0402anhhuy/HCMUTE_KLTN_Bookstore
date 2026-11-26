@@ -33,24 +33,31 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     });
     const [durationHours, setDurationHours] = useState("6");
-    const [endDate, setEndDate] = useState("");
+    const endDate = useMemo(
+        () => calculateEndDateStr(startDate, durationHours),
+        [startDate, durationHours],
+    );
 
     const [availableProducts, setAvailableProducts] = useState([]);
     const [rawCategories, setRawCategories] = useState([]);
     const [occupiedProductMap, setOccupiedProductMap] = useState({});
-    const [selectedCategoryId, setSelectedCategoryId] = useState("ALL");
-    const [productSearch, setProductSearch] = useState("");
+    const [selectedCategoryId, setSelectedCategoryIdState] = useState("ALL");
+    const [productSearch, setProductSearchState] = useState("");
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [loadingProducts, setLoadingProducts] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
     const PRODUCTS_PER_PAGE = 5;
 
-    useEffect(() => {
-        if (startDate && durationHours) {
-            setEndDate(calculateEndDateStr(startDate, durationHours));
-        }
-    }, [startDate, durationHours]);
+    const setSelectedCategoryId = (val) => {
+        setSelectedCategoryIdState(val);
+        setCurrentPage(1);
+    };
+
+    const setProductSearch = (val) => {
+        setProductSearchState(val);
+        setCurrentPage(1);
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -136,10 +143,6 @@ export const useAdminAddPromotion = ({ onSave, showToast }) => {
         const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
         return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
     }, [filteredProducts, currentPage]);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [selectedCategoryId, productSearch]);
 
     const toggleProductSelection = (id) => {
         if (occupiedProductMap[id]) {

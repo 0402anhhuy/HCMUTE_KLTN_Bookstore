@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     Calendar,
     MapPin,
@@ -16,7 +16,6 @@ import {
     Clock,
     Lock,
     Loader2,
-    Eye,
 } from "lucide-react";
 import { Breadcrumb, EmptyState } from "@/components/common";
 import { useOrderHistory } from "./useOrderHistory";

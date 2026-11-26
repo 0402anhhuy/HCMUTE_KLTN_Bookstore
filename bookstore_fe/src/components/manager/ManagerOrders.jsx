@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   CheckCircle, 
   X, 
@@ -9,11 +9,9 @@ import {
   RotateCcw, 
   XCircle,
   Eye,
-  AlertTriangle,
   User,
   Phone,
   MapPin,
-  CreditCard,
   ChevronLeft,
   ChevronRight,
   Loader2
@@ -35,6 +33,30 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
+  const handleViewDetails = useCallback(async (orderId) => {
+    setSelectedOrder(orderId);
+    setLoadingDetails(true);
+    try {
+      const response = await api.get(`/orders/${orderId}`);
+      let returnRequest = null;
+      if (response.data.order?.status === 'cancel_requested' || response.data.order?.status === 'refunded') {
+        try {
+          const retResponse = await api.get(`/orders/${orderId}/return`);
+          returnRequest = retResponse.data;
+        } catch (e) {
+          console.error("Failed to load return request details:", e);
+        }
+      }
+      setOrderDetails({ ...response.data, returnRequest });
+    } catch (error) {
+      console.error(error);
+      showToast('Lỗi khi lấy chi tiết đơn hàng!', 'error');
+      setSelectedOrder(null);
+    } finally {
+      setLoadingDetails(false);
+    }
+  }, [showToast]);
+
   useEffect(() => {
     const handleOrderUpdated = (event) => {
       const { orderId } = event.detail || {};
@@ -49,7 +71,7 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
     return () => {
       window.removeEventListener('order-updated', handleOrderUpdated);
     };
-  }, [selectedOrder, loadData]);
+  }, [selectedOrder, loadData, handleViewDetails]);
 
   // Reject Return Request Modal state
   const [rejectingRequest, setRejectingRequest] = useState(null);
@@ -61,17 +83,6 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
 
   // Approve Return Request Modal state
   const [approvingRequest, setApprovingRequest] = useState(null);
-
-  const handleDeliverOrder = async (orderId) => {
-    try {
-      await api.post(`/orders/${orderId}/deliver`);
-      showToast(`Đơn hàng #${orderId} đã được chuyển sang trạng thái Giao thành công!`, 'success');
-      loadData();
-    } catch (error) {
-      console.error(error);
-      showToast('Lỗi khi cập nhật trạng thái đơn hàng!', 'error');
-    }
-  };
 
   const handleCancelOrder = (orderId) => {
     setCancelReason('');
@@ -140,30 +151,6 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
     } catch (error) {
       console.error(error);
       showToast('Lỗi khi cập nhật trạng thái đơn hàng!', 'error');
-    }
-  };
-
-  const handleViewDetails = async (orderId) => {
-    setSelectedOrder(orderId);
-    setLoadingDetails(true);
-    try {
-      const response = await api.get(`/orders/${orderId}`);
-      let returnRequest = null;
-      if (response.data.order?.status === 'cancel_requested' || response.data.order?.status === 'refunded') {
-        try {
-          const retResponse = await api.get(`/orders/${orderId}/return`);
-          returnRequest = retResponse.data;
-        } catch (e) {
-          console.error("Failed to load return request details:", e);
-        }
-      }
-      setOrderDetails({ ...response.data, returnRequest });
-    } catch (error) {
-      console.error(error);
-      showToast('Lỗi khi lấy chi tiết đơn hàng!', 'error');
-      setSelectedOrder(null);
-    } finally {
-      setLoadingDetails(false);
     }
   };
 
