@@ -4,7 +4,11 @@ import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
 import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
-import { getProductDiscountPercent, getProductOriginalPrice } from "@/utils/productPricing";
+import {
+    buildActivePromoDiscountMap,
+    getProductDiscountPercent,
+    getProductOriginalPrice,
+} from "@/utils/productPricing";
 import {
     buildCatalogSearchParams,
     buildProductsRequestUrl,
@@ -19,7 +23,6 @@ import ngheThuatCover from "@/assets/nghe_thuat_ve.png";
 import quanLyCover from "@/assets/quan_ly_cam_xuc.png";
 
 const FLASH_SALE_SLOT_HOURS = 6;
-const FLASH_SALE_LIMIT = 10;
 
 // Cache dùng chung cho toàn bộ phiên (module-level) để lần mount sau (quay lại trang chủ)
 // hiển thị ngay dữ liệu cũ trong lúc chờ API, không bắt người dùng nhìn màn hình trống
@@ -265,44 +268,7 @@ export const useHome = (options = {}) => {
     }, [flashSaleEndsAt, fetchActivePromotions]);
 
     const promoProductMap = useMemo(() => {
-        const map = new Map();
-        if (activePromotions && activePromotions.length > 0) {
-            activePromotions.forEach((promo) => {
-                if (promo.applicableProducts && promo.applicableProducts.length > 0) {
-                    promo.applicableProducts.forEach((p) => {
-                        let discount = 0;
-                        if (promo.discountType === "PERCENT") {
-                            discount = Number(promo.discountValue) || 0;
-                        } else if (promo.discountType === "FIXED") {
-                            discount = p.price ? Math.round(((Number(promo.discountValue) || 0) / p.price) * 100) : 0;
-                        }
-
-                        const pId = String(p.id);
-                        if (map.has(pId)) {
-                            const existing = map.get(pId);
-                            if (discount > existing.promotionDiscountPercent) {
-                                map.set(pId, {
-                                    ...p,
-                                    promotionDiscountPercent: discount,
-                                    promotionTitle: promo.title,
-                                    promotionEndDate: promo.endDate,
-                                    promoUsedCount: promo.usedCount || 0,
-                                });
-                            }
-                        } else {
-                            map.set(pId, {
-                                ...p,
-                                promotionDiscountPercent: discount,
-                                promotionTitle: promo.title,
-                                promotionEndDate: promo.endDate,
-                                promoUsedCount: promo.usedCount || 0,
-                            });
-                        }
-                    });
-                }
-            });
-        }
-        return map;
+        return buildActivePromoDiscountMap(activePromotions);
     }, [activePromotions]);
 
     const enrichedProducts = useMemo(() => {
@@ -319,20 +285,12 @@ export const useHome = (options = {}) => {
     }, [products, promoProductMap]);
 
     const flashSaleProducts = useMemo(() => {
-        // Priority 1: Products assigned by Admin in active Promotion programs
-        if (promoProductMap.size > 0) {
-            const uniquePromoProducts = Array.from(promoProductMap.values());
-            if (uniquePromoProducts.length > 0) {
-                return uniquePromoProducts;
-            }
+        // Chỉ hiển thị các sản phẩm thuộc chương trình khuyến mãi đang diễn ra do Admin tạo
+        if (promoProductMap.size === 0) {
+            return [];
         }
-
-        // Priority 2: Các sản phẩm có mức giảm giá tốt nhất để luôn có flash sale sinh động
-        const saleItems = enrichedProducts
-            .filter((p) => (Number(p.promotionDiscountPercent) || 0) > 0)
-            .slice(0, FLASH_SALE_LIMIT);
-        return saleItems;
-    }, [promoProductMap, enrichedProducts]);
+        return Array.from(promoProductMap.values());
+    }, [promoProductMap]);
 
     const flashSaleTotalPages = Math.max(
         1,

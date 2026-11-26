@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,8 +30,10 @@ public class PromotionService {
     private final AuditLogService auditLogService;
     private final UserService userService;
 
+    @Transactional
     public List<Promotion> getAllPromotions() {
         List<Promotion> promotions = promotionRepository.findAll();
+        syncPromotionStatuses(promotions, LocalDateTime.now());
         for (Promotion p : promotions) {
             List<Order> orders = orderRepository.findByPromotionId(p.getId());
             BigDecimal rev = BigDecimal.ZERO;
@@ -46,6 +49,36 @@ public class PromotionService {
             p.setTotalRevenue(rev);
         }
         return promotions;
+    }
+
+    private void syncPromotionStatuses(List<Promotion> promotions, LocalDateTime now) {
+        if (promotions == null || promotions.isEmpty()) {
+            return;
+        }
+        List<Promotion> changed = new ArrayList<>();
+        for (Promotion promo : promotions) {
+            Promotion.PromotionStatus expected = resolvePromotionStatus(promo, now);
+            if (expected != null && promo.getStatus() != expected) {
+                promo.setStatus(expected);
+                changed.add(promo);
+            }
+        }
+        if (!changed.isEmpty()) {
+            promotionRepository.saveAll(changed);
+        }
+    }
+
+    private Promotion.PromotionStatus resolvePromotionStatus(Promotion promo, LocalDateTime now) {
+        if (promo.getStatus() == Promotion.PromotionStatus.INACTIVE) {
+            return Promotion.PromotionStatus.INACTIVE;
+        }
+        if (promo.getEndDate() != null && !promo.getEndDate().isAfter(now)) {
+            return Promotion.PromotionStatus.EXPIRED;
+        }
+        if (promo.getStartDate() != null && !promo.getStartDate().isAfter(now)) {
+            return Promotion.PromotionStatus.ACTIVE;
+        }
+        return Promotion.PromotionStatus.PENDING;
     }
 
     public List<Promotion> getActivePromotions() {
@@ -82,6 +115,7 @@ public class PromotionService {
 
         // Kiểm tra xem có sản phẩm nào đã thuộc chương trình khuyến mãi khác đang hoặc sắp diễn ra không
         List<Promotion> existingPromos = promotionRepository.findAll();
+        syncPromotionStatuses(existingPromos, LocalDateTime.now());
         for (Promotion existing : existingPromos) {
             if (existing.getStatus() == Promotion.PromotionStatus.EXPIRED || existing.getStatus() == Promotion.PromotionStatus.INACTIVE) {
                 continue;
@@ -158,6 +192,7 @@ public class PromotionService {
 
         // Kiểm tra xem có sản phẩm nào đã thuộc chương trình khuyến mãi khác (ngoại trừ chương trình đang sửa) không
         List<Promotion> existingPromos = promotionRepository.findAll();
+        syncPromotionStatuses(existingPromos, LocalDateTime.now());
         for (Promotion existing : existingPromos) {
             if (existing.getId().equals(id) || existing.getStatus() == Promotion.PromotionStatus.EXPIRED || existing.getStatus() == Promotion.PromotionStatus.INACTIVE) {
                 continue;

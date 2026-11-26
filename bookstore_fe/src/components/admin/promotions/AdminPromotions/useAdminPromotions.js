@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { promotionService } from "@/services/promotionService";
 import { useApp } from "@/context/AppContext";
+import { getEffectivePromotionStatus } from "@/utils/productPricing";
 
 export const useAdminPromotions = () => {
     const { showToast } = useApp();
@@ -25,18 +26,21 @@ export const useAdminPromotions = () => {
             const res = await promotionService.getPromotions();
             const rawPromotions = res.data || [];
 
-            // Sync totalRevenue from promotion report endpoint for guaranteed accuracy
+            // Sync totalRevenue & time-based status for expired/due promotions
+            const now = new Date();
             const promotionsWithRevenue = await Promise.all(
                 rawPromotions.map(async (promo) => {
+                    const effectiveStatus = getEffectivePromotionStatus(promo, now);
                     try {
                         const reportRes = await promotionService.getPromotionReport(promo.id);
                         return {
                             ...promo,
+                            status: effectiveStatus,
                             totalRevenue: reportRes.data?.totalRevenue ?? promo.totalRevenue ?? 0,
                             totalUses: reportRes.data?.totalUses ?? promo.totalUses ?? 0,
                         };
                     } catch {
-                        return promo;
+                        return { ...promo, status: effectiveStatus };
                     }
                 })
             );
