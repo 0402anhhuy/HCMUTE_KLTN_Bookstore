@@ -1,0 +1,93 @@
+name: Code Quality & Secret Scan
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  frontend-quality:
+    name: Frontend Lint, Unit Tests & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bookstore_fe
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: 'bookstore_fe/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run frontend unit tests
+        run: find src -name '*.test.js' -print0 | xargs -0 node --test
+
+      - name: Build production bundle
+        run: npm run build
+
+  backend-quality:
+    name: Backend Compile, Unit Tests & SpotBugs
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bookstore_be
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run backend unit tests
+        run: bash ./mvnw -B test -Dtest='!BookstoreBeApplicationTests,!PerformanceSlaBenchmarkTest'
+
+      - name: Run SpotBugs static analysis
+        run: bash ./mvnw -B com.github.spotbugs:spotbugs-maven-plugin:4.8.6.6:spotbugs
+
+      - name: Verify zero non-EI SpotBugs findings
+        run: |
+          node -e "
+            const fs = require('fs');
+            const xml = fs.readFileSync('target/spotbugsXml.xml', 'utf8');
+            const bugs = [...xml.matchAll(/<BugInstance[^>]*category=['\"]([^'\"]+)['\"][^>]*priority=['\"](\d+)['\"][^>]*type=['\"]([^'\"]+)['\"][^>]*>/g)];
+            const blocking = bugs.filter(m => m[1] !== 'MALICIOUS_CODE' || m[2] === '1');
+            console.log('Total SpotBugs findings:', bugs.length, '| Blocking (non-EI / P1):', blocking.length);
+            if (blocking.length > 0) {
+              console.error(blocking.map(m => m[3] + ' (' + m[1] + ' P' + m[2] + ')').join('\n'));
+              process.exit(1);
+            }
+          "

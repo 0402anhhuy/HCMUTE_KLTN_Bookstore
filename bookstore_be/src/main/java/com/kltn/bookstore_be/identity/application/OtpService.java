@@ -26,20 +26,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
 public class OtpService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final OtpTokenRepository otpTokenRepository;
     private final MailService mailService;
 
     @Transactional
     public String generateAndSendOtp(User user, OtpToken.OtpType type) {
-        // Generate a 6-digit numeric OTP
-        String otpCode = String.format("%06d", new Random().nextInt(1000000));
+        // Generate a 6-digit numeric OTP using CSPRNG
+        String otpCode = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
         
         OtpToken otpToken = OtpToken.builder()
                 .user(user)

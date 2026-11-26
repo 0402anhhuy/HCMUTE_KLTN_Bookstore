@@ -21,6 +21,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -30,10 +31,10 @@ public class VNPayUtil {
             "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$");
 
     public static String hmacSHA512(final String key, final String data) {
+        if (key == null || data == null) {
+            return "";
+        }
         try {
-            if (key == null || data == null) {
-                throw new NullPointerException();
-            }
             final Mac hmac512 = Mac.getInstance("HmacSHA512");
             byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);
             final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
@@ -45,7 +46,7 @@ public class VNPayUtil {
                 sb.append(String.format("%02x", b & 0xff));
             }
             return sb.toString();
-        } catch (Exception ex) {
+        } catch (GeneralSecurityException ex) {
             return "";
         }
     }
