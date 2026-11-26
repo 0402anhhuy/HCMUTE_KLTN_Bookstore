@@ -5,6 +5,12 @@ import api from "@/services/api";
 import { productService } from "@/services/productService";
 import { buildCategoryTree } from "@/utils/categoryTree";
 import { getProductDiscountPercent, getProductOriginalPrice } from "@/utils/productPricing";
+import {
+    buildCatalogSearchParams,
+    buildProductsRequestUrl,
+    hasActiveCatalogFilters,
+    shouldSyncCatalogUrl,
+} from "./catalogFilterUrl";
 
 // Import local image assets
 import matNguCover from "@/assets/mat_ngu_cuoc_doi.png";
@@ -70,7 +76,7 @@ export const useHome = (options = {}) => {
     const { addToCart } = useApp();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const keyword = searchParams.get("keyword") || "";
+    const keyword = (searchParams.get("keyword") || "").trim();
 
     // Search/Filter states
     const [categories, setCategories] = useState([]);
@@ -160,23 +166,28 @@ export const useHome = (options = {}) => {
         }
     }, []);
 
+    const catalogFilters = useMemo(
+        () => ({
+            page,
+            keyword,
+            selectedCategory,
+            minPrice,
+            maxPrice,
+            selectedPublishers,
+        }),
+        [
+            page,
+            keyword,
+            selectedCategory,
+            minPrice,
+            maxPrice,
+            selectedPublishers,
+        ],
+    );
+
     const fetchProducts = useCallback(async () => {
-        const hasActiveFilters =
-            !!keyword.trim() ||
-            !!selectedCategory ||
-            !!minPrice ||
-            !!maxPrice ||
-            selectedPublishers.length > 0;
-        const size = hasActiveFilters ? 12 : 30;
-        let url = `/products?page=${page}&size=${size}`;
-        if (keyword.trim())
-            url += `&keyword=${encodeURIComponent(keyword)}`;
-        if (selectedCategory) url += `&categoryId=${selectedCategory}`;
-        if (minPrice) url += `&minPrice=${minPrice}`;
-        if (maxPrice) url += `&maxPrice=${maxPrice}`;
-        selectedPublishers.forEach((pubId) => {
-            if (pubId) url += `&publisher=${encodeURIComponent(pubId)}`;
-        });
+        const hasActiveFilters = hasActiveCatalogFilters(catalogFilters);
+        const url = buildProductsRequestUrl(catalogFilters);
 
         const cacheKey = hasActiveFilters ? null : "default";
         const cached = cacheKey ? readCache(productsCache, cacheKey) : null;
@@ -201,35 +212,27 @@ export const useHome = (options = {}) => {
         } finally {
             setLoading(false);
         }
+    }, [catalogFilters]);
 
-        // Đồng bộ bộ lọc lên URL để link chia sẻ/tải lại vẫn giữ đúng kết quả lọc
-        if (syncFiltersWithUrl) {
-            const next = new URLSearchParams();
-            if (keyword.trim()) next.set("keyword", keyword.trim());
-            if (selectedCategory) next.set("categoryId", selectedCategory);
-            if (minPrice) next.set("minPrice", minPrice);
-            if (maxPrice) next.set("maxPrice", maxPrice);
-            if (selectedPublishers.length > 0)
-                selectedPublishers.forEach((pubId) =>
-                    next.append("publisher", pubId),
-                );
-            if (page > 0) next.set("page", String(page));
-            const nextStr = next.toString();
-            if (nextStr !== searchParams.toString()) {
-                setSearchParams(next, { replace: true });
-            }
+    const searchParamsRef = useRef(searchParams);
+    useEffect(() => {
+        searchParamsRef.current = searchParams;
+    }, [searchParams]);
+
+    // Đồng bộ bộ lọc lên URL tách riêng khỏi fetchProducts để tránh cập nhật URL
+    // làm đổi dependency của fetchProducts và bắn lại API lần thứ 2.
+    useEffect(() => {
+        const next = buildCatalogSearchParams(catalogFilters);
+        if (
+            shouldSyncCatalogUrl(
+                syncFiltersWithUrl,
+                next,
+                searchParamsRef.current,
+            )
+        ) {
+            setSearchParams(next, { replace: true });
         }
-    }, [
-        page,
-        selectedCategory,
-        keyword,
-        minPrice,
-        maxPrice,
-        selectedPublishers,
-        syncFiltersWithUrl,
-        searchParams,
-        setSearchParams,
-    ]);
+    }, [syncFiltersWithUrl, catalogFilters, setSearchParams]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
