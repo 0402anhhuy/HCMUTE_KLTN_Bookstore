@@ -648,6 +648,75 @@
     cursor: not-allowed;
 }
 
+/* Review Modal Elements */
+.order-review-modal-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.order-review-modal-close-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.order-review-stars-select-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 16px 0;
+}
+
+.order-review-star-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.12s ease;
+}
+
+.order-review-star-btn:hover {
+    transform: scale(1.12);
+}
+
+.order-review-submit-btn {
+    width: 100%;
+    padding: 11px 20px;
+    background-color: #059669;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.order-review-submit-btn:hover:not(:disabled) {
+    background-color: #047857;
+}
+
+.order-review-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* ================= ORDER DETAILS MODAL ================= */
 .order-details-modal-fixed-header {
     display: flex;
