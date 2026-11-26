@@ -64,9 +64,14 @@ export const useOrderHistory = () => {
     };
 
     useEffect(() => {
-        if (user) {
-            fetchOrders();
-        }
+        if (!user) return;
+        let active = true;
+        Promise.resolve().then(() => {
+            if (active) fetchOrders();
+        });
+        return () => {
+            active = false;
+        };
     }, [user]);
 
     useEffect(() => {

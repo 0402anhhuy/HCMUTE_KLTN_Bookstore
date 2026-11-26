@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
@@ -7,6 +7,7 @@ import {
     getProductDiscountPercent,
     getProductOriginalPrice,
 } from "@/utils/productPricing";
+import { calculateCouponDiscount, findBestCoupon } from "@/utils/couponDiscount";
 
 export const useCart = () => {
     const {
@@ -19,48 +20,30 @@ export const useCart = () => {
         fetchCart,
     } = useApp();
     const navigate = useNavigate();
-    const [couponCode, setCouponCodeState] = useState("");
-    const isManualCouponRef = useRef(false);
+    const [rawCouponCode, setRawCouponCode] = useState("");
+    const [hasManualCoupon, setHasManualCoupon] = useState(false);
 
     useEffect(() => {
-        fetchCart?.();
-    }, []);
+        let active = true;
+        Promise.resolve().then(() => {
+            if (active) fetchCart?.();
+        });
+        return () => {
+            active = false;
+        };
+    }, [fetchCart]);
 
     const setCouponCode = (code, isManual = true) => {
         if (isManual) {
-            isManualCouponRef.current = true;
+            setHasManualCoupon(true);
         }
-        setCouponCodeState(code);
+        setRawCouponCode(code);
     };
     const [usePoints, setUsePoints] = useState(false);
-    const [selectedItemIds, setSelectedItemIds] = useState(new Set());
-
-    useEffect(() => {
-        if (!cart?.items || cart.items.length === 0) {
-            setSelectedItemIds(new Set());
-            return;
-        }
-        setSelectedItemIds((prev) => {
-            const currentIds = new Set(
-                (cart.items || [])
-                    .filter((item) => item && item.id !== undefined && item.id !== null)
-                    .map((item) => item.id),
-            );
-            if (prev.size === 0) {
-                return currentIds;
-            }
-            const next = new Set();
-            prev.forEach((id) => {
-                if (currentIds.has(id)) {
-                    next.add(id);
-                }
-            });
-            return next.size > 0 ? next : currentIds;
-        });
-    }, [cart?.items]);
+    const [deselectedIds, setDeselectedIds] = useState(() => new Set());
 
     const toggleSelectItem = (itemId) => {
-        setSelectedItemIds((prev) => {
+        setDeselectedIds((prev) => {
             const next = new Set(prev);
             if (next.has(itemId)) {
                 next.delete(itemId);
@@ -81,19 +64,19 @@ export const useCart = () => {
 
     // Luôn tính toán các ID đã chọn đồng bộ trực tiếp với danh sách item hiện có trong giỏ
     const activeSelectedItemIds = useMemo(() => {
-        const availableIds = new Set(
-            (cart?.items || [])
-                .filter((item) => item && item.id !== undefined && item.id !== null)
-                .map((item) => item.id),
-        );
         const active = new Set();
-        selectedItemIds.forEach((id) => {
-            if (availableIds.has(id)) {
-                active.add(id);
+        (cart?.items || []).forEach((item) => {
+            if (
+                item &&
+                item.id !== undefined &&
+                item.id !== null &&
+                !deselectedIds.has(item.id)
+            ) {
+                active.add(item.id);
             }
         });
         return active;
-    }, [cart?.items, selectedItemIds]);
+    }, [cart?.items, deselectedIds]);
 
     const isAllSelected = Boolean(
         cart?.items &&
@@ -103,15 +86,15 @@ export const useCart = () => {
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
-            setSelectedItemIds(new Set());
-        } else {
-            setSelectedItemIds(
+            setDeselectedIds(
                 new Set(
                     (cart?.items || [])
                         .filter((item) => item && item.id !== undefined && item.id !== null)
                         .map((item) => item.id),
                 ),
             );
+        } else {
+            setDeselectedIds(new Set());
         }
     };
 
@@ -125,7 +108,6 @@ export const useCart = () => {
 
     const [coupons, setCoupons] = useState([]);
     const [activePromotions, setActivePromotions] = useState([]);
-    const [bestCoupon, setBestCoupon] = useState(null);
     const couponVersionRef = useRef("");
 
     useEffect(() => {
@@ -156,7 +138,7 @@ export const useCart = () => {
         return { discountPercent, originalPrice };
     };
 
-    const fetchCoupons = async (notifyChange = false) => {
+    const fetchCoupons = useCallback(async (notifyChange = false) => {
         try {
             const res = await api.get("/coupons");
             const nextCoupons = res.data || [];
@@ -189,57 +171,29 @@ export const useCart = () => {
         } catch (err) {
             console.error("Failed to fetch coupons", err);
         }
-    };
+    }, [showToast]);
 
     useEffect(() => {
-        fetchCoupons();
+        let active = true;
+        Promise.resolve().then(() => {
+            if (active) fetchCoupons();
+        });
         const refreshTimer = setInterval(() => fetchCoupons(true), 10000);
-        return () => clearInterval(refreshTimer);
-    }, []);
+        return () => {
+            active = false;
+            clearInterval(refreshTimer);
+        };
+    }, [fetchCoupons]);
 
-    const calculateDiscount = (coupon, currentSubtotal, rawShipping = 30000) => {
-        if (!coupon) return 0;
-        if (currentSubtotal < coupon.minOrderValue) return 0;
+    const calculateDiscount = calculateCouponDiscount;
 
-        const isExpired = new Date(coupon.endDate) < new Date();
-        const isLimitReached = coupon.usedCount >= coupon.usageLimit;
-        if (coupon.status !== "ACTIVE" || isExpired || isLimitReached) return 0;
+    const bestCoupon = useMemo(
+        () => findBestCoupon(coupons, totalAmount),
+        [coupons, totalAmount],
+    );
 
-        if (coupon.discountType === "PERCENT") {
-            let disc = (currentSubtotal * coupon.discountValue) / 100;
-            if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
-                disc = coupon.maxDiscountAmount;
-            }
-            return disc;
-        } else if (coupon.discountType === "FREESHIP") {
-            let val = coupon.discountValue || rawShipping;
-            let disc = Math.min(rawShipping, val);
-            if (coupon.maxDiscountAmount && disc > coupon.maxDiscountAmount) {
-                disc = coupon.maxDiscountAmount;
-            }
-            return disc;
-        } else {
-            return coupon.discountValue;
-        }
-    };
-
-    useEffect(() => {
-        if (coupons.length > 0 && !isManualCouponRef.current && !couponCode) {
-            let maxDisc = 0;
-            let best = null;
-            coupons.forEach((c) => {
-                const disc = calculateDiscount(c, totalAmount);
-                if (disc > maxDisc) {
-                    maxDisc = disc;
-                    best = c;
-                }
-            });
-            if (best) {
-                setBestCoupon(best);
-                setCouponCodeState(best.code);
-            }
-        }
-    }, [coupons, totalAmount, couponCode]);
+    const couponCode =
+        rawCouponCode || (!hasManualCoupon && bestCoupon ? bestCoupon.code : "");
 
     const activeCouponObj = coupons.find((c) => c?.code === couponCode);
     const savedAddresses =
@@ -419,7 +373,7 @@ export const useCart = () => {
         if (usePoints) {
             params.push(`usePoints=true`);
         }
-        params.push(`cartItemIds=${Array.from(selectedItemIds).join(",")}`);
+        params.push(`cartItemIds=${Array.from(activeSelectedItemIds).join(",")}`);
 
         if (params.length > 0) {
             path += `?${params.join("&")}`;
@@ -448,8 +402,8 @@ export const useCart = () => {
     const sortedCoupons = useMemo(() => {
         if (!coupons || coupons.length === 0) return [];
         return [...coupons].sort((a, b) => {
-            const discB = calculateDiscount(b, totalAmount, rawShippingFee);
-            const discA = calculateDiscount(a, totalAmount, rawShippingFee);
+            const discB = calculateCouponDiscount(b, totalAmount, rawShippingFee);
+            const discA = calculateCouponDiscount(a, totalAmount, rawShippingFee);
             if (discB !== discA) return discB - discA;
 
             const valB = Number(b.discountValue) || 0;

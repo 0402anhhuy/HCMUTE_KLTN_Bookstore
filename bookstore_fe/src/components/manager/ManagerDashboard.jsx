@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useApp } from '../../context/AppContext';
@@ -31,7 +31,6 @@ const ManagerDashboard = () => {
   const { 
     user, 
     logoutUser, 
-    showToast, 
     notifications, 
     unreadCount, 
     markNotificationRead,
@@ -41,20 +40,21 @@ const ManagerDashboard = () => {
   const [searchParams] = useSearchParams();
 
   // Tab, Sidebar & Notification State
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  // Set active tab based on query param
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
+  const tabParam = searchParams.get('tab');
+  const [prevTabParam, setPrevTabParam] = useState(tabParam);
+  const [activeTab, setActiveTab] = useState(() => tabParam || 'dashboard');
+  if (tabParam !== prevTabParam) {
+    setPrevTabParam(tabParam);
     if (tabParam) {
       setActiveTab(tabParam);
     }
-  }, [searchParams]);
+  }
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Loading & Data State
   const [loading, setLoading] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -62,32 +62,8 @@ const ManagerDashboard = () => {
   const [stockMovements, setStockMovements] = useState([]);
   const [shippers, setShippers] = useState([]);
 
-  // Load all data on mount
-  useEffect(() => {
-    if (user?.id && (user.role === 'MANAGER' || user.role === 'ADMIN')) {
-      loadData();
-    }
-  }, [user?.id, user?.role]);
-
-  useEffect(() => {
-    if (!user?.id || (user.role !== 'MANAGER' && user.role !== 'ADMIN')) return;
-    const handleProductUpdated = () => loadData();
-    const handleOrderUpdated = () => {
-      if (activeTab !== 'orders') {
-        loadData();
-      }
-    };
-    window.addEventListener('product-updated', handleProductUpdated);
-    window.addEventListener('order-updated', handleOrderUpdated);
-    return () => {
-      window.removeEventListener('product-updated', handleProductUpdated);
-      window.removeEventListener('order-updated', handleOrderUpdated);
-    };
-  }, [user?.id, user?.role, activeTab]);
-
-  const loadData = async () => {
-    const isInitial = products.length === 0 && orders.length === 0;
-    if (isInitial) {
+  const loadData = useCallback(async () => {
+    if (!hasLoadedOnceRef.current) {
       setLoading(true);
     }
     try {
@@ -144,9 +120,38 @@ const ManagerDashboard = () => {
     } catch (error) {
       console.error('Error loading manager dashboard data', error);
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Load all data on mount
+  useEffect(() => {
+    if (!user?.id || (user.role !== 'MANAGER' && user.role !== 'ADMIN')) return;
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) loadData();
+    });
+    return () => {
+      active = false;
+    };
+  }, [user?.id, user?.role, loadData]);
+
+  useEffect(() => {
+    if (!user?.id || (user.role !== 'MANAGER' && user.role !== 'ADMIN')) return;
+    const handleProductUpdated = () => loadData();
+    const handleOrderUpdated = () => {
+      if (activeTab !== 'orders') {
+        loadData();
+      }
+    };
+    window.addEventListener('product-updated', handleProductUpdated);
+    window.addEventListener('order-updated', handleOrderUpdated);
+    return () => {
+      window.removeEventListener('product-updated', handleProductUpdated);
+      window.removeEventListener('order-updated', handleOrderUpdated);
+    };
+  }, [user?.id, user?.role, activeTab, loadData]);
 
   const handleNotificationClick = (n) => {
     if (!n.read) {

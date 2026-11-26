@@ -17,7 +17,6 @@ import {
     Info,
     Clock,
     Layers,
-    Lock,
 } from "lucide-react";
 import EmptyState from "@/components/common/EmptyState/EmptyState";
 import { useAdminAuditLogs } from "./useAdminAuditLogs";

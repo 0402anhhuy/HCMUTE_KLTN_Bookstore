@@ -28,9 +28,6 @@ const Navbar = () => {
         navSearch,
         setNavSearch,
         categoryTree,
-        activeLevel1,
-        activeLevel1Id,
-        setActiveLevel1Id,
         showCategoryMenu,
         setShowCategoryMenu,
         categoryMenuRef,
@@ -61,17 +58,23 @@ const Navbar = () => {
         return name.split(" ").filter(Boolean).pop();
     })();
 
-    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [menuRouteKey, setMenuRouteKey] = useState(null);
+    const userMenuOpen = menuRouteKey === location.key;
+    const setUserMenuOpen = (nextOpen) => {
+        setMenuRouteKey((prev) => {
+            const resolved =
+                typeof nextOpen === "function"
+                    ? nextOpen(prev === location.key)
+                    : nextOpen;
+            return resolved ? location.key : null;
+        });
+    };
     const userMenuRef = useRef(null);
-
-    useEffect(() => {
-        setUserMenuOpen(false);
-    }, [location]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-                setUserMenuOpen(false);
+                setMenuRouteKey(null);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);

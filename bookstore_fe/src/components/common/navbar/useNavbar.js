@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { categoryService } from "@/services/categoryService";
@@ -24,28 +24,25 @@ export const useNavbar = () => {
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [trendingKeywords, setTrendingKeywords] = useState([]);
-    const [loadingTrending, setLoadingTrending] = useState(false);
+    const [loadingTrending, setLoadingTrending] = useState(true);
 
     const searchBoxRef = useRef(null);
     const categoryMenuRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const [prevRouteKey, setPrevRouteKey] = useState(() => `${location.pathname}${location.search}`);
 
-    // Reset/sync navSearch when changing routes
-    useEffect(() => {
+    const currentRouteKey = `${location.pathname}${location.search}`;
+    if (currentRouteKey !== prevRouteKey) {
+        setPrevRouteKey(currentRouteKey);
         const params = new URLSearchParams(location.search);
         const kw = params.get("keyword") || "";
-        if (location.pathname !== "/catalog" || !kw) {
-            setNavSearch("");
-        } else {
-            setNavSearch(kw);
-        }
-    }, [location]);
+        setNavSearch(location.pathname === "/catalog" && kw ? kw : "");
+    }
 
     // Lấy top 10 sách bestseller thực tế từ DB để hiển thị gợi ý tìm kiếm
     useEffect(() => {
         let isMounted = true;
-        setLoadingTrending(true);
         productService
             .getBestsellers({ limit: 10 })
             .then((res) => {
@@ -72,19 +69,20 @@ export const useNavbar = () => {
         };
     }, []);
 
-    const fetchCategories = useCallback(async () => {
-        try {
-            const res = await categoryService.getCategories();
-            const data = res.data || [];
-            setRawCategories(data);
-        } catch (e) {
-            console.error("Failed to load categories in navbar:", e);
-        }
-    }, []);
-
     useEffect(() => {
-        fetchCategories();
-    }, [fetchCategories]);
+        let active = true;
+        categoryService
+            .getCategories()
+            .then((res) => {
+                if (active) setRawCategories(res.data || []);
+            })
+            .catch((e) => {
+                console.error("Failed to load categories in navbar:", e);
+            });
+        return () => {
+            active = false;
+        };
+    }, []);
 
     // Xây dựng cây thư mục đa cấp từ danh sách phẳng/quan hệ parent
     // ✅ Gọi thẳng buildCategoryTree để luôn đảm bảo dựng đúng cây 3 cấp từ API
@@ -93,19 +91,14 @@ export const useNavbar = () => {
         return buildCategoryTree(rawCategories);
     }, [rawCategories]);
 
-    // Thiết lập danh mục cấp 1 mặc định khi load xong
-    useEffect(() => {
-        if (categoryTree.length > 0 && !activeLevel1Id) {
-            setActiveLevel1Id(categoryTree[0].id);
-        }
-    }, [categoryTree, activeLevel1Id]);
+    const resolvedLevel1Id = activeLevel1Id ?? categoryTree[0]?.id ?? null;
 
     const activeLevel1 = useMemo(() => {
         return (
-            categoryTree.find((c) => String(c.id) === String(activeLevel1Id)) ||
+            categoryTree.find((c) => String(c.id) === String(resolvedLevel1Id)) ||
             categoryTree[0]
         );
-    }, [categoryTree, activeLevel1Id]);
+    }, [categoryTree, resolvedLevel1Id]);
 
     // Đóng modal khi click ra ngoài
     useEffect(() => {

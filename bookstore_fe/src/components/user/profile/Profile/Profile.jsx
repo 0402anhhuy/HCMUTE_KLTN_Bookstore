@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import {
-    ShieldAlert,
     User,
     MapPin,
     Heart,
