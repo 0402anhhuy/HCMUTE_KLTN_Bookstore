@@ -600,6 +600,7 @@
     border-radius: 999px;
     font-size: 0.775rem;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .admin-coupons-status-badge.active {

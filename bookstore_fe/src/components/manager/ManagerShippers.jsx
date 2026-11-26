@@ -375,12 +375,12 @@ const ManagerShippers = ({ shippers = [], orders = [], loadData }) => {
         <table className="manager-table">
           <thead>
             <tr>
-              <th style={{ width: '12%' }}>MÃ SHIPPER</th>
+              <th style={{ width: '10%' }}>MÃ SHIPPER</th>
               <th style={{ width: '22%' }}>HỌ VÀ TÊN</th>
               <th style={{ width: '18%' }}>SỐ ĐIỆN THOẠI</th>
               <th style={{ width: '16%' }}>PHƯƠNG TIỆN</th>
-              <th style={{ width: '12%' }}>ĐƠN ĐANG GIAO</th>
-              <th style={{ width: '10%' }}>TRẠNG THÁI</th>
+              <th style={{ width: '11%' }}>ĐƠN ĐANG GIAO</th>
+              <th style={{ width: '13%' }}>TRẠNG THÁI</th>
               <th style={{ width: '10%', textAlign: 'center' }}>THAO TÁC</th>
             </tr>
           </thead>

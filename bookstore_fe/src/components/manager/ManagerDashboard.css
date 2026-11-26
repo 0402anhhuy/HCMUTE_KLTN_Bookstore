@@ -725,6 +725,8 @@
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .manager-badge-purple {

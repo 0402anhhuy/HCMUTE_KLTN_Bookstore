@@ -55,6 +55,10 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
   const [rejectingRequest, setRejectingRequest] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  // Cancel Order Modal state
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+
   // Approve Return Request Modal state
   const [approvingRequest, setApprovingRequest] = useState(null);
 
@@ -69,16 +73,23 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
     }
   };
 
-  const handleCancelOrder = async (orderId) => {
-    const reason = window.prompt('Nhập lý do hủy đơn hàng:');
-    if (reason === null) return;
-    if (!reason.trim()) {
+  const handleCancelOrder = (orderId) => {
+    setCancelReason('');
+    setCancellingOrderId(orderId);
+  };
+
+  const handleCancelOrderSubmit = async (e) => {
+    e.preventDefault();
+    const trimmed = cancelReason.trim();
+    if (!trimmed) {
       showToast('Lý do hủy không được để trống!', 'error');
       return;
     }
     try {
-      await api.post(`/orders/${orderId}/cancel?reason=${encodeURIComponent(reason.trim())}`);
-      showToast(`Đơn hàng #${orderId} đã được hủy!`, 'success');
+      await api.post(`/orders/${cancellingOrderId}/cancel?reason=${encodeURIComponent(trimmed)}`);
+      showToast(`Đơn hàng #${cancellingOrderId} đã được hủy!`, 'success');
+      setCancellingOrderId(null);
+      setCancelReason('');
       loadData();
     } catch (error) {
       console.error(error);
@@ -1187,56 +1198,85 @@ const ManagerOrders = ({ orders = [], shippers = [], loadData }) => {
           </div>
         )}
 
-        {/* REJECT RETURN REQUEST MODAL */}
-        {rejectingRequest && (
-          <div className="manager-modal-overlay" style={{ zIndex: 2100 }}>
-            <div className="manager-modal-box" style={{ maxWidth: '440px' }}>
-              <div className="manager-modal-header">
-                <h3 style={{ color: '#ef4444' }}>Từ chối yêu cầu đổi trả</h3>
-                <button
-                  type="button"
-                  onClick={() => setRejectingRequest(null)}
-                  className="manager-modal-close-btn"
-                  aria-label="Đóng"
-                >
-                  <X size={20} />
-                </button>
+        {/* REASON MODAL (CANCEL ORDER OR REJECT RETURN REQUEST) */}
+        {(() => {
+          const modalConfig = cancellingOrderId
+            ? {
+                title: `Hủy đơn hàng #${cancellingOrderId}`,
+                description: 'Vui lòng nhập lý do hủy đơn hàng để thông báo cho khách hàng.',
+                placeholder: 'Nhập lý do hủy đơn hàng...',
+                confirmLabel: 'Xác nhận hủy đơn',
+                value: cancelReason,
+                onChange: setCancelReason,
+                onClose: () => setCancellingOrderId(null),
+                onSubmit: handleCancelOrderSubmit,
+              }
+            : rejectingRequest
+              ? {
+                  title: 'Từ chối yêu cầu đổi trả',
+                  description: 'Vui lòng nhập lý do từ chối yêu cầu đổi trả của khách hàng để gửi phản hồi.',
+                  placeholder: 'Nhập lý do từ chối cụ thể...',
+                  confirmLabel: 'Xác nhận từ chối',
+                  value: rejectReason,
+                  onChange: setRejectReason,
+                  onClose: () => setRejectingRequest(null),
+                  onSubmit: handleRejectSubmit,
+                }
+              : null;
+
+          if (!modalConfig) return null;
+
+          return (
+            <div className="manager-modal-overlay" style={{ zIndex: 2100 }}>
+              <div className="manager-modal-box" style={{ maxWidth: '440px' }}>
+                <div className="manager-modal-header">
+                  <h3 style={{ color: '#ef4444' }}>{modalConfig.title}</h3>
+                  <button
+                    type="button"
+                    onClick={modalConfig.onClose}
+                    className="manager-modal-close-btn"
+                    aria-label="Đóng"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                <form onSubmit={modalConfig.onSubmit}>
+                  <div className="manager-modal-body">
+                    <p style={{ fontSize: '0.875rem', color: 'var(--mgr-text-muted)', margin: 0 }}>
+                      {modalConfig.description}
+                    </p>
+                    <textarea
+                      rows={4}
+                      placeholder={modalConfig.placeholder}
+                      value={modalConfig.value}
+                      onChange={(e) => modalConfig.onChange(e.target.value)}
+                      className="manager-input"
+                      style={{ width: '100%', resize: 'none' }}
+                      autoFocus
+                      required
+                    />
+                  </div>
+                  <div className="manager-modal-footer">
+                    <button
+                      type="button"
+                      onClick={modalConfig.onClose}
+                      className="manager-btn-secondary"
+                    >
+                      Hủy bỏ
+                    </button>
+                    <button
+                      type="submit"
+                      className="manager-btn-danger"
+                      style={{ padding: '8px 18px', fontSize: '0.875rem' }}
+                    >
+                      {modalConfig.confirmLabel}
+                    </button>
+                  </div>
+                </form>
               </div>
-              <form onSubmit={handleRejectSubmit}>
-                <div className="manager-modal-body">
-                  <p style={{ fontSize: '0.875rem', color: 'var(--mgr-text-muted)', margin: 0 }}>
-                    Vui lòng nhập lý do từ chối yêu cầu đổi trả của khách hàng để gửi phản hồi.
-                  </p>
-                  <textarea 
-                    rows={4} 
-                    placeholder="Nhập lý do từ chối cụ thể..." 
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    className="manager-input"
-                    style={{ width: '100%', resize: 'none' }}
-                    required
-                  />
-                </div>
-                <div className="manager-modal-footer">
-                  <button 
-                    type="button" 
-                    onClick={() => setRejectingRequest(null)} 
-                    className="manager-btn-secondary"
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="manager-btn-danger"
-                    style={{ padding: '8px 18px', fontSize: '0.875rem' }}
-                  >
-                    Xác nhận từ chối
-                  </button>
-                </div>
-              </form>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* APPROVE RETURN REQUEST MODAL */}
         {approvingRequest && (

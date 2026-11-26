@@ -473,6 +473,7 @@
     font-size: 0.775rem;
     font-weight: 700;
     line-height: 1.2;
+    white-space: nowrap;
 }
 
 .admin-promotions-status-badge.status-active {
