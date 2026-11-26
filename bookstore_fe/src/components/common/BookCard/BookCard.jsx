@@ -1,5 +1,5 @@
 import { BookOpen, Star, ShoppingCart } from "lucide-react";
-import { getProductDiscountPercent, getProductOriginalPrice } from "../../../utils/productPricing";
+import { resolveBookCardPricing } from "./bookCardPricing";
 import "./BookCard.css";
 
 const BookCard = ({
@@ -17,18 +17,11 @@ const BookCard = ({
     const imageUrl = getProductImage ? getProductImage(product) : product?.imageUrl;
     const isOutOfStock = product?.stockQuantity === 0;
 
-    const discountPercent = (() => {
-        if (showBadge && typeof showBadge === "string" && showBadge.includes("%")) {
-            const parsed = parseInt(showBadge.replace(/[^0-9]/g, ""), 10);
-            if (!isNaN(parsed) && parsed > 0) return parsed;
-        }
-        return getProductDiscountPercent(product);
-    })();
-
-    const computedOriginalPrice = (() => {
-        if (originalPrice) return originalPrice;
-        return getProductOriginalPrice(product, discountPercent);
-    })();
+    const { discountPercent, computedOriginalPrice, hasDiscount } = resolveBookCardPricing({
+        product,
+        originalPrice,
+        showBadge,
+    });
 
     return (
         <div
@@ -71,11 +64,6 @@ const BookCard = ({
 
             <div className="book-card-title">
                 <span>{product?.name || "Đang cập nhật"}</span>
-                {discountPercent > 0 && (
-                    <span className="book-card-name-discount-tag">
-                        -{discountPercent}%
-                    </span>
-                )}
             </div>
             <div className="book-card-author">
                 {product?.author || "Đang cập nhật"}
@@ -107,10 +95,10 @@ const BookCard = ({
 
             <div className="book-card-bottom-row">
                 <div className="book-card-price-group">
-                    <span className={`book-card-price tabular-nums ${discountPercent > 0 ? "is-discounted" : ""}`}>
+                    <span className={`book-card-price tabular-nums ${hasDiscount ? "is-discounted" : ""}`}>
                         {formatPrice ? formatPrice(product.price) : `${Number(product.price || 0).toLocaleString("vi-VN")} đ`}
                     </span>
-                    {computedOriginalPrice && discountPercent > 0 ? (
+                    {hasDiscount ? (
                         <div className="book-card-original-price-row">
                             <span className="book-card-original-price tabular-nums">
                                 {formatPrice ? formatPrice(computedOriginalPrice) : `${Number(computedOriginalPrice).toLocaleString("vi-VN")} đ`}

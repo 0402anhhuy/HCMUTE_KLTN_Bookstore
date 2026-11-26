@@ -23,6 +23,7 @@ import publisherPlaceholder from "@/assets/publisher_placeholder.svg";
 import { useHome } from "./useHome";
 import "./Home.css";
 import { RecommendationSection, CarouselArrow } from "@/components/common";
+import { resolveBookCardPricing } from "@/components/common/BookCard/bookCardPricing";
 import { useNavigate } from "react-router-dom";
 
 // Hàm loại bỏ tiêu đề sách bị lặp lại ở đầu phần mô tả sản phẩm
@@ -1103,6 +1104,12 @@ const BookCard = ({
     originalPrice,
     isFlashSale,
 }) => {
+    const { discountPercent, computedOriginalPrice, hasDiscount } = resolveBookCardPricing({
+        product,
+        originalPrice,
+        showBadge,
+    });
+
     return (
         <div
             className="glass-card book-card-item"
@@ -1140,15 +1147,20 @@ const BookCard = ({
                 Tác giả: {product.author || "Đang cập nhật"}
             </div>
 
-            {/* Giá hiện tại và giá gốc gạch ngang */}
+            {/* Giá hiện tại và giá gốc gạch ngang + tag giảm giá */}
             <div className="book-card-price-group tabular-nums">
                 <span className="book-card-price-val">
                     {formatPrice(product.price)}
                 </span>
-                {originalPrice && (
-                    <span className="book-card-original-price">
-                        {formatPrice(originalPrice)}
-                    </span>
+                {hasDiscount && (
+                    <div className="book-card-original-price-row">
+                        <span className="book-card-original-price">
+                            {formatPrice(computedOriginalPrice)}
+                        </span>
+                        <span className="book-card-discount-rate">
+                            -{discountPercent}%
+                        </span>
+                    </div>
                 )}
             </div>
 
