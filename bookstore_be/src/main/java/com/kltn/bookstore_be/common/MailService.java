@@ -1,5 +1,6 @@
 package com.kltn.bookstore_be.common;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import org.springframework.web.client.RestClient;
 import java.net.http.HttpClient;
 import java.time.Duration;
 
+@Slf4j
 @Service
 public class MailService {
 
@@ -75,11 +77,7 @@ public class MailService {
         String subject = "Bookstore - Xác thực mã OTP của bạn";
         String body = buildOtpBody(otpCode, type);
 
-        System.out.println("\n==================================================");
-        System.out.println("SENDING EMAIL TO: " + toEmail);
-        System.out.println("OTP CODE: [" + otpCode + "]");
-        System.out.println("TYPE: " + type);
-        System.out.println("==================================================\n");
+        log.debug("Preparing OTP email (type={}) to {}", type, toEmail);
 
         if (StringUtils.hasText(appsScriptConfig.url()) && sendViaAppsScript(toEmail, subject, body)) {
             return;
@@ -103,17 +101,17 @@ public class MailService {
 
             String responseBody = response.getBody();
             if (responseBody != null && (responseBody.contains("\"ok\":false") || responseBody.contains("\"ok\": false"))) {
-                System.err.println("Google Apps Script rejected email request: " + responseBody);
+                log.warn("Google Apps Script rejected email request: {}", responseBody);
                 return false;
             }
             if (responseBody != null && responseBody.toLowerCase().contains("<html")) {
-                System.err.println("Google Apps Script returned HTML instead of JSON. Ensure Web App access is set to 'Anyone'.");
+                log.warn("Google Apps Script returned HTML instead of JSON. Ensure Web App access is set to 'Anyone'.");
                 return false;
             }
-            System.out.println("Sent OTP email via Google Apps Script to: " + toEmail);
+            log.info("Sent OTP email via Google Apps Script to {}", toEmail);
             return true;
         } catch (Exception e) {
-            System.err.println("Could not send email via Google Apps Script: " + e.getMessage());
+            log.error("Could not send email via Google Apps Script: {}", e.getMessage());
             return false;
         }
     }
@@ -130,7 +128,7 @@ public class MailService {
             message.setText(body);
             mailSender.send(message);
         } catch (Exception e) {
-            System.err.println("Could not send real email via SMTP: " + e.getMessage());
+            log.error("Could not send real email via SMTP: {}", e.getMessage());
         }
     }
 

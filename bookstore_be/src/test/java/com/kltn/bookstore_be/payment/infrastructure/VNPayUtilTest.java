@@ -74,4 +74,15 @@ class VNPayUtilTest {
         assertThrows(IllegalStateException.class, () -> VNPayUtil.requireNonBlankConfig("   ", "vnpay.tmn-code"));
         assertThrows(IllegalStateException.class, () -> VNPayUtil.requireNonBlankConfig(null, "vnpay.hash-secret"));
     }
+
+    @Test
+    @DisplayName("hmacSHA512 trả về chuỗi rỗng khi key hoặc data null và tính chữ ký 128 ký tự hex khi hợp lệ")
+    void hmacSHA512_handlesNullAndValidInputs() {
+        assertEquals("", VNPayUtil.hmacSHA512(null, "vnp_Amount=10000"));
+        assertEquals("", VNPayUtil.hmacSHA512("secret", null));
+
+        String signature = VNPayUtil.hmacSHA512("test-secret", "vnp_Amount=10000&vnp_TxnRef=1");
+        assertEquals(128, signature.length());
+        assertEquals(signature, VNPayUtil.hmacSHA512("test-secret", "vnp_Amount=10000&vnp_TxnRef=1"));
+    }
 }

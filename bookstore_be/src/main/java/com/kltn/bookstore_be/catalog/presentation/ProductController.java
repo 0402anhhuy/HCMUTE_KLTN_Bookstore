@@ -23,6 +23,7 @@ import com.kltn.bookstore_be.identity.domain.User;
 import com.kltn.bookstore_be.catalog.application.ProductService;
 import com.kltn.bookstore_be.identity.application.UserService;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/products")
@@ -117,7 +119,7 @@ public class ProductController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Trạng thái không hợp lệ"));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to load products with status={}", status, e);
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }

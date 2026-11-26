@@ -10,6 +10,7 @@ import com.kltn.bookstore_be.ordering.domain.OrderRepository;
 import com.kltn.bookstore_be.ordering.domain.Promotion;
 import com.kltn.bookstore_be.ordering.domain.PromotionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PromotionService {
@@ -157,7 +159,7 @@ public class PromotionService {
             User admin = userService.getAuthenticatedUser();
             auditLogService.log(admin, "CREATE_PROMOTION", "Tạo chương trình ưu đãi mới: " + saved.getTitle());
         } catch (Exception e) {
-            // Ignore if no admin context found strictly
+            log.warn("Không thể ghi audit log khi tạo khuyến mãi {}: {}", saved.getTitle(), e.getMessage());
         }
 
         return saved;
@@ -228,7 +230,7 @@ public class PromotionService {
             User admin = userService.getAuthenticatedUser();
             auditLogService.log(admin, "UPDATE_PROMOTION", "Cập nhật chương trình ưu đãi: " + saved.getTitle());
         } catch (Exception e) {
-            // Ignore
+            log.warn("Không thể ghi audit log khi cập nhật khuyến mãi {}: {}", saved.getTitle(), e.getMessage());
         }
 
         return saved;
