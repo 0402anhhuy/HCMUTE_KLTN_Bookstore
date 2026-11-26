@@ -10,6 +10,10 @@ import com.kltn.bookstore_be.notification.application.NotificationService;
 import com.kltn.bookstore_be.ordering.domain.*;
 import com.kltn.bookstore_be.payment.domain.Payment;
 import com.kltn.bookstore_be.payment.domain.PaymentRepository;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -574,6 +578,55 @@ class OrderServiceTest {
             } finally {
                 TimeZone.setDefault(originalDefault);
             }
+        }
+
+        @Test
+        @DisplayName("Checkout VNPay qua proxy - chuẩn hóa IPv4, bỏ '#' ở vnp_OrderInfo và trim cấu hình")
+        void checkout_vnpayBehindProxy_normalizesIpAndSanitizesParams() {
+            ReflectionTestUtils.setField(orderService, "vnp_TmnCode", " TEST_TMN ");
+            ReflectionTestUtils.setField(orderService, "vnp_HashSecret", " TEST_SECRET ");
+            ReflectionTestUtils.setField(orderService, "vnp_ApiUrl", " https://sandbox.vnpayment.vn/paymentv2/vpcpay.html ");
+            ReflectionTestUtils.setField(orderService, "vnp_ReturnUrl", " https://bookstore-kltn-deploy.vercel.app/payment/vnpay-callback ");
+
+            CheckoutRequest request = new CheckoutRequest();
+            request.setProductId(sampleProduct.getId());
+            request.setQuantity(2);
+            request.setPaymentMethod(Order.PaymentMethod.VNPAY);
+            request.setShippingAddress("123 ABC Street");
+
+            when(userRepository.findById(sampleUser.getId())).thenReturn(Optional.of(sampleUser));
+            when(productService.getProductById(sampleProduct.getId())).thenReturn(sampleProduct);
+            when(productService.updateProduct(eq(sampleProduct.getId()), any(Product.class))).thenReturn(sampleProduct);
+            when(promotionRepository.findActivePromotions(any(LocalDateTime.class))).thenReturn(List.of());
+            when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+                Order saved = invocation.getArgument(0);
+                saved.setId(42L);
+                saved.setCreatedAt(LocalDateTime.now());
+                return saved;
+            });
+
+            HttpServletRequest mockRequest = mock(HttpServletRequest.class);
+            when(mockRequest.getHeader("X-FORWARDED-FOR")).thenReturn("14.241.120.5, 172.71.10.2");
+
+            OrderResponse response = orderService.checkout(sampleUser, request, mockRequest);
+            String url = response.getPaymentUrl();
+
+            assertNotNull(url);
+            assertTrue(url.startsWith("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?"), url);
+
+            String query = url.substring(url.indexOf('?') + 1);
+            Map<String, String> params = new HashMap<>();
+            for (String pair : query.split("&")) {
+                String[] parts = pair.split("=", 2);
+                params.put(
+                        URLDecoder.decode(parts[0], StandardCharsets.US_ASCII),
+                        URLDecoder.decode(parts[1], StandardCharsets.US_ASCII));
+            }
+            assertEquals("14.241.120.5", params.get("vnp_IpAddr"));
+            assertEquals("TEST_TMN", params.get("vnp_TmnCode"));
+            assertEquals("https://bookstore-kltn-deploy.vercel.app/payment/vnpay-callback", params.get("vnp_ReturnUrl"));
+            assertEquals("Thanh toan don hang Bookstore 42", params.get("vnp_OrderInfo"));
+            assertTrue(params.get("vnp_SecureHash").matches("^[0-9a-f]{128}$"));
         }
     }
 }

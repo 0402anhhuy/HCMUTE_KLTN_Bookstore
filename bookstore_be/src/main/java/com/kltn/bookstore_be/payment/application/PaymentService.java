@@ -50,7 +50,7 @@ public class PaymentService {
     @Transactional
     public boolean processVNPayCallback(Map<String, String> queryParams) {
         String vnp_SecureHash = queryParams.get("vnp_SecureHash");
-        if (vnp_SecureHash == null) {
+        if (vnp_SecureHash == null || vnp_SecureHash.isBlank()) {
             return false;
         }
 
@@ -58,7 +58,8 @@ public class PaymentService {
         queryParams.remove("vnp_SecureHash");
         queryParams.remove("vnp_SecureHashType");
 
-        String signValue = VNPayUtil.hashAllFields(queryParams, vnp_HashSecret);
+        String secretKey = VNPayUtil.requireNonBlankConfig(vnp_HashSecret, "vnpay.hash-secret");
+        String signValue = VNPayUtil.hashAllFields(queryParams, secretKey);
         if (!signValue.equals(vnp_SecureHash)) {
             return false; // Signature mismatch
         }
