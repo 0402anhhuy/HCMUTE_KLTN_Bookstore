@@ -2,6 +2,11 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import api from "@/services/api";
+import {
+    buildActivePromoDiscountMap,
+    getProductDiscountPercent,
+    getProductOriginalPrice,
+} from "@/utils/productPricing";
 
 export const useCart = () => {
     const {
@@ -119,8 +124,37 @@ export const useCart = () => {
         );
 
     const [coupons, setCoupons] = useState([]);
+    const [activePromotions, setActivePromotions] = useState([]);
     const [bestCoupon, setBestCoupon] = useState(null);
     const couponVersionRef = useRef("");
+
+    useEffect(() => {
+        api.get("/promotions/active")
+            .then((res) => setActivePromotions(res.data || []))
+            .catch(() => setActivePromotions([]));
+    }, []);
+
+    const promoProductMap = useMemo(
+        () => buildActivePromoDiscountMap(activePromotions),
+        [activePromotions],
+    );
+
+    const getCartItemPricing = (product) => {
+        if (!product) return { discountPercent: 0, originalPrice: null };
+        const promo = promoProductMap.get(String(product.id));
+        const enrichedProduct = promo
+            ? {
+                  ...product,
+                  promotionDiscountPercent: promo.promotionDiscountPercent,
+              }
+            : product;
+        const discountPercent = getProductDiscountPercent(enrichedProduct);
+        const originalPrice =
+            discountPercent > 0
+                ? getProductOriginalPrice(enrichedProduct, discountPercent)
+                : null;
+        return { discountPercent, originalPrice };
+    };
 
     const fetchCoupons = async (notifyChange = false) => {
         try {
@@ -457,5 +491,6 @@ export const useCart = () => {
         couponSearchInput,
         setCouponSearchInput,
         handleApplyCouponFromModal,
+        getCartItemPricing,
     };
 };
