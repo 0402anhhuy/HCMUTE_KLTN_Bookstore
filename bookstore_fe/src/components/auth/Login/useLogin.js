@@ -47,6 +47,7 @@ export const useLogin = () => {
         try {
             const response = await api.post("/auth/login", { email: email.trim(), password, rememberMe });
             const userData = {
+                id: response.data.id ?? response.data.userId ?? null,
                 email: response.data.email,
                 fullName: response.data.fullName,
                 phone: response.data.phone || "",
